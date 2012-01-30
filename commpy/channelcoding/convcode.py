@@ -47,7 +47,7 @@ def _bit_array_2_dec(in_bitarray):
 #   HELPER FUNCTION
 #   Compute the Hamming distance between two Bit Arrays
 # =============================================================================
-def _hamming_dist(in_bitarray_1, in_bitarray_2):
+def hamming_dist(in_bitarray_1, in_bitarray_2):
 
     distance = np.sum(np.bitwise_xor(in_bitarray_1, in_bitarray_2))
     
@@ -69,7 +69,7 @@ def _generate_tables(generator_matrix, M):
     
     # Compute the number of states in the encoder using
     # the number of memory elements
-    number_states = pow(2, M)
+    number_states = pow(2, M.sum())
     
     # Compute the number of input symbols (depends on k)
     number_inputs = pow(2, k)
@@ -84,49 +84,76 @@ def _generate_tables(generator_matrix, M):
     input_table = np.zeros([number_states, number_states], 'int')
 
     # Initialize the shift register
-    shift_register = np.zeros(M, 'int')
+    #shift_register = np.zeros(M, 'int')
     
     # Compute the entries in the next state table and the output table
     # Loop over all possible states
     for current_state in range(number_states):
-        
+
+        #shift_register = np.zeros(M[current_state], 'int')
+       
         # Loop over all possible inputs
         for current_input in range(number_inputs):
+            #shift_register = np.zeros(M[current_input], 'int')
+            
             # Initialize the shift register array to represent the current_state
-            shift_register = _dec_2_bit_array(current_state, M)
+            #shift_register = _dec_2_bit_array(current_state, M[current_input])
             # Initialize the array of output bits of dimension n
             outbits = np.zeros(n, 'int')
             
             # Compute the values in the output_table
             # Loop over n outputs
             for r in range(n):
-                # Convert the number representing a polynomial into a bit array
-                generator_array = _dec_2_bit_array(generator_matrix[0][r], M+1)
+                
+                output_generator_array = np.zeros(k, 'int')
+                shift_register = _dec_2_bit_array(current_state, M.sum())
 
-                # Loop over M delay elements of the shift register 
-                # to compute their contribution to the r-th output
-                for i in range(M):
-                    outbits[r] = (outbits[r] + \
-                        (shift_register[i]*generator_array[i+1]))%2
+                for l in range(k):
+                    #print M[l], current_state
+                                       
+                    # Convert the number representing a polynomial into a bit array
+                    generator_array = _dec_2_bit_array(generator_matrix[l][r], M[l]+1)
+
+                    # Loop over M delay elements of the shift register 
+                    # to compute their contribution to the r-th output
+                    for i in range(M[l]):
+                        outbits[r] = (outbits[r] + \
+                            (shift_register[i+l]*generator_array[i+1]))%2
+                        
+                        #next_shift_register[1:]
+
+                    output_generator_array[l] = generator_array[0]
+                    if l == 0:
+                        shift_register[1:M[l]] = shift_register[0:M[l]-1]
+                        shift_register[0] = _dec_2_bit_array(current_input, k)[0]
+                    else:
+                        shift_register[l+M[l-1]:l+M[l-1]+M[l]-1] = \
+                                shift_register[l+M[l-1]-1:l+M[l-1]+M[l]-2] 
+                        shift_register[l+M[l-1]-1] = \
+                                _dec_2_bit_array(current_input, k)[l]
 
                 # Compute the contribution of the current_input to the output
                 outbits[r] = (outbits[r] + \
-                    current_input*generator_array[0])%2
+                    (np.sum(_dec_2_bit_array(current_input, k) * \
+                    output_generator_array)%2))%2
             
             # Update the ouput_table using the computed output value
             output_table[current_state][current_input] = \
                 _bit_array_2_dec(outbits)
             
             # Shift the bits in the shift register by '1' (Clock Cycle)
-            shift_register[1:] = shift_register[0:M-1]
+            #shift_register[1:] = shift_register[0:M[current_input]-1]
 
             # Read in the input bit into the shift register
-            shift_register[0] = current_input
+            #shift_register[0] = current_input
 
             # Update the next_state_table using the new state of 
             # the shift register
             next_state_table[current_state][current_input] = \
                 _bit_array_2_dec(shift_register)
+    
+    #print next_state_table
+    #print output_table
 
     return [next_state_table, output_table]
 
@@ -156,17 +183,11 @@ def convencode(message_bits, generator_matrix, M):
     number_message_bits = np.size(message_bits)
 
     # Initialize an array to contain the message bits plus the truncation zeros
-    inbits = np.zeros(number_message_bits + M, 'int')
-    number_inbits = number_message_bits + M
-
+    inbits = np.zeros(number_message_bits + M.sum() + M.sum()%k, 'int')
+    number_inbits = number_message_bits + M.sum() + M.sum()%k
+    
     # Pad the input bits with M zeros (L-th terminated truncation)
     inbits[0:number_message_bits] = message_bits
-
-    # Initialize a shift register corresponding to the encoder delay elements
-    shift_register = np.zeros(M+1, 'int')
-  
-    # Initialize a pointer to the shift register head 
-    sr_head = 0
     
     # Compute the number of outbits to be generated
     number_outbits = int(number_inbits/rate)
@@ -180,7 +201,7 @@ def convencode(message_bits, generator_matrix, M):
     # Encoding process - Each iteration of the loop represents one clock cycle
     current_state = 0
     j = 0
-    for i in range(number_inbits-k): # Loop through all input bits
+    for i in range(number_inbits/k-1): # Loop through all input bits
         current_input = _bit_array_2_dec(inbits[i*k:(i+1)*k])
         current_output = output_table[current_state][current_input]
         outbits[j*n:(j+1)*n] = _dec_2_bit_array(current_output, n)
@@ -219,7 +240,7 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth):
 
     # Compute the number of states in the encoder using
     # the number of memory elements
-    number_states = pow(2, M)
+    number_states = pow(2, M.sum())
     
     # Compute the number of input symbols (depends on k)
     number_inputs = pow(2, k)
@@ -238,11 +259,12 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth):
 
     decoded_symbols = np.zeros([number_states, tb_depth], 'int')
     
-    decoded_bits = np.zeros(L-M+tb_depth-1, 'int')
+    decoded_bits = np.zeros(L+2*tb_depth-1, 'int')
 
     t = 1
     tb_count = 1
-    while t < L+M:
+    count = 0
+    while t < (L+M.sum()+M.sum()%k)/k: #+M.sum()+M.sum()%k:
         # Get the received codeword corresponding to t
         r_codeword = _bit_array_2_dec(coded_bits[(t-1)*n:t*n])
         
@@ -263,7 +285,7 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth):
 
                 # Compute the branch metric (hamming distance) between 
                 # the received and the ideal codeword
-                branch_metric = _hamming_dist( \
+                branch_metric = hamming_dist( \
                         _dec_2_bit_array(r_codeword, n), \
                         _dec_2_bit_array(i_codeword, n))
                 
@@ -293,11 +315,12 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth):
             # Traceback Loop
             while j >= 0:
                 previous_state = int(paths[current_state][j])
-                decoded_bits[t+(j-2)*k:t+(j-1)*k] = _dec_2_bit_array( \
-                    decoded_symbols[previous_state][j], k)
+                decoded_bits[t+(j)*k+count:t+(j+1)*k+count] =  \
+                        _dec_2_bit_array(decoded_symbols[previous_state][j], k)
                 j = j - 1
                 current_state = previous_state
             
+            count = count + k-1
             tb_count = tb_depth - 1
             paths[:,0:tb_depth-1] = paths[:,1:]
             decoded_symbols[:,0:tb_depth-1] = decoded_symbols[:,1:]
@@ -313,11 +336,8 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth):
         path_metrics[:,0] = path_metrics[:,1]
 
         # Force all the paths back to '0' state at the end of decoding
-        if t == L+M-1:
+        if t == (L+M.sum()+M.sum()%k)/k-1:
             number_states = 1
-
-    return decoded_bits
-
-
-
+     
+    return decoded_bits[M.sum()+M.sum()%k-1:len(decoded_bits)-tb_depth]
 
