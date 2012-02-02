@@ -17,7 +17,6 @@
 import numpy as np
 from commpy.utilities import *
 
-
 # =============================================================================
 #   Generates the next_state_table and the output_table for the encoder/decoder
 # =============================================================================
@@ -47,9 +46,6 @@ def _generate_tables(generator_matrix, M):
     
     # Initialize the input table
     input_table = np.zeros([number_states, number_states], 'int')
-
-    # Initialize the shift register
-    #shift_register = np.zeros(M, 'int')
     
     # Compute the entries in the next state table and the output table
     # Loop over all possible states
@@ -148,7 +144,7 @@ def convencode(message_bits, generator_matrix, M):
     # Encoding process - Each iteration of the loop represents one clock cycle
     current_state = 0
     j = 0
-    for i in xrange(number_inbits/k-1): # Loop through all input bits
+    for i in xrange(number_inbits/k): # Loop through all input bits
         current_input = bitarray2dec(inbits[i*k:(i+1)*k])
         current_output = output_table[current_state][current_input]
         outbits[j*n:(j+1)*n] = dec2bitarray(current_output, n)
@@ -158,7 +154,7 @@ def convencode(message_bits, generator_matrix, M):
     return outbits
 
 
-def viterbi_decode(coded_bits, generator_matrix, M, tb_depth):
+def viterbi_decode(coded_bits, generator_matrix, M, tb_depth, decoding_type='hard'):
     """
     Decodes a stream of convolutionally encoded bits using the Viterbi Algorithm
 
@@ -173,7 +169,6 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth):
         Memory of the convolutional encoder (shift register)
     tb_length : int
         Traceback depth (Typically set to 5*(M+1))
-
     References
     ----------
     [1]. Todd K. Moon. Error Correction Coding: Mathematical Methods and 
@@ -185,9 +180,11 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth):
     [k, n] = generator_matrix.shape
     rate = float(k)/n
 
+    total_memory = M.sum()
+
     # Compute the number of states in the encoder using
     # the number of memory elements
-    number_states = pow(2, M.sum())
+    number_states = pow(2, total_memory)
     
     # Compute the number of input symbols (depends on k)
     number_inputs = pow(2, k)
@@ -206,15 +203,25 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth):
 
     decoded_symbols = np.zeros([number_states, tb_depth], 'int')
     
-    decoded_bits = np.zeros(L+2*tb_depth-1, 'int')
+    decoded_bits = np.zeros(L+tb_depth, 'int')
 
     t = 1
     tb_count = 1
     count = 0
-    while t < (L+M.sum()+M.sum()%k)/k: #+M.sum()+M.sum()%k:
+    while t < (L+total_memory+total_memory%k)/k:
         # Get the received codeword corresponding to t
-        r_codeword = bitarray2dec(coded_bits[(t-1)*n:t*n])
-        
+        if t <= L:
+            r_codeword = coded_bits[(t-1)*n:t*n]
+        else:
+            if decoding_type == 'hard':
+                r_codeword = np.zeros(n, 'int')
+            elif decoding_type == 'soft':
+                pass
+            elif decoding_type == 'unquantized':
+                r_codeword = -1 + np.zeros(n, 'int')
+            else:
+                pass
+
         # Loop over all the current states (Time instant: t)
         for state_num in xrange(number_states):
             # Using the next state table find the previous states and inputs
@@ -224,26 +231,35 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth):
             # Initialize a temporary array to store all the path metrics 
             # for the current state
             pmetrics = np.zeros(len(previous_states))
+            #print len(previous_states)
             
             # Loop over all the previous states (Time instant: t-1)
             for i in xrange(len(previous_states)):
                 # Using the output table, find the ideal codeword 
                 i_codeword = output_table[previous_states[i]][inputs[i]]
-
+                
                 # Compute the branch metric (hamming distance) between 
                 # the received and the ideal codeword
-                branch_metric = hamming_dist( \
-                        dec2bitarray(r_codeword, n), \
-                        dec2bitarray(i_codeword, n))
-                
+                i_codeword_array = dec2bitarray(i_codeword, n)
+                if decoding_type == 'hard':
+                    branch_metric = hamming_dist(r_codeword, i_codeword_array)
+                elif decoding_type == 'soft':
+                    pass
+                elif decoding_type == 'unquantized':
+                    i_codeword_array[i_codeword_array == 0] = -1
+                    #print r_codeword, i_codeword_array
+                    branch_metric = euclid_dist(r_codeword, i_codeword_array)
+                else:
+                    pass
+
                 # ADD operation: Add the branch metric to the 
                 # accumulated path metric and store it in the temporary array 
                 pmetrics[i] = path_metrics[previous_states[i]][0] + branch_metric
-            
+
             # Execute COMPARE and SELECT operations only for finite values 
             # in pmetrics 
             if np.isfinite(pmetrics.min()):       
-                # Compare and Select the minimum accumulated path metric
+                # Compare and Select the minimum accumulated path metric    
                 path_metrics[state_num][1] = pmetrics.min()
                 
                 # Store the previous state corresponding to the minimum 
@@ -253,16 +269,17 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth):
                 # Store the previous input corresponding to the minimum 
                 # accumulated path metric
                 decoded_symbols[state_num][tb_count] = inputs[pmetrics.argmin()]
+            else:
+                path_metrics[state_num][1] = 10000
         
-
-        if t >= tb_depth - 1:
+          if t >= tb_depth - 1:
             j = tb_depth - 1
             current_state = path_metrics[:,1].argmin()
             
             # Traceback Loop
             while j >= 0:
                 previous_state = int(paths[current_state][j])
-                decoded_bits[t+(j)*k+count:t+(j+1)*k+count] =  \
+                decoded_bits[(t-tb_depth-1)+(j)*k+count:(t-tb_depth-1)+(j+1)*k+count] =  \
                         dec2bitarray(decoded_symbols[previous_state][j], k)
                 j = j - 1
                 current_state = previous_state
@@ -273,7 +290,6 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth):
             decoded_symbols[:,0:tb_depth-1] = decoded_symbols[:,1:]
 
         else:
-            decoded_bits[(t-1)*k:t*k] = dec2bitarray(0, k)
             tb_count = tb_count + 1
 
         # Increment time
@@ -283,9 +299,8 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth):
         path_metrics[:,0] = path_metrics[:,1]
 
         # Force all the paths back to '0' state at the end of decoding
-        if t == (L+M.sum()+M.sum()%k)/k-1:
+        if t == (L+total_memory+total_memory%k)/k-1:
             number_states = 1
 
-    return decoded_bits[k+n%k:len(decoded_bits)-tb_depth-M.sum()+n] 
-    #return decoded_bits[(M.sum()+M.sum()%k)/k+1:len(decoded_bits)-tb_depth]
+    return decoded_bits[0:len(decoded_bits)-tb_depth-M.sum()-M.sum()%k]
 

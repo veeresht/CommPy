@@ -32,7 +32,7 @@ def dec2bitarray(in_number, bit_width):
     binary_string = bin(in_number)
     bitarray = np.zeros(bit_width, 'int')
 
-    for i in range(len(binary_string)-2):
+    for i in xrange(len(binary_string)-2):
         bitarray[bit_width-i-1] = int(binary_string[len(binary_string)-i-1]) 
 
     return bitarray
@@ -50,7 +50,7 @@ def bitarray2dec(in_bitarray):
 
     number = 0
 
-    for i in range(len(in_bitarray)):
+    for i in xrange(len(in_bitarray)):
         number = number + in_bitarray[i]*pow(2, len(in_bitarray)-1-i)
   
     return number
@@ -67,8 +67,24 @@ def hamming_dist(in_bitarray_1, in_bitarray_2):
         NumPy array of bits.
     """
 
-    distance = np.sum(np.bitwise_xor(in_bitarray_1, in_bitarray_2))
+    distance = np.bitwise_xor(in_bitarray_1, in_bitarray_2).sum()
     
     return distance
+
+def euclid_dist(in_array1, in_array2):
+    """
+    Computes the squared euclidena distance between two NumPy arrays
+
+    Parameters
+    ----------
+    in_bitarray_1: 1-D ndarray
+        NumPy array of real values.
+    in_bitarray_2: 1-D ndarray
+        NumPy array of real values.
+    """
+    distance = ((in_array1 - in_array2)*(in_array1 - in_array2)).sum()
+        
+    return distance
+    
 
 
