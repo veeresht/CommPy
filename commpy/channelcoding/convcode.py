@@ -16,6 +16,7 @@
 
 import numpy as np
 from commpy.utilities import *
+from commpy.channelcoding.acstb import *
 
 # =============================================================================
 #   Generates the next_state_table and the output_table for the encoder/decoder
@@ -28,7 +29,7 @@ def _generate_tables(generator_matrix, M):
     # M ---------------- Memory of the encoder (shift register)
     # =========================================================================
 
-    # Derive the encoder parameters using the G(D) matrix
+    # Derive the encoder parameters using the G(D) matrix)
     [k, n] = generator_matrix.shape
     
     # Compute the number of states in the encoder using
@@ -154,7 +155,7 @@ def convencode(message_bits, generator_matrix, M):
     return outbits
 
 
-def viterbi_decode(coded_bits, generator_matrix, M, tb_depth, decoding_type='hard'):
+def viterbi_decode(coded_bits, generator_matrix, M, tb_depth=None, decoding_type='hard'):
     """
     Decodes a stream of convolutionally encoded bits using the Viterbi Algorithm
 
@@ -174,133 +175,79 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth, decoding_type='har
     [1]. Todd K. Moon. Error Correction Coding: Mathematical Methods and 
     Algorithms. John Wiley and Sons, 2005.
     """
-
+    
     # Derive the encoder parameters using the G(D) matrix
     # k = Rows in G(D), n = columns in G(D)
     [k, n] = generator_matrix.shape
     rate = float(k)/n
-
+    
+    # Compute the total memory for the decoder
     total_memory = M.sum()
 
-    # Compute the number of states in the encoder using
+    if tb_depth is None:
+        tb_depth = 5*total_memory
+
+    # Compute the number of states in the decoder using
     # the number of memory elements
     number_states = pow(2, total_memory)
     
     # Compute the number of input symbols (depends on k)
     number_inputs = pow(2, k)
-
-    L = int(len(coded_bits)*rate)
-
-    [next_state_table, output_table] = _generate_tables(generator_matrix, M)
     
-    path_metrics = np.zeros([number_states, 2])
-    path_metrics[:,:] = np.inf
+    # Number of message bits after decoding
+    L = int(len(coded_bits)*rate)
+    
+    [next_state_table, output_table] = _generate_tables(generator_matrix, M)
+
+    path_metrics = np.empty([number_states, 2])
+    path_metrics[:,:] = 10000
     path_metrics[0][0] = 0
     
-    paths = np.zeros([number_states, tb_depth])
-    paths[:,:] = np.nan
+    paths = np.empty([number_states, tb_depth], 'int')
+    paths[:,:] = 10000
     paths[0][0] = 0
 
     decoded_symbols = np.zeros([number_states, tb_depth], 'int')
     
-    decoded_bits = np.zeros(L+tb_depth, 'int')
+    decoded_bits = np.empty(L+tb_depth+k, 'int')
+   
+    r_codeword = np.empty(n, 'int')
 
-    t = 1
     tb_count = 1
     count = 0
-    while t < (L+total_memory+total_memory%k)/k:
+    current_number_states = number_states
+
+    for t in xrange(1, (L+total_memory+total_memory%k)/k + 1):
         # Get the received codeword corresponding to t
         if t <= L:
             r_codeword = coded_bits[(t-1)*n:t*n]
         else:
             if decoding_type == 'hard':
-                r_codeword = np.zeros(n, 'int')
+                r_codeword[:] = 0
             elif decoding_type == 'soft':
                 pass
             elif decoding_type == 'unquantized':
-                r_codeword = -1 + np.zeros(n, 'int')
+                r_codeword[:] = 0
+                r_codeword = r_codeword - 1
             else:
                 pass
-
-        # Loop over all the current states (Time instant: t)
-        for state_num in xrange(number_states):
-            # Using the next state table find the previous states and inputs
-            # leading into the current state (Trellis)
-            [previous_states, inputs] = np.where(next_state_table == state_num)
-
-            # Initialize a temporary array to store all the path metrics 
-            # for the current state
-            pmetrics = np.zeros(len(previous_states))
-            #print len(previous_states)
-            
-            # Loop over all the previous states (Time instant: t-1)
-            for i in xrange(len(previous_states)):
-                # Using the output table, find the ideal codeword 
-                i_codeword = output_table[previous_states[i]][inputs[i]]
-                
-                # Compute the branch metric (hamming distance) between 
-                # the received and the ideal codeword
-                i_codeword_array = dec2bitarray(i_codeword, n)
-                if decoding_type == 'hard':
-                    branch_metric = hamming_dist(r_codeword, i_codeword_array)
-                elif decoding_type == 'soft':
-                    pass
-                elif decoding_type == 'unquantized':
-                    i_codeword_array[i_codeword_array == 0] = -1
-                    #print r_codeword, i_codeword_array
-                    branch_metric = euclid_dist(r_codeword, i_codeword_array)
-                else:
-                    pass
-
-                # ADD operation: Add the branch metric to the 
-                # accumulated path metric and store it in the temporary array 
-                pmetrics[i] = path_metrics[previous_states[i]][0] + branch_metric
-
-            # Execute COMPARE and SELECT operations only for finite values 
-            # in pmetrics 
-            if np.isfinite(pmetrics.min()):       
-                # Compare and Select the minimum accumulated path metric    
-                path_metrics[state_num][1] = pmetrics.min()
-                
-                # Store the previous state corresponding to the minimum 
-                # accumulated path metric
-                paths[state_num][tb_count] = previous_states[pmetrics.argmin()]
-                
-                # Store the previous input corresponding to the minimum 
-                # accumulated path metric
-                decoded_symbols[state_num][tb_count] = inputs[pmetrics.argmin()]
-            else:
-                path_metrics[state_num][1] = 10000
         
-          if t >= tb_depth - 1:
-            j = tb_depth - 1
-            current_state = path_metrics[:,1].argmin()
-            
-            # Traceback Loop
-            while j >= 0:
-                previous_state = int(paths[current_state][j])
-                decoded_bits[(t-tb_depth-1)+(j)*k+count:(t-tb_depth-1)+(j+1)*k+count] =  \
-                        dec2bitarray(decoded_symbols[previous_state][j], k)
-                j = j - 1
-                current_state = previous_state
-            
-            count = count + k-1
-            tb_count = tb_depth - 1
-            paths[:,0:tb_depth-1] = paths[:,1:]
-            decoded_symbols[:,0:tb_depth-1] = decoded_symbols[:,1:]
+        acs_traceback(number_states, next_state_table, output_table, r_codeword, 
+                decoding_type, path_metrics, paths, decoded_symbols, decoded_bits, 
+                tb_count, n, k, number_inputs, t, count, tb_depth, current_number_states)        
 
+        if t >= tb_depth - 1:
+            tb_count = tb_depth - 1
+            count = count + k - 1
         else:
             tb_count = tb_count + 1
-
-        # Increment time
-        t = t + 1 
 
         # Path metrics (at t-1) = Path metrics (at t)
         path_metrics[:,0] = path_metrics[:,1]
 
         # Force all the paths back to '0' state at the end of decoding
-        if t == (L+total_memory+total_memory%k)/k-1:
-            number_states = 1
-
-    return decoded_bits[0:len(decoded_bits)-tb_depth-M.sum()-M.sum()%k]
+        if t == (L+total_memory+total_memory%k)/k:
+            current_number_states = 1
+            
+    return decoded_bits[0:len(decoded_bits)-tb_depth-M.sum()-M.sum()%k-k]
 
