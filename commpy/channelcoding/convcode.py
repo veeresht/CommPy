@@ -18,6 +18,11 @@ import numpy as np
 from commpy.utilities import *
 from commpy.channelcoding.acstb import *
 
+
+__all__ = ['convencode', 'viterbi_decode']
+
+
+
 # =============================================================================
 #   Generates the next_state_table and the output_table for the encoder/decoder
 # =============================================================================
@@ -104,18 +109,24 @@ def _generate_tables(generator_matrix, M):
 
 def convencode(message_bits, generator_matrix, M):
     """
-    Convolutionally encode message bits using by specifying a generator matrix 
-    G(D) for the code and the memory of the encoder.
+    Encode bits using a convolutional code.
 
-    Parameters
-    ----------
-    message_bits : 1-D ndarray
+    **Parameters**
+
+    message_bits : 1D ndarray
         Stream of bits to be convolutionally encoded.
+    
     generator_matrix : 2-D ndarray
         Generator matrix G(D) of the convolutional code using which the input 
-        bits are to be encoded
-    M : int
-        Memory of the convolutional encoder (shift register)
+        bits are to be encoded.
+    
+    M : 1D ndarray
+        Number of memory elements per input of the convolutional encoder.
+
+    **Returns**
+
+    coded_bits : 1D ndarray
+        Encoded bit stream.
     """  
     
     # Derive the encoder parameters using the G(D) matrix
@@ -159,19 +170,29 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth=None, decoding_type
     """
     Decodes a stream of convolutionally encoded bits using the Viterbi Algorithm
 
-    Parameters
-    ----------
-    coded_bits : 1-D ndarray
+    **Parameters**
+
+    coded_bits : 1D ndarray 
         Stream of convolutionally encoded bits which are to be decoded.
-    generator_matrix : 2-D ndarray
-        Generator matrix G(D) of the convolutional code using which the input 
-        bits are to be decoded.
-    M : int
-        Memory of the convolutional encoder (shift register)
+    
+    generator_matrix : 2D ndarray
+        Generator matrix G(D) of the convolutional code using which the input bits are to be decoded.
+    
+    M : 1D ndarray 
+        Number of memory elements per input of the convolutional encoder.
+    
     tb_length : int
-        Traceback depth (Typically set to 5*(M+1))
-    References
-    ----------
+        Traceback depth (Typically set to 5*(M+1)).
+    
+    decoding_type : str {'hard', 'soft', 'unquantized'}
+        
+    **Returns**
+
+    decoded_bits : 1D ndarray 
+        Decoded bit stream.
+
+    **References**
+
     [1]. Todd K. Moon. Error Correction Coding: Mathematical Methods and 
     Algorithms. John Wiley and Sons, 2005.
     """
@@ -210,7 +231,7 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth=None, decoding_type
     decoded_symbols = np.zeros([number_states, tb_depth], 'int')
     
     decoded_bits = np.empty(L+tb_depth+k, 'int')
-   
+
     r_codeword = np.empty(n, 'int')
 
     tb_count = 1

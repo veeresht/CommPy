@@ -16,24 +16,33 @@
 
 import numpy as np
 
+__all__=['rcosfilter', 'rrcosfilter', 'gaussianfilter']
+
 def rcosfilter(N, alpha, Ts, Fs):
     """
-    Generates a raised cosine (RC) filter (FIR) impulse response of length N samples
+    Generates a raised cosine (RC) filter (FIR) impulse response.
     
-    Parameters
-    ----------
+    **Parameters**
+    
     N : int 
-        Length of the filter in samples
+        Length of the filter in samples.
+
     alpha: float
-        Roll off factor (Valid values are [0,1])
+        Roll off factor (Valid values are [0,1]).
+
     Ts : float
-        Symbol period in seconds
+        Symbol period in seconds.
+
     Fs : float 
-        Sampling Rate in Hz
+        Sampling Rate in Hz.
+
+    **Returns**
+
     h_raised_cosine : 1-D ndarray (float)
-        Impulse response of the raised cosine filter
-    time_index : 1-D ndarray(float) 
-        Array containing the time indices for the impulse response
+        Impulse response of the raised cosine filter.
+
+    time_index : 1-D ndarray (float) 
+        Array containing the time indices for the impulse response.
     """
 
     T_delta = 1/float(Fs)
@@ -57,22 +66,29 @@ def rcosfilter(N, alpha, Ts, Fs):
 
 def rrcosfilter(N, alpha, Ts, Fs):
     """
-    Generates a root raised cosine (RRC) filter (FIR) impulse response of length N samples
+    Generates a root raised cosine (RRC) filter (FIR) impulse response.
     
-    Parameters
-    ----------
+    **Parameters**
+    
     N : int 
-        Length of the filter in samples
+        Length of the filter in samples.
+    
     alpha: float
-        Roll off factor (Valid values are [0,1])
+        Roll off factor (Valid values are [0,1]).
+    
     Ts : float
-        Symbol period in seconds
+        Symbol period in seconds.
+    
     Fs : float 
-        Sampling Rate in Hz
+        Sampling Rate in Hz.
+    
+    **Returns**
+
     h_root_raised_cosine : 1-D ndarray (float)
-        Impulse response of the root raised cosine filter
+        Impulse response of the root raised cosine filter.
+    
     time_index : 1-D ndarray(float) 
-        Array containing the time indices for the impulse response
+        Array containing the time indices for the impulse response.
     """
 
     T_delta = 1/float(Fs)
@@ -99,22 +115,29 @@ def rrcosfilter(N, alpha, Ts, Fs):
 
 def gaussianfilter(N, alpha, Ts, Fs):
     """
-    Generates a gaussian filter (FIR) impulse response of length N samples
+    Generates a gaussian filter (FIR) impulse response.
     
     Parameters
-    ----------
+
     N : int 
-        Length of the filter in samples
+        Length of the filter in samples.
+
     alpha: float
-        Roll off factor (Valid values are [0,1])
+        Roll off factor (Valid values are [0,1]).
+    
     Ts : float
-        Symbol period in seconds
+        Symbol period in seconds.
+    
     Fs : float 
-        Sampling Rate in Hz
+        Sampling Rate in Hz.
+    
+    **Returns**
+    
     h_gaussian : 1-D ndarray (float)
-        Impulse response of the gaussian filter
+        Impulse response of the gaussian filter.
+    
     time_index : 1-D ndarray(float) 
-        Array containing the time indices for the impulse response
+        Array containing the time indices for the impulse response.
     """
    
     T_delta = 1/float(Fs)

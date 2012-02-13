@@ -1,9 +1,15 @@
 """
-CommPy: Communications Toolkit in Python 
+CommPy
 ================================================
+
 
 Contents
 --------
 
+Subpackages
+-----------
+::
+
+ channelcoding                --- Channel Coding Algorithms [*]
 """
 from channelcoding import *
