@@ -111,21 +111,21 @@ def convencode(message_bits, generator_matrix, M):
     """
     Encode bits using a convolutional code.
 
-    **Parameters**
-
-    message_bits : 1D ndarray
+    Parameters
+    ----------  
+    message_bits : 1D ndarray containing {0, 1}
         Stream of bits to be convolutionally encoded.
     
-    generator_matrix : 2-D ndarray
+    generator_matrix : 2-D ndarray of ints
         Generator matrix G(D) of the convolutional code using which the input 
         bits are to be encoded.
     
-    M : 1D ndarray
+    M : 1D ndarray of ints 
         Number of memory elements per input of the convolutional encoder.
 
-    **Returns**
-
-    coded_bits : 1D ndarray
+    Returns
+    -------
+    coded_bits : 1D ndarray containing {0, 1} 
         Encoded bit stream.
     """  
     
@@ -170,31 +170,32 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth=None, decoding_type
     """
     Decodes a stream of convolutionally encoded bits using the Viterbi Algorithm
 
-    **Parameters**
-
+    Parameters
+    ----------
     coded_bits : 1D ndarray 
         Stream of convolutionally encoded bits which are to be decoded.
     
-    generator_matrix : 2D ndarray
+    generator_matrix : 2D ndarray of ints
         Generator matrix G(D) of the convolutional code using which the input bits are to be decoded.
     
-    M : 1D ndarray 
+    M : 1D ndarray of ints
         Number of memory elements per input of the convolutional encoder.
     
     tb_length : int
         Traceback depth (Typically set to 5*(M+1)).
     
     decoding_type : str {'hard', 'soft', 'unquantized'}
+        The type of decoding to be used.
         
-    **Returns**
-
+    Returns
+    -------
     decoded_bits : 1D ndarray 
         Decoded bit stream.
-
-    **References**
-
-    [1]. Todd K. Moon. Error Correction Coding: Mathematical Methods and 
-    Algorithms. John Wiley and Sons, 2005.
+    
+    References
+    ----------
+    .. [1] Todd K. Moon. Error Correction Coding: Mathematical Methods and 
+        Algorithms. John Wiley and Sons, 2005.
     """
     
     # Derive the encoder parameters using the G(D) matrix
