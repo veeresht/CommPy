@@ -6,8 +6,7 @@ in Python using SciPy, NumPy and Cython.
 
 Objectives
 ----------
-- To provide readable and useable implementations of algorithms used in the 
-research, design and implementation of digital communication systems.
+- To provide readable and useable implementations of algorithms used in the research, design and implementation of digital communication systems.
 
 Planned Features
 ----------------
