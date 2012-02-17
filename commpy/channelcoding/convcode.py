@@ -22,96 +22,76 @@ import numpy as np
 from commpy.utilities import dec2bitarray, bitarray2dec
 from commpy.channelcoding.acstb import acs_traceback
 
+__all__ = ['conv_encode', 'viterbi_decode']
 
-__all__ = ['convencode', 'viterbi_decode']
-
-
-# =============================================================================
-#   Generates the next_state_table and the output_table for the encoder/decoder
-# =============================================================================
-def _generate_tables(generator_matrix, M):
+class Trellis:
     """
-    Generate the next_state_table and the output_table defining the trellis for
-    the generator matrix
-
-    Parameters
-    ----------
-    generator_matrix : 2-D ndarray of ints
-        Generator matrix G(D) of the convolutional code using which the input
-        bits are to be encoded.
-
-    M : 1D ndarray of ints
-        Number of memory elements per input of the convolutional encoder.
-
-    Returns
-    -------
-    [next_state_table, output_table] : tuple of 2D ndarray of ints
-        next_state_table consists of the state transitions corresponding to the
-        convolutional encoder trellis.
-        output_table consists of the outputs corresponding to the convolutional
-        encoder trellis.
-
+    Class defining a Trellis object
     """
-    [k, n] = generator_matrix.shape
-    number_states = pow(2, M.sum())
-    number_inputs = pow(2, k)
-    next_state_table = np.zeros([number_states, number_inputs], 'int')
-    output_table = np.zeros([number_states, number_inputs], 'int')
-    input_table = np.zeros([number_states, number_states], 'int')
+    def __init__(self, g_matrix, memory):
+        [self.k, self.n] = g_matrix.shape
+        self.total_memory = memory.sum()
+        self.number_states = pow(2, self.total_memory)
+        self.number_inputs = pow(2, self.k) 
+        self.next_state_table = np.zeros([self.number_states, 
+                                          self.number_inputs], 'int')
+        self.output_table = np.zeros([self.number_states, 
+                                      self.number_inputs], 'int')
     
-    # Compute the entries in the next state table and the output table
-    for current_state in xrange(number_states):
+        # Compute the entries in the next state table and the output table
+        for current_state in xrange(self.number_states):
        
-        for current_input in xrange(number_inputs):
-            outbits = np.zeros(n, 'int')
+            for current_input in xrange(self.number_inputs):
+                outbits = np.zeros(self.n, 'int')
             
-            # Compute the values in the output_table
-            for r in xrange(n):
+                # Compute the values in the output_table
+                for r in xrange(self.n):
                 
-                output_generator_array = np.zeros(k, 'int')
-                shift_register = dec2bitarray(current_state, M.sum())
+                    output_generator_array = np.zeros(self.k, 'int')
+                    shift_register = dec2bitarray(current_state, 
+                                                  self.total_memory)
 
-                for l in xrange(k):
+                    for l in xrange(self.k):
                                        
-                    # Convert the number representing a polynomial into a 
-                    # bit array
-                    generator_array = \
-                            dec2bitarray(generator_matrix[l][r], M[l]+1)
+                        # Convert the number representing a polynomial into a 
+                        # bit array
+                        generator_array = dec2bitarray(g_matrix[l][r], 
+                                                       memory[l]+1)
 
-                    # Loop over M delay elements of the shift register 
-                    # to compute their contribution to the r-th output
-                    for i in xrange(M[l]):
-                        outbits[r] = (outbits[r] + \
-                            (shift_register[i+l]*generator_array[i+1]))%2
+                        # Loop over M delay elements of the shift register 
+                        # to compute their contribution to the r-th output
+                        for i in xrange(memory[l]):
+                            outbits[r] = (outbits[r] + \
+                                (shift_register[i+l]*generator_array[i+1])) % 2
 
-                    output_generator_array[l] = generator_array[0]
-                    if l == 0:
-                        shift_register[1:M[l]] = shift_register[0:M[l]-1]
-                        shift_register[0] = dec2bitarray(current_input, k)[0]
-                    else:
-                        shift_register[l+M[l-1]:l+M[l-1]+M[l]-1] = \
-                                shift_register[l+M[l-1]-1:l+M[l-1]+M[l]-2] 
-                        shift_register[l+M[l-1]-1] = \
-                                dec2bitarray(current_input, k)[l]
+                        output_generator_array[l] = generator_array[0]
+                        if l == 0:
+                            shift_register[1:memory[l]] = \
+                                    shift_register[0:memory[l]-1]
+                            shift_register[0] = dec2bitarray(current_input, 
+                                                             self.k)[0]
+                        else:
+                            shift_register[l+memory[l-1]:l+memory[l-1]+memory[l]-1] = \
+                                    shift_register[l+memory[l-1]-1:l+memory[l-1]+memory[l]-2] 
+                            shift_register[l+memory[l-1]-1] = \
+                                    dec2bitarray(current_input, self.k)[l]
 
-                # Compute the contribution of the current_input to the output
-                outbits[r] = (outbits[r] + \
-                    (np.sum(dec2bitarray(current_input, k) * \
-                    output_generator_array)%2))%2
+                    # Compute the contribution of the current_input to output
+                    outbits[r] = (outbits[r] + \
+                        (np.sum(dec2bitarray(current_input, self.k) * \
+                        output_generator_array) % 2)) % 2
             
-            # Update the ouput_table using the computed output value
-            output_table[current_state][current_input] = \
-                bitarray2dec(outbits)
+                # Update the ouput_table using the computed output value
+                self.output_table[current_state][current_input] = \
+                    bitarray2dec(outbits)
 
-            # Update the next_state_table using the new state of 
-            # the shift register
-            next_state_table[current_state][current_input] = \
-                bitarray2dec(shift_register)
-
-    return [next_state_table, output_table]
+                # Update the next_state_table using the new state of 
+                # the shift register
+                self.next_state_table[current_state][current_input] = \
+                    bitarray2dec(shift_register)
 
 
-def convencode(message_bits, generator_matrix, M):
+def conv_encode(message_bits, trellis):
     """
     Encode bits using a convolutional code.
 
@@ -132,33 +112,31 @@ def convencode(message_bits, generator_matrix, M):
     coded_bits : 1D ndarray containing {0, 1} 
         Encoded bit stream.
     """  
-    
-    # k = Rows in G(D), n = Columns in G(D)
-    [k, n] = generator_matrix.shape
+
+    k = trellis.k
+    n = trellis.n
+    total_memory = trellis.total_memory
     rate = float(k)/n
 
-    # Store the number of message bits to be encoded
     number_message_bits = np.size(message_bits)
 
     # Initialize an array to contain the message bits plus the truncation zeros
-    inbits = np.zeros(number_message_bits + M.sum() + M.sum()%k, 'int')
-    number_inbits = number_message_bits + M.sum() + M.sum()%k
+    inbits = np.zeros(number_message_bits + total_memory + total_memory % k, 
+                      'int')
+    number_inbits = number_message_bits + total_memory + total_memory % k
     
     # Pad the input bits with M zeros (L-th terminated truncation)
     inbits[0:number_message_bits] = message_bits
     
-    # Compute the number of outbits to be generated
-    number_outbits = int(number_inbits/rate)
-
-    # Initialize the outbits array upfront 
+    number_outbits = int(number_inbits/rate) 
     outbits = np.zeros(number_outbits, 'int')
-    
-    # Generate the next_state_table and the output_table
-    [next_state_table, output_table] = _generate_tables(generator_matrix, M)
+    next_state_table = trellis.next_state_table
+    output_table = trellis.output_table
 
     # Encoding process - Each iteration of the loop represents one clock cycle
     current_state = 0
     j = 0
+
     for i in xrange(number_inbits/k): # Loop through all input bits
         current_input = bitarray2dec(inbits[i*k:(i+1)*k])
         current_output = output_table[current_state][current_input]
@@ -169,8 +147,7 @@ def convencode(message_bits, generator_matrix, M):
     return outbits
 
 
-def viterbi_decode(coded_bits, generator_matrix, M, tb_depth=None, \
-                    decoding_type='hard'):
+def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     """
     Decodes a stream of convolutionally encoded bits using the Viterbi Algorithm
 
@@ -204,20 +181,22 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth=None, \
     """
     
     # k = Rows in G(D), n = columns in G(D)
-    [k, n] = generator_matrix.shape
+    k = trellis.k
+    n = trellis.n
     rate = float(k)/n
-    total_memory = M.sum()
+    total_memory = trellis.total_memory
+    number_states = trellis.number_states
+    number_inputs = trellis.number_inputs
 
     if tb_depth is None:
         tb_depth = 5*total_memory
 
-    number_states = pow(2, total_memory)
-    number_inputs = pow(2, k)
+    next_state_table = trellis.next_state_table
+    output_table = trellis.output_table
     
     # Number of message bits after decoding
     L = int(len(coded_bits)*rate)
     
-    [next_state_table, output_table] = _generate_tables(generator_matrix, M)
     path_metrics = np.empty([number_states, 2])
     path_metrics[:, :] = 10000
     path_metrics[0][0] = 0
@@ -248,10 +227,9 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth=None, \
             else:
                 pass
         
-        acs_traceback(number_states, next_state_table, output_table, 
-                r_codeword, decoding_type, path_metrics, paths, 
-                decoded_symbols, decoded_bits, tb_count, n, k, number_inputs, 
-                t, count, tb_depth, current_number_states)        
+        acs_traceback(r_codeword, trellis, decoding_type, path_metrics, paths, 
+                decoded_symbols, decoded_bits, tb_count, t, count, tb_depth, 
+                current_number_states)        
 
         if t >= tb_depth - 1:
             tb_count = tb_depth - 1
@@ -266,4 +244,4 @@ def viterbi_decode(coded_bits, generator_matrix, M, tb_depth=None, \
         if t == (L+total_memory+total_memory%k)/k:
             current_number_states = 1
             
-    return decoded_bits[0:len(decoded_bits)-tb_depth-M.sum()-M.sum()%k-k]
+    return decoded_bits[0:len(decoded_bits)-tb_depth-total_memory-total_memory%k-k]

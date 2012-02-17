@@ -64,23 +64,28 @@ cdef int where_c(np.ndarray[np.int_t, ndim=2] inarray, int rows, int cols, int s
 @cython.boundscheck(False) # turn of bounds-checking for entire function
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def acs_traceback(int number_states, 
-        np.ndarray[np.int_t, ndim=2] next_state_table, 
-        np.ndarray[np.int_t, ndim=2] output_table,
-        np.ndarray[np.int_t, ndim=1] r_codeword, decoding_type, 
-        np.ndarray[np.float64_t, ndim=2] path_metrics, 
-        np.ndarray[np.int_t, ndim=2] paths, 
-        np.ndarray[np.int_t, ndim=2] decoded_symbols,
-        np.ndarray[np.int_t, ndim=1] decoded_bits,
-        int tb_count, int n, int k, int number_inputs, int t, int count, 
-        int tb_depth, int current_number_states):
+def acs_traceback(np.ndarray[np.int_t, ndim=1] r_codeword, 
+                  trellis, decoding_type,  
+                  np.ndarray[np.float64_t, ndim=2] path_metrics, 
+                  np.ndarray[np.int_t, ndim=2] paths, 
+                  np.ndarray[np.int_t, ndim=2] decoded_symbols,
+                  np.ndarray[np.int_t, ndim=1] decoded_bits,
+                  int tb_count, int t, int count, 
+                  int tb_depth, int current_number_states):
 
     cdef int state_num, i, j, number_previous_states, previous_state, \
             previous_input, i_codeword, number_found, min_idx, \
             current_state, dec_symbol
 
-    cdef float branch_metric = 0
+    cdef int k = trellis.k
+    cdef int n = trellis.n
+    cdef int number_states = trellis.number_states
+    cdef int number_inputs = trellis.number_inputs
 
+    cdef float branch_metric = 0
+    
+    cdef np.ndarray[np.int_t, ndim=2] next_state_table = trellis.next_state_table
+    cdef np.ndarray[np.int_t, ndim=2] output_table = trellis.output_table
     cdef np.ndarray[np.float64_t, ndim=1] pmetrics = np.empty(number_inputs)
     cdef np.ndarray[np.int_t, ndim=1] i_codeword_array = np.empty(n, 'int')
     cdef np.ndarray[np.int_t, ndim=2] index_array = np.empty([number_states, 2], 'int')
