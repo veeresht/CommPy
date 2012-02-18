@@ -28,8 +28,14 @@ class Trellis:
     """
     Class defining a Trellis object
     """
-    def __init__(self, g_matrix, memory):
+    def __init__(self, memory, g_matrix, feedback = 0, code_type = 'default'):
+        
         [self.k, self.n] = g_matrix.shape
+        
+        if code_type == 'rsc':
+            for i in xrange(self.k):
+                g_matrix[i][i] = feedback
+
         self.total_memory = memory.sum()
         self.number_states = pow(2, self.total_memory)
         self.number_inputs = pow(2, self.k) 
@@ -66,20 +72,23 @@ class Trellis:
 
                         output_generator_array[l] = generator_array[0]
                         if l == 0:
+                            feedback_array = (dec2bitarray(feedback, memory[l]) * shift_register[0:memory[l]]).sum()
                             shift_register[1:memory[l]] = \
                                     shift_register[0:memory[l]-1]
-                            shift_register[0] = dec2bitarray(current_input, 
-                                                             self.k)[0]
+                            shift_register[0] = (dec2bitarray(current_input, 
+                                    self.k)[0] + feedback_array) % 2
                         else:
+                            feedback_array = (dec2bitarray(feedback, memory[l]) * 
+                                    shift_register[l+memory[l-1]-1:l+memory[l-1]+memory[l]-1]).sum()
                             shift_register[l+memory[l-1]:l+memory[l-1]+memory[l]-1] = \
                                     shift_register[l+memory[l-1]-1:l+memory[l-1]+memory[l]-2] 
                             shift_register[l+memory[l-1]-1] = \
-                                    dec2bitarray(current_input, self.k)[l]
+                                    (dec2bitarray(current_input, self.k)[l] + feedback_array) % 2
 
                     # Compute the contribution of the current_input to output
                     outbits[r] = (outbits[r] + \
                         (np.sum(dec2bitarray(current_input, self.k) * \
-                        output_generator_array) % 2)) % 2
+                        output_generator_array + feedback_array) % 2)) % 2
             
                 # Update the ouput_table using the computed output value
                 self.output_table[current_state][current_input] = \
