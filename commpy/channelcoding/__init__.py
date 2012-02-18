@@ -11,7 +11,7 @@ Convolutional Codes
 .. autosummary::
    :toctree: generated/
 
-   convencode       -- Convolutional Encoder.
+   conv_encode      -- Convolutional Encoder.
    viterbi_decode   -- Convolutional Decoder using the Viterbi algorithm.
 
 """

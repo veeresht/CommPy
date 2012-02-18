@@ -1,3 +1,8 @@
 *.pyc
 *.so
 *.swp
+
+/doc/_build
+/doc/generated
+/doc/sphinxext
+
