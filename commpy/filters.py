@@ -16,7 +16,19 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-""" Pulse Shaping Filters module """
+"""  
+============================================
+Pulse Shaping Filters (:mod:`commpy.filters`)
+============================================
+
+.. autosummary::
+   :toctree: generated/
+    
+   rcosfilter          -- Class representing convolutional code trellis.
+   rrcosfilter         -- Convolutional Encoder.
+   gaussianfilter     -- Convolutional Decoder using the Viterbi algorithm.
+
+"""
 
 import numpy as np
 

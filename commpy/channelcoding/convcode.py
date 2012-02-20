@@ -22,11 +22,89 @@ import numpy as np
 from commpy.utilities import dec2bitarray, bitarray2dec
 from commpy.channelcoding.acstb import acs_traceback
 
-__all__ = ['conv_encode', 'viterbi_decode']
+__all__ = ['Trellis', 'conv_encode', 'viterbi_decode']
 
 class Trellis:
     """
-    Class defining a Trellis object
+    Class defining a Trellis corresponding to a k/n - rate convolutional code.
+    
+    Parameters
+    ----------
+    memory : 1D ndarray of ints
+        Number of memory elements per input of the convolutional encoder.
+
+    g_matrix : 2D ndarray of ints (octal representation)
+        Generator matrix G(D) of the convolutional encoder. Each element of 
+        G(D) represents a polynomial. 
+
+    feedback : int, optional
+        Feedback polynomial of the convolutional encoder. Default value is 00.
+        
+    code_type : {'default', 'rsc'}, optional
+        Use 'rsc' to generate a recursive systematic convolutional code. 
+        If 'rsc' is specified, then the first 'k x k' sub-matrix of G(D) must 
+        represent a identity matrix along with a non-zero feedback polynomial.
+    
+    
+    Attributes
+    ----------
+    k : int 
+        Size of the smallest block of input bits that can be encoded using 
+        the convolutional code.
+
+    n : int
+        Size of the smallest block of output bits generated using 
+        the convolutional code.
+
+    total_memory : int
+        Total number of delay elements needed to implement the convolutional 
+        encoder.
+
+    number_states : int
+        Number of states in the convolutional code trellis.
+
+    number_inputs: int
+        Number of branches from each state in the convolutional code trellis.
+
+    next_state_table : 2D ndarray of ints
+        Table representing the state transition matrix of the 
+        convolutional code trellis. Rows represent current states and 
+        columns represent current inputs in decimal. Elements represent the 
+        corresponding next states in decimal.
+ 
+    output_table:
+        Table representing the output matrix of the convolutional code trellis.
+        Rows represent current states and columns represent current inputs in 
+        decimal. Elements represent corresponding outputs in decimal.
+    
+    Examples
+    --------
+    >>> from numpy import array
+    >>> import commpy.channelcoding.convcode as cc
+    >>> memory = array([2])
+    >>> g_matrix = array([[05, 07]]) # G(D) = [1+D^2, 1+D+D^2]
+    >>> trellis = cc.Trellis(memory, g_matrix)
+    >>> print trellis.k
+    1
+    >>> print trellis.n
+    2
+    >>> print trellis.total_memory
+    2
+    >>> print trellis.number_states
+    4
+    print trellis.number_inputs
+    2
+    >>> print trellis.next_state_table
+    [[0 2]
+     [0 2]
+     [1 3]
+     [1 3]]
+    >>>print trellis.output_table
+    [[0 3]
+     [3 0]
+     [1 2]
+     [2 1]]
+    
     """
     def __init__(self, memory, g_matrix, feedback = 0, code_type = 'default'):
         

@@ -15,5 +15,6 @@ Reference
     :maxdepth: 1
     
     channelcoding
+    filters
 
 

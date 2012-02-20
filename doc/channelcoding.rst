@@ -1,2 +1,2 @@
 .. automodule:: commpy.channelcoding
-
+	:members:

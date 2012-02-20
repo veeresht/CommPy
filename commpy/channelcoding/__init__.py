@@ -10,7 +10,8 @@ Convolutional Codes
 
 .. autosummary::
    :toctree: generated/
-
+    
+   Trellis          -- Class representing convolutional code trellis.
    conv_encode      -- Convolutional Encoder.
    viterbi_decode   -- Convolutional Decoder using the Viterbi algorithm.
 
