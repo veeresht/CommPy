@@ -29,5 +29,17 @@ How can I contribute?
 ~~~~~~~~~~~~~~~~~~~~~
 I have put a board on Trello to track the progress of CommPy. Take a look here_. Select your feature, implement it and send me a pull request :)
 
+How do I use CommPy?
+~~~~~~~~~~~~~~~~~~~~
+Requirements
+^^^^^^^^^^^^
+- Python 2.7 or above
+- NumPy 1.6 or above
+- SciPy 0.10 or above
+- Matplotlib 1.1 or above
+- Cython 0.15 or above
+
+Currently there is no installer for CommPy. You can clone the github repo and starting using it. Remember to build the Cython modules. You can also look at a very preliminary version of the Commpy Documentation_.
 
 .. _here: https://trello.com/board/commpy/4f44785f28107d10684bbd7d 
+.. _Documentation: http://veeresht.github.com/CommPy/commpydoc.html
