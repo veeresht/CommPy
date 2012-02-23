@@ -27,7 +27,7 @@ CommPy uses Python as its base programming language and python packages like Num
 
 How can I contribute?
 ~~~~~~~~~~~~~~~~~~~~~
-I have put a board on Trello to track the progress of CommPy. Take a look here_. Select your feature, implement it and send me a pull request :)
+I have put a board on Trello to track the progress of CommPy. Take a look here_. Select your feature, implement it and send me a pull request :). If you want to suggest new features or discuss anything related to CommPy, please get in touch with me.
 
 How do I use CommPy?
 ~~~~~~~~~~~~~~~~~~~~
