@@ -13,5 +13,5 @@ Subpackages
  channelcoding                --- Channel Coding Algorithms [*]
 
 """
-from channelcoding import *
+#from channelcoding import *
 from filters import *

@@ -142,13 +142,13 @@ feedback_5 = 00
 code_type_5 = 'default'
 number_inputs_5 = 4
 number_states_5 = 4
-next_state_table_5 = array([[0, 2, 1, 3],
-                          [0, 2, 1, 3],
-                          [0, 2, 1, 3],
-                          [0, 2, 1, 3]])
+next_state_table_5 = array([[0, 1, 2, 3],
+                            [0, 1, 2, 3],
+                            [0, 1, 2, 3],
+                            [0, 1, 2, 3]])
 output_table_5 = array([[0, 4, 7, 3],
-                        [5, 1, 2, 3],
                         [3, 7, 4, 0],
+                        [5, 1, 2, 6],
                         [6, 2, 1, 5]])
 
 
@@ -169,9 +169,9 @@ class TestTrellis:
         assert_array_equal(trellis_3.next_state_table, next_state_table_3)
         assert_array_equal(trellis_3.output_table, output_table_3)
         
-        trellis_4 = Trellis(memory_4, g_matrix_4, feedback_4, code_type_4)
-        assert_array_equal(trellis_4.next_state_table, next_state_table_4)
-        assert_array_equal(trellis_4.output_table, output_table_4)
+        trellis_5 = Trellis(memory_5, g_matrix_5, feedback_5, code_type_5)
+        assert_array_equal(trellis_5.next_state_table, next_state_table_5)
+        assert_array_equal(trellis_5.output_table, output_table_5)
 
 if __name__ == "__main__":
     run_module_suite()

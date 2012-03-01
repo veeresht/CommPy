@@ -19,6 +19,10 @@
 """ Algorithms for Convolutional Codes """
 
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.collections import PatchCollection
+import matplotlib.patches as mpatches
+
 from commpy.utilities import dec2bitarray, bitarray2dec
 from commpy.channelcoding.acstb import acs_traceback
 
@@ -41,9 +45,12 @@ class Trellis:
         Feedback polynomial of the convolutional encoder. Default value is 00.
         
     code_type : {'default', 'rsc'}, optional
-        Use 'rsc' to generate a recursive systematic convolutional code. 
-        If 'rsc' is specified, then the first 'k x k' sub-matrix of G(D) must 
-        represent a identity matrix along with a non-zero feedback polynomial.
+        Use 'rsc' to generate a recursive systematic convolutional code.
+
+        If 'rsc' is specified, then the first 'k x k' sub-matrix of
+
+        G(D) must represent a identity matrix along with a non-zero 
+        feedback polynomial.
     
     
     Attributes
@@ -63,7 +70,7 @@ class Trellis:
     number_states : int
         Number of states in the convolutional code trellis.
 
-    number_inputs: int
+    number_inputs : int
         Number of branches from each state in the convolutional code trellis.
 
     next_state_table : 2D ndarray of ints
@@ -72,7 +79,7 @@ class Trellis:
         columns represent current inputs in decimal. Elements represent the 
         corresponding next states in decimal.
  
-    output_table:
+    output_table : 2D ndarray of ints
         Table representing the output matrix of the convolutional code trellis.
         Rows represent current states and columns represent current inputs in 
         decimal. Elements represent corresponding outputs in decimal.
@@ -176,6 +183,119 @@ class Trellis:
                 # the shift register
                 self.next_state_table[current_state][current_input] = \
                     bitarray2dec(shift_register)
+
+ 
+    def _generate_grid(self, trellis_length):
+        """ Private method """
+
+        grid = np.mgrid[0.12:0.22*trellis_length:(trellis_length+1)*(0+1j), 
+                        0.1:0.1+self.number_states*0.1:self.number_states*(0+1j)].reshape(2, -1)
+        
+        return grid
+
+    def _generate_states(self, trellis_length, grid, state_order, state_radius, font):
+        """ Private method """
+        state_patches = []
+
+        for state_count in xrange(self.number_states * trellis_length):
+            state_patch = mpatches.Circle(grid[:,state_count], state_radius, 
+                    color="#003399", ec="#cccccc")
+            state_patches.append(state_patch)
+            plt.text(grid[0, state_count], grid[1, state_count]-0.02, 
+                    str(state_order[state_count % self.number_states]), 
+                    ha="center", family=font, size=20, color="#ffffff")
+
+        return state_patches
+
+    def _generate_edges(self, trellis_length, grid, state_order, state_radius, edge_colors):
+        """ Private method """
+        edge_patches = []
+
+        for current_time_index in xrange(trellis_length-1):
+            grid_subset = grid[:,self.number_states * current_time_index:]
+            for state_count_1 in xrange(self.number_states):
+                input_count = 0
+                for state_count_2 in xrange(self.number_states):
+                    dx = grid_subset[0, state_count_2+self.number_states] - grid_subset[0,state_count_1] - 2*state_radius
+                    dy = grid_subset[1, state_count_2+self.number_states] - grid_subset[1,state_count_1]
+                    if np.count_nonzero(self.next_state_table[state_order[state_count_1],:] == state_order[state_count_2]):
+                        found_index = np.where(self.next_state_table[state_order[state_count_1],:] ==
+                                                state_order[state_count_2])
+                        edge_patch = mpatches.FancyArrow(grid_subset[0,state_count_1]+state_radius, 
+                                grid_subset[1,state_count_1], dx, dy, width=0.005,
+                                length_includes_head = True, color = edge_colors[found_index[0][0]])
+                        edge_patches.append(edge_patch)
+                        input_count = input_count + 1
+
+        return edge_patches
+
+    def _generate_labels(self, grid, state_order, state_radius, font):
+        """ Private method """
+
+        for state_count in xrange(self.number_states):
+            for input_count in xrange(self.number_inputs):
+                edge_label = str(input_count) + "/" + str(
+                        self.output_table[state_order[state_count], input_count])
+                plt.text(grid[0, state_count]-1.5*state_radius, 
+                         grid[1, state_count]+state_radius*(1-input_count-0.7), 
+                         edge_label, ha="center", family=font, size=14)
+
+    
+    def visualize(self, trellis_length = 2, state_order = None, 
+                  state_radius = 0.04, edge_colors = None):
+        """ Plot the trellis diagram.
+
+        Parameters
+        ----------
+        trellis_length : int, optional
+            Specifies the number of time steps in the trellis diagram. 
+            Default value is 2.
+
+        state_order : list of ints, optional
+            Specifies the order in the which the states of the trellis 
+            are to be displayed starting from the top in the plot.
+            Default order is [0,...,number_states-1]
+        
+        state_radius : float, optional
+            Radius of each state (circle) in the plot. 
+            Default value is 0.04 
+
+        edge_colors = list of hex color codes, optional
+            A list of length equal to the number_inputs, 
+            containing color codes that represent the edge corresponding 
+            to the input.
+        
+        """
+        if edge_colors is None:
+            edge_colors = ["#9E1BE0", "#06D65D"]
+
+        if state_order is None:
+            state_order = range(self.number_states)
+        
+        font = "sans-serif"
+        fig = plt.figure()
+        ax = plt.axes([0,0,1,1])
+        trellis_patches = []
+
+        state_order.reverse()
+
+        trellis_grid = self._generate_grid(trellis_length)
+        state_patches = self._generate_states(trellis_length, trellis_grid, 
+                                              state_order, state_radius, font)
+        edge_patches = self._generate_edges(trellis_length, trellis_grid, 
+                                            state_order, state_radius, 
+                                            edge_colors)
+        self._generate_labels(trellis_grid, state_order, state_radius, font)
+
+        trellis_patches.extend(state_patches)
+        trellis_patches.extend(edge_patches)
+
+        collection = PatchCollection(trellis_patches, match_original=True)
+        ax.add_collection(collection)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        #plt.legend([edge_patches[0], edge_patches[1]], ["1-input", "0-input"])
+        plt.show()
 
 
 def conv_encode(message_bits, trellis):
