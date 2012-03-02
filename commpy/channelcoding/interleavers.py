@@ -73,8 +73,8 @@ def rand_deinterlv(in_array, seed):
     out_array : 1D ndarray of ints
         De-interleaved output data.
 
-    Notes
-    -----
+    Note
+    ----
     The random number generator is the RandomState object from NumPy, 
     which uses the Mersenne Twister algorithm. 
         

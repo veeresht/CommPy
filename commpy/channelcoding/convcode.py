@@ -298,7 +298,7 @@ class Trellis:
         plt.show()
 
 
-def conv_encode(message_bits, trellis):
+def conv_encode(message_bits, trellis, puncture_matrix=None):
     """
     Encode bits using a convolutional code.
 
@@ -319,11 +319,14 @@ def conv_encode(message_bits, trellis):
     coded_bits : 1D ndarray containing {0, 1} 
         Encoded bit stream.
     """  
-
+   
     k = trellis.k
     n = trellis.n
     total_memory = trellis.total_memory
     rate = float(k)/n
+    
+    if puncture_matrix is None:
+        puncture_matrix = np.ones((trellis.k, trellis.n))
 
     number_message_bits = np.size(message_bits)
 
@@ -337,6 +340,8 @@ def conv_encode(message_bits, trellis):
     
     number_outbits = int(number_inbits/rate) 
     outbits = np.zeros(number_outbits, 'int')
+    p_outbits = np.zeros(number_outbits*
+            puncture_matrix[0:].sum()/np.size(puncture_matrix, 1), 'int')
     next_state_table = trellis.next_state_table
     output_table = trellis.output_table
 
@@ -350,8 +355,14 @@ def conv_encode(message_bits, trellis):
         outbits[j*n:(j+1)*n] = dec2bitarray(current_output, n)
         current_state = next_state_table[current_state][current_input]
         j = j + 1
-   
-    return outbits
+    
+    j = 0
+    for i in xrange(number_outbits):
+        if puncture_matrix[0][i % np.size(puncture_matrix, 1)] == 1:
+            p_outbits[j] = outbits[i]
+            j = j + 1
+    
+    return p_outbits
 
 
 def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
