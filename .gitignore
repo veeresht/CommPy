@@ -1,6 +1,8 @@
 *.pyc
 *.so
 *.swp
+*.png
+*.pdf
 
 /doc/_build
 /doc/generated
