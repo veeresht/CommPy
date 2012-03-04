@@ -479,4 +479,5 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
         if t == (L+total_memory+total_memory%k)/k:
             current_number_states = 1
         
-    return decoded_bits[0:len(decoded_bits)-tb_depth-total_memory-total_memory%k-k]
+    return decoded_bits[0:len(decoded_bits)-tb_depth-1]
+    #return decoded_bits[0:len(decoded_bits)-tb_depth-total_memory-total_memory%k-k]

@@ -64,7 +64,7 @@ cdef int where_c(np.ndarray[np.int_t, ndim=2] inarray, int rows, int cols, int s
 @cython.boundscheck(False) # turn of bounds-checking for entire function
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def acs_traceback(np.ndarray[np.int_t, ndim=1] r_codeword, 
+def acs_traceback(np.ndarray[np.float64_t, ndim=1] r_codeword, 
                   trellis, decoding_type,  
                   np.ndarray[np.float64_t, ndim=2] path_metrics, 
                   np.ndarray[np.int_t, ndim=2] paths, 
