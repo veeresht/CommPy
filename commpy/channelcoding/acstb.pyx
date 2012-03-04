@@ -135,20 +135,19 @@ def acs_traceback(np.ndarray[np.int_t, ndim=1] r_codeword,
         # Store the previous input corresponding to the minimum 
         # accumulated path metric        
         decoded_symbols[state_num, tb_count] = index_array[min_idx, 1]
-
+    
     if t >= tb_depth - 1:
         current_state = path_metrics[:,1].argmin()
-            
+        
         # Traceback Loop
         for j in reversed(xrange(1, tb_depth)):
 
+            dec_symbol = decoded_symbols[current_state, j]
             previous_state = paths[current_state, j]
-            dec_symbol = decoded_symbols[previous_state, j]
             dec2bitarray_c(dec_symbol, k, decoded_bitarray)
-            decoded_bits[(t-tb_depth-1)+(j)*k+count:(t-tb_depth-1)+(j+1)*k+count] =  \
+            decoded_bits[(t-tb_depth-1)+(j+1)*k+count:(t-tb_depth-1)+(j+2)*k+count] =  \
                     decoded_bitarray
             current_state = previous_state
-
+        
         paths[:,0:tb_depth-1] = paths[:,1:]
         decoded_symbols[:,0:tb_depth-1] = decoded_symbols[:,1:]
-

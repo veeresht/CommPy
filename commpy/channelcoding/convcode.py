@@ -298,7 +298,7 @@ class Trellis:
         plt.show()
 
 
-def conv_encode(message_bits, trellis, puncture_matrix=None):
+def conv_encode(message_bits, trellis, code_type = 'default', puncture_matrix=None):
     """
     Encode bits using a convolutional code.
 
@@ -331,14 +331,20 @@ def conv_encode(message_bits, trellis, puncture_matrix=None):
     number_message_bits = np.size(message_bits)
 
     # Initialize an array to contain the message bits plus the truncation zeros
-    inbits = np.zeros(number_message_bits + total_memory + total_memory % k, 
+    if code_type == 'default':
+        inbits = np.zeros(number_message_bits + total_memory + total_memory % k, 
                       'int')
-    number_inbits = number_message_bits + total_memory + total_memory % k
-    
-    # Pad the input bits with M zeros (L-th terminated truncation)
-    inbits[0:number_message_bits] = message_bits
-    
-    number_outbits = int(number_inbits/rate) 
+        number_inbits = number_message_bits + total_memory + total_memory % k
+
+        # Pad the input bits with M zeros (L-th terminated truncation)
+        inbits[0:number_message_bits] = message_bits
+        number_outbits = int(number_inbits/rate) 
+ 
+    else:
+        inbits = message_bits
+        number_inbits = number_message_bits
+        number_outbits = int((number_inbits + total_memory)/rate)
+        
     outbits = np.zeros(number_outbits, 'int')
     p_outbits = np.zeros(number_outbits*
             puncture_matrix[0:].sum()/np.size(puncture_matrix, 1), 'int')
@@ -354,8 +360,19 @@ def conv_encode(message_bits, trellis, puncture_matrix=None):
         current_output = output_table[current_state][current_input]
         outbits[j*n:(j+1)*n] = dec2bitarray(current_output, n)
         current_state = next_state_table[current_state][current_input]
-        j = j + 1
+        j += 1
     
+    if code_type == 'rsc':
+
+        term_bits = dec2bitarray(current_state, trellis.total_memory)
+        term_bits = term_bits[::-1]
+        for i in xrange(trellis.total_memory):
+            current_input = bitarray2dec(term_bits[i*k:(i+1)*k])
+            current_output = output_table[current_state][current_input]
+            outbits[j*n:(j+1)*n] = dec2bitarray(current_output, n)
+            current_state = next_state_table[current_state][current_input]
+            j += 1
+
     j = 0
     for i in xrange(number_outbits):
         if puncture_matrix[0][i % np.size(puncture_matrix, 1)] == 1:
@@ -414,7 +431,7 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     
     # Number of message bits after decoding
     L = int(len(coded_bits)*rate)
-    
+
     path_metrics = np.empty([number_states, 2])
     path_metrics[:, :] = 10000
     path_metrics[0][0] = 0
@@ -454,12 +471,12 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
             count = count + k - 1
         else:
             tb_count = tb_count + 1
-
+        
         # Path metrics (at t-1) = Path metrics (at t)
         path_metrics[:, 0] = path_metrics[:, 1]
 
         # Force all the paths back to '0' state at the end of decoding
         if t == (L+total_memory+total_memory%k)/k:
             current_number_states = 1
-            
+        
     return decoded_bits[0:len(decoded_bits)-tb_depth-total_memory-total_memory%k-k]
