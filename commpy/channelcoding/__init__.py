@@ -26,6 +26,7 @@ Interleavers and De-interleavers
 
 """
 
-from convcode import *
+from convcode import Trellis, conv_encode, viterbi_decode
 from interleavers import *
+from turbo import turbo_encode, map_decode, turbo_decode
 

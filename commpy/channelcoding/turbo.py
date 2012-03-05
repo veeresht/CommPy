@@ -19,20 +19,22 @@
 """ Turbo Codes """
 
 from numpy import array, append, zeros, exp, pi, log
-from commpy.channelcoding import Trellis, conv_encode, rand_interlv
+from commpy.channelcoding import Trellis, conv_encode, rand_interlv, rand_deinterlv
 from commpy.utilities import dec2bitarray, bitarray2dec
 
 def turbo_encode(msg_bits, trellis1, trellis2, interlv_seed):
     
-    puncture_matrix = array([[0, 1]])
-    sys_stream = append(msg_bits, zeros(trellis1.total_memory, 'int'));
-    non_sys_stream_1 = conv_encode(msg_bits, trellis1, 'rsc', puncture_matrix)
+    stream = conv_encode(msg_bits, trellis1, 'rsc')
+    sys_stream = stream[::2]
+    non_sys_stream_1 = stream[1::2]
+    
     interlv_msg_bits = rand_interlv(msg_bits, interlv_seed)
+    puncture_matrix = array([[0, 1]])
     non_sys_stream_2 = conv_encode(interlv_msg_bits, trellis2, 'rsc', puncture_matrix)
 
     return [sys_stream, non_sys_stream_1, non_sys_stream_2]
 
-def map_decode(sys_symbols, non_sys_symbols, trellis, noise_variance):
+def map_decode(sys_symbols, non_sys_symbols, trellis, noise_variance, L_int):
     
     k = trellis.k
     n = trellis.n
@@ -59,6 +61,7 @@ def map_decode(sys_symbols, non_sys_symbols, trellis, noise_variance):
     lappr = 0 
 
     decoded_bits = zeros(msg_length, 'int')
+    L_ext = zeros(msg_length)
 
     # Backward recursion
     for reverse_time_index in reversed(xrange(1, msg_length+1)):
@@ -115,7 +118,8 @@ def map_decode(sys_symbols, non_sys_symbols, trellis, noise_variance):
                                        branch_prob * 
                                        b_state_metrics[next_state][time_index])
 
-        lappr = log(app[1]/app[0])
+        L_ext[time_index-1] = log(app[1]/app[0])
+        lappr = L_int[time_index-1] + L_ext[time_index-1]
         
         #print lappr
         if lappr > 0:
@@ -136,7 +140,7 @@ def map_decode(sys_symbols, non_sys_symbols, trellis, noise_variance):
         f_state_metrics[:,0] = f_state_metrics[:,1]
         f_state_metrics[:,1] = 0
     
-    return decoded_bits
+    return [L_ext, decoded_bits]
     #return decoded_bits[0:msg_length-trellis.total_memory]
                
 def _compute_branch_prob(code_bit_0, code_bit_1, rx_symbol_0, rx_symbol_1, 
@@ -150,11 +154,41 @@ def _compute_branch_prob(code_bit_0, code_bit_1, rx_symbol_0, rx_symbol_1,
                   (rx_symbol_1 - code_symbol_1)*(rx_symbol_1 - code_symbol_1)) / 
                   (2*noise_variance) )
 
-    #H = (1/(2*pi*noise_variance))*exp(-((rx_symbol_0+1)*(rx_symbol_0+1) + 
-    #                                    (rx_symbol_1+1)*(rx_symbol_1+1)) / 
-    #                                    (2*noise_variance))
 
-    #return H*exp(2*(code_bit_0*rx_symbol_0 + code_bit_1*rx_symbol_1)/
-    #                noise_variance)  
+def turbo_decode(sys_symbols, non_sys_symbols_1, non_sys_symbols_2, trellis, 
+                 noise_variance, number_iterations, interlv_seed, L_int = None):
     
+    if L_int is None:
+        L_int = zeros(len(sys_symbols))
+
+    L_int_1 = L_int
+    for iteration_count in xrange(number_iterations):
+        
+        #print "===========" + str(iteration_count) + "=============="
+
+        # MAP Decoder - 1
+        [L_ext_1, decoded_bits] = map_decode(sys_symbols, non_sys_symbols_1, 
+                                             trellis, noise_variance, L_int_1)
+        
+        #print " ========= L extrinsic 1 ===================="
+        #print L_ext_1
+
+        # Interleave systematic symbols for input to second decoder
+        sys_symbols_i = rand_interlv(sys_symbols, interlv_seed)
+
+        L_ext_1 = L_ext_1 - L_int_1
+        L_ext_1 = rand_interlv(L_ext_1, interlv_seed)
+
+        # MAP Decoder - 2
+        [L_2, decoded_bits] = map_decode(sys_symbols_i, non_sys_symbols_2, 
+                                         trellis, noise_variance, L_ext_1)
+        
+        #print " ============ L extrinsic 2 ======================"
+        #print L_2
+
+        L_ext_2 = L_2 - L_ext_1
+        L_int_1 = rand_deinterlv(L_ext_2, interlv_seed)
+        
+    decoded_bits = rand_deinterlv(decoded_bits, interlv_seed)
+    return decoded_bits
 
