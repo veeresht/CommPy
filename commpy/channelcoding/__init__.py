@@ -15,6 +15,17 @@ Convolutional Codes
     conv_encode      -- Convolutional Encoder.
     viterbi_decode   -- Convolutional Decoder using the Viterbi algorithm.
 
+
+Turbo Codes
+===========
+
+.. autosummary::
+    :toctree: generated/
+
+    turbo_encode    -- Turbo Encoder.
+    map_decode      -- Convolutional Code decoder using MAP algorithm.
+    turbo_decode    -- Turbo Decoder.
+
 Interleavers and De-interleavers
 ================================
 

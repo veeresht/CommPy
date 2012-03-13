@@ -82,7 +82,7 @@ def rand_deinterlv(in_array, seed):
 
     rand_gen = RandomState(seed)
     p_array = rand_gen.permutation(arange(len(in_array)))
-    out_array = zeros(len(in_array), 'int')
+    out_array = zeros(len(in_array), in_array.dtype)
     for index, element in enumerate(p_array):
         out_array[element] = in_array[index]
   
