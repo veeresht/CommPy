@@ -24,7 +24,31 @@ from commpy.utilities import dec2bitarray, bitarray2dec
 from commpy.channelcoding.map_c import backward_recursion, forward_recursion_decoding 
 
 def turbo_encode(msg_bits, trellis1, trellis2, interlv_seed):
+    """ 
+    Encode Bits using a parallel concatenated rate-1/3 turbo code consisting 
+    of two rate-1/2 systematic convolutional component codes. 
+
+    Parameters
+    ----------
+    msg_bits : 1D ndarray containing {0, 1}
+        Stream of bits to be turbo encoded.
+
+    trellis1 : Trellis object
+        Trellis representation of the first code in the parallel concatenation.
+
+    trellis2 : Trellis object
+        Trellis representation of the second code in the parallel concatenation.
     
+    interlv_seed : int
+        Seed used to initialize the random interleaver used in the turbo code.
+    
+    Returns
+    -------
+    [sys_stream, non_sys_stream1, non_sys_stream2] : list of 1D ndarrays
+        Encoded bit streams corresponding to the systematic output 
+        and the two non-systematic outputs from the two component codes.
+    """
+
     stream = conv_encode(msg_bits, trellis1, 'rsc')
     sys_stream = stream[::2]
     non_sys_stream_1 = stream[1::2]
@@ -38,7 +62,46 @@ def turbo_encode(msg_bits, trellis1, trellis2, interlv_seed):
     return [sys_stream, non_sys_stream_1, non_sys_stream_2]
 
 def map_decode(sys_symbols, non_sys_symbols, trellis, noise_variance, L_int, mode='decode'):
+    """
+    Decodes a stream of convolutionally encoded 
+    (rate 1/2) bits using the MAP algorithm
     
+    Parameters
+    ----------
+    sys_symbols : 1D ndarray
+        Received symbols corresponding to the systematic (first output) bits in 
+        the codeword.
+    
+    non_sys_symbols : 1D ndarray
+        Received symbols corresponding to the non-systematic 
+        (second output) bits in the codeword.
+
+    trellis : Trellis object
+        Trellis representation of the convolutional code.
+
+    noise_variance : float
+        Variance (power) of the AWGN channel.
+
+    L_int : 1D ndarray
+        Array representing the initial intrinsic information for all received 
+        symbols. Typically all zeros, corresponding to equal prior 
+        probabilities of bits 0 and 1.
+    
+    mode : str{'decode', 'compute'}, optional
+        The mode in which the MAP decoder is used. 
+        'decode' mode returns the decoded bits 
+        along with the extrinsic information. 
+        'compute' mode returns only the 
+        extrinsic information.
+
+    Returns
+    -------
+    [L_ext, decoded_bits] : list of two 1D ndarrays
+        The first element of the list is the extrinsic information.
+        The second element of the list is the decoded bits.
+
+    """
+
     k = trellis.k
     n = trellis.n
     rate = float(k)/n
