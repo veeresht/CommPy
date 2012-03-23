@@ -23,13 +23,51 @@ from numpy.random.mtrand import RandomState
 
 __all__ = ['rand_interlv', 'rand_deinterlv']
 
-def rand_interlv(in_array, seed):
-    """ Random interleaver. 
+class _Interleaver:
+
+    def interlv(self, in_array):
+        """ Interleave input array using the specific interleaver.
+
+        Parameters
+        ----------
+        in_array : 1D ndarray of ints
+            Input data to be interleaved.
+
+        Returns
+        -------
+        out_array : 1D ndarray of ints
+            Interleaved output data.
+
+        """
+        out_array = array(map(lambda x: in_array[x], self.p_array))
+        return out_array
+    
+    def deinterlv(self, in_array):
+        """ De-interleave input array using the specific interleaver.
+
+        Parameters
+        ----------
+        in_array : 1D ndarray of ints
+            Input data to be de-interleaved.
+
+        Returns
+        -------
+        out_array : 1D ndarray of ints
+            De-interleaved output data.
+
+        """
+        out_array = zeros(len(in_array), in_array.dtype)
+        for index, element in enumerate(self.p_array):
+            out_array[element] = in_array[index]
+        return out_array
+
+class RandInterlv(_Interleaver):
+    """ Random Interleaver. 
 
     Parameters
     ----------
-    in_array : 1D ndarray of ints
-        Input data to be interleaved.
+    length : int
+        Length of the interleaver.
 
     seed : int
         Seed to initialize the random number generator 
@@ -38,8 +76,8 @@ def rand_interlv(in_array, seed):
     
     Returns
     -------
-    out_array : 1D ndarray of ints
-        Interleaved output data.
+    random_interleaver : RandInterlv object
+        A random interleaver object.
 
     Note
     ----
@@ -48,42 +86,15 @@ def rand_interlv(in_array, seed):
     which uses the Mersenne Twister algorithm. 
     
     """ 
-    rand_gen = RandomState(seed)
-    p_array = rand_gen.permutation(arange(len(in_array)))
-    out_array = array(map(lambda x: in_array[x], p_array))
+    def __init__(self, length, seed):
+        rand_gen = RandomState(seed)
+        self.p_array = rand_gen.permutation(arange(length))
 
-    return out_array
-    
-def rand_deinterlv(in_array, seed):
-    """ Random de-interleaver        
 
-    Parameters
-    ----------
-    in_array : 1D ndarray of ints
-        Input data to be de-interleaved.
+#class SRandInterlv(_Interleaver):
 
-    seed : int
-        Seed to initialize the random number generator 
-        which generates the random permutation for interleaving. 
-        This has to be the same as the seed used during 
-        interleaving to obtain correctly de-interleaved data. 
-    
-    Returns
-    -------
-    out_array : 1D ndarray of ints
-        De-interleaved output data.
 
-    Note
-    ----
-    The random number generator is the RandomState object from NumPy, 
-    which uses the Mersenne Twister algorithm. 
-        
-    """
+#class QPPInterlv(_Interleaver):
 
-    rand_gen = RandomState(seed)
-    p_array = rand_gen.permutation(arange(len(in_array)))
-    out_array = zeros(len(in_array), in_array.dtype)
-    for index, element in enumerate(p_array):
-        out_array[element] = in_array[index]
-  
-    return out_array
+
+
