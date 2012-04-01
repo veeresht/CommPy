@@ -21,7 +21,7 @@
 from numpy import array, arange, zeros
 from numpy.random.mtrand import RandomState
 
-__all__ = ['rand_interlv', 'rand_deinterlv']
+__all__ = ['RandInterlv']
 
 class _Interleaver:
 

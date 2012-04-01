@@ -32,8 +32,7 @@ Interleavers and De-interleavers
 .. autosummary::
     :toctree: generated/
 
-    rand_interlv    -- Random Interleaver.
-    rand_deinterlv  -- Random De-interleaver.
+    RandInterlv    -- Random Interleaver.
 
 """
 

@@ -19,14 +19,16 @@
 """ Turbo Codes """
 
 from numpy import array, append, zeros, exp, pi, log, empty
-from commpy.channelcoding import Trellis, conv_encode, rand_interlv, rand_deinterlv
+from commpy.channelcoding import Trellis, conv_encode
 from commpy.utilities import dec2bitarray, bitarray2dec
 from commpy.channelcoding.map_c import backward_recursion, forward_recursion_decoding 
 
-def turbo_encode(msg_bits, trellis1, trellis2, interlv_seed):
-    """ 
-    Encode Bits using a parallel concatenated rate-1/3 turbo code consisting 
-    of two rate-1/2 systematic convolutional component codes. 
+def turbo_encode(msg_bits, trellis1, trellis2, interleaver):
+    """ Turbo Encoder.
+
+    Encode Bits using a parallel concatenated rate-1/3 
+    turbo code consisting of two rate-1/2 systematic 
+    convolutional component codes. 
 
     Parameters
     ----------
@@ -34,26 +36,31 @@ def turbo_encode(msg_bits, trellis1, trellis2, interlv_seed):
         Stream of bits to be turbo encoded.
 
     trellis1 : Trellis object
-        Trellis representation of the first code in the parallel concatenation.
+        Trellis representation of the 
+        first code in the parallel concatenation.
 
     trellis2 : Trellis object
-        Trellis representation of the second code in the parallel concatenation.
+        Trellis representation of the 
+        second code in the parallel concatenation.
     
-    interlv_seed : int
-        Seed used to initialize the random interleaver used in the turbo code.
+    interleaver : Interleaver object
+        Interleaver used in the turbo code.
     
     Returns
     -------
     [sys_stream, non_sys_stream1, non_sys_stream2] : list of 1D ndarrays
-        Encoded bit streams corresponding to the systematic output 
-        and the two non-systematic outputs from the two component codes.
+        Encoded bit streams corresponding 
+        to the systematic output 
+        
+        and the two non-systematic 
+        outputs from the two component codes.
     """
 
     stream = conv_encode(msg_bits, trellis1, 'rsc')
     sys_stream = stream[::2]
     non_sys_stream_1 = stream[1::2]
     
-    interlv_msg_bits = rand_interlv(sys_stream, interlv_seed)
+    interlv_msg_bits = interleaver.interlv(sys_stream)
     puncture_matrix = array([[0, 1]])
     non_sys_stream_2 = conv_encode(interlv_msg_bits, trellis2, 'rsc', puncture_matrix)
     
@@ -62,14 +69,16 @@ def turbo_encode(msg_bits, trellis1, trellis2, interlv_seed):
     return [sys_stream, non_sys_stream_1, non_sys_stream_2]
 
 def map_decode(sys_symbols, non_sys_symbols, trellis, noise_variance, L_int, mode='decode'):
-    """
+    """ Maximum a-posteriori probability (MAP) decoder.
+    
     Decodes a stream of convolutionally encoded 
-    (rate 1/2) bits using the MAP algorithm
+    (rate 1/2) bits using the MAP algorithm.
     
     Parameters
     ----------
     sys_symbols : 1D ndarray
-        Received symbols corresponding to the systematic (first output) bits in 
+        Received symbols corresponding to 
+        the systematic (first output) bits in 
         the codeword.
     
     non_sys_symbols : 1D ndarray
@@ -83,13 +92,18 @@ def map_decode(sys_symbols, non_sys_symbols, trellis, noise_variance, L_int, mod
         Variance (power) of the AWGN channel.
 
     L_int : 1D ndarray
-        Array representing the initial intrinsic information for all received 
-        symbols. Typically all zeros, corresponding to equal prior 
+        Array representing the initial intrinsic 
+        information for all received 
+        symbols. 
+        
+        Typically all zeros, 
+        corresponding to equal prior 
         probabilities of bits 0 and 1.
     
     mode : str{'decode', 'compute'}, optional
         The mode in which the MAP decoder is used. 
         'decode' mode returns the decoded bits 
+        
         along with the extrinsic information. 
         'compute' mode returns only the 
         extrinsic information.
@@ -237,8 +251,55 @@ def map_decode(sys_symbols, non_sys_symbols, trellis, noise_variance, L_int, mod
 
 
 def turbo_decode(sys_symbols, non_sys_symbols_1, non_sys_symbols_2, trellis, 
-                 noise_variance, number_iterations, interlv_seed, L_int = None):
+                 noise_variance, number_iterations, interleaver, L_int = None):
+    """ Turbo Decoder.
+
+    Decodes a stream of convolutionally encoded 
+    (rate 1/3) bits using the BCJR algorithm.
     
+    Parameters
+    ----------
+    sys_symbols : 1D ndarray
+        Received symbols corresponding to 
+        the systematic (first output) bits in the codeword.
+    
+    non_sys_symbols_1 : 1D ndarray
+        Received symbols corresponding to 
+        the first parity bits in the codeword.
+
+    non_sys_symbols_2 : 1D ndarray
+        Received symbols corresponding to the 
+        second parity bits in the codeword.
+
+    trellis : Trellis object
+        Trellis representation of the convolutional codes 
+        used in the Turbo code.
+    
+    noise_variance : float
+        Variance (power) of the AWGN channel.
+    
+    number_iterations : int
+        Number of the iterations of the 
+        BCJR algorithm used in turbo decoding.
+
+    interleaver : Interleaver object.
+        Interleaver used in the turbo code.
+
+    L_int : 1D ndarray
+        Array representing the initial intrinsic 
+        information for all received 
+        symbols. 
+        
+        Typically all zeros, 
+        corresponding to equal prior 
+        probabilities of bits 0 and 1.
+
+    Returns
+    -------
+    decoded_bits : 1D ndarray of ints containing {0, 1}
+        Decoded bit stream.
+        
+    """
     if L_int is None:
         L_int = zeros(len(sys_symbols))
 
@@ -247,7 +308,7 @@ def turbo_decode(sys_symbols, non_sys_symbols_1, non_sys_symbols_2, trellis,
     #print sys_symbols, non_sys_symbols_1
     #print noise_variance
     # Interleave systematic symbols for input to second decoder
-    sys_symbols_i = rand_interlv(sys_symbols, interlv_seed)
+    sys_symbols_i = interleaver.interlv(sys_symbols)
 
 
     for iteration_count in xrange(number_iterations):
@@ -265,7 +326,7 @@ def turbo_decode(sys_symbols, non_sys_symbols_1, non_sys_symbols_2, trellis,
         
         L_ext_1 = L_ext_1 - L_int_1
         #print L_ext_1
-        L_int_2 = rand_interlv(L_ext_1, interlv_seed)
+        L_int_2 = interleaver.interlv(L_ext_1)
         #print L_int_2
         if iteration_count == number_iterations - 1:
             mode = 'decode'
@@ -281,12 +342,12 @@ def turbo_decode(sys_symbols, non_sys_symbols_1, non_sys_symbols_2, trellis,
         #print rand_deinterlv(L_2, interlv_seed)
 
         L_ext_2 = L_2 - L_int_2
-        L_int_1 = rand_deinterlv(L_ext_2, interlv_seed)
+        L_int_1 = interleaver.deinterlv(L_ext_2)
         #print L_int_1 
 
         #L_int_1 = L_int_1/100
 
     #decoded_bits = (L_2 > 0).astype('int')
-    decoded_bits = rand_deinterlv(decoded_bits, interlv_seed)
+    decoded_bits = interleaver.deinterlv(decoded_bits)
     return decoded_bits
 
