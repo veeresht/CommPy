@@ -1,0 +1,190 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Channel Coding (commpy.channelcoding) &mdash; CommPy 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="CommPy 0.1 documentation" href="index.html" />
+    <link rel="next" title="commpy.channelcoding.Trellis" href="generated/commpy.channelcoding.Trellis.html" />
+    <link rel="prev" title="CommPy" href="commpydoc.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="generated/commpy.channelcoding.Trellis.html" title="commpy.channelcoding.Trellis"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="commpydoc.html" title="CommPy"
+             accesskey="P">previous</a> |</li>
+        <li><a href="commpydoc.html">CommPy 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <span class="target" id="module-commpy.channelcoding"></span><div class="section" id="module-commpy.channelcoding">
+<span id="channel-coding-commpy-channelcoding"></span><h1>Channel Coding (<a class="reference internal" href="#module-commpy.channelcoding" title="commpy.channelcoding"><tt class="xref py py-mod docutils literal"><span class="pre">commpy.channelcoding</span></tt></a>)<a class="headerlink" href="#module-commpy.channelcoding" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="convolutional-codes">
+<h2>Convolutional Codes<a class="headerlink" href="#convolutional-codes" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/commpy.channelcoding.Trellis.html#commpy.channelcoding.Trellis" title="commpy.channelcoding.Trellis"><tt class="xref py py-obj docutils literal"><span class="pre">Trellis</span></tt></a>(memory,&nbsp;g_matrix[,&nbsp;feedback,&nbsp;code_type])</td>
+<td>Class defining a Trellis corresponding to a k/n - rate convolutional code.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/commpy.channelcoding.conv_encode.html#commpy.channelcoding.conv_encode" title="commpy.channelcoding.conv_encode"><tt class="xref py py-obj docutils literal"><span class="pre">conv_encode</span></tt></a>(message_bits,&nbsp;trellis[,&nbsp;...])</td>
+<td>Encode bits using a convolutional code.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/commpy.channelcoding.viterbi_decode.html#commpy.channelcoding.viterbi_decode" title="commpy.channelcoding.viterbi_decode"><tt class="xref py py-obj docutils literal"><span class="pre">viterbi_decode</span></tt></a>(coded_bits,&nbsp;trellis[,&nbsp;...])</td>
+<td>Decodes a stream of convolutionally encoded bits using the Viterbi Algorithm</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="turbo-codes">
+<h2>Turbo Codes<a class="headerlink" href="#turbo-codes" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/commpy.channelcoding.turbo_encode.html#commpy.channelcoding.turbo_encode" title="commpy.channelcoding.turbo_encode"><tt class="xref py py-obj docutils literal"><span class="pre">turbo_encode</span></tt></a>(msg_bits,&nbsp;trellis1,&nbsp;trellis2,&nbsp;...)</td>
+<td>Turbo Encoder.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/commpy.channelcoding.map_decode.html#commpy.channelcoding.map_decode" title="commpy.channelcoding.map_decode"><tt class="xref py py-obj docutils literal"><span class="pre">map_decode</span></tt></a>(sys_symbols,&nbsp;non_sys_symbols,&nbsp;...)</td>
+<td>Maximum a-posteriori probability (MAP) decoder.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/commpy.channelcoding.turbo_decode.html#commpy.channelcoding.turbo_decode" title="commpy.channelcoding.turbo_decode"><tt class="xref py py-obj docutils literal"><span class="pre">turbo_decode</span></tt></a>(sys_symbols,&nbsp;non_sys_symbols_1,&nbsp;...)</td>
+<td>Turbo Decoder.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="interleavers-and-de-interleavers">
+<h2>Interleavers and De-interleavers<a class="headerlink" href="#interleavers-and-de-interleavers" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/commpy.channelcoding.RandInterlv.html#commpy.channelcoding.RandInterlv" title="commpy.channelcoding.RandInterlv"><tt class="xref py py-obj docutils literal"><span class="pre">RandInterlv</span></tt></a>(length,&nbsp;seed)</td>
+<td>Random Interleaver.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="commpydoc.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Channel Coding (<tt class="docutils literal"><span class="pre">commpy.channelcoding</span></tt>)</a><ul>
+<li><a class="reference internal" href="#convolutional-codes">Convolutional Codes</a><ul>
+</ul>
+</li>
+<li><a class="reference internal" href="#turbo-codes">Turbo Codes</a><ul>
+</ul>
+</li>
+<li><a class="reference internal" href="#interleavers-and-de-interleavers">Interleavers and De-interleavers</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="commpydoc.html"
+                        title="previous chapter">CommPy</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="generated/commpy.channelcoding.Trellis.html"
+                        title="next chapter">commpy.channelcoding.Trellis</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="generated/commpy.channelcoding.Trellis.html" title="commpy.channelcoding.Trellis"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="commpydoc.html" title="CommPy"
+             >previous</a> |</li>
+        <li><a href="commpydoc.html">CommPy 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CommPy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

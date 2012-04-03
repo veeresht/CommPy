@@ -1,0 +1,6 @@
+commpy.channelcoding.conv_encode
+================================
+
+.. currentmodule:: commpy.channelcoding
+
+.. autofunction:: conv_encode

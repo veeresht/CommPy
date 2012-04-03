@@ -1,0 +1,6 @@
+commpy.channelcoding.viterbi_decode
+===================================
+
+.. currentmodule:: commpy.channelcoding
+
+.. autofunction:: viterbi_decode

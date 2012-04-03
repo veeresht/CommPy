@@ -1,0 +1,6 @@
+commpy.channelcoding.map_decode
+===============================
+
+.. currentmodule:: commpy.channelcoding
+
+.. autofunction:: map_decode

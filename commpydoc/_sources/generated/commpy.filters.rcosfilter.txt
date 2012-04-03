@@ -1,0 +1,6 @@
+commpy.filters.rcosfilter
+=========================
+
+.. currentmodule:: commpy.filters
+
+.. autofunction:: rcosfilter

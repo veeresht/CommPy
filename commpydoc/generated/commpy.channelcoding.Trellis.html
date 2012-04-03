@@ -1,0 +1,198 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>commpy.channelcoding.Trellis &mdash; CommPy 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="CommPy 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Channel Coding (commpy.channelcoding)" href="../channelcoding.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../commpydoc.html">CommPy 0.1 documentation</a> &raquo;</li>
+          <li><a href="../channelcoding.html" accesskey="U">Channel Coding (<tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">commpy.channelcoding</span></tt>)</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="commpy-channelcoding-trellis">
+<h1>commpy.channelcoding.Trellis<a class="headerlink" href="#commpy-channelcoding-trellis" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="commpy.channelcoding.Trellis">
+<em class="property">class </em><tt class="descname">Trellis</tt><big>(</big><em>memory</em>, <em>g_matrix</em>, <em>feedback=0</em>, <em>code_type='default'</em><big>)</big><a class="headerlink" href="#commpy.channelcoding.Trellis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class defining a Trellis corresponding to a k/n - rate convolutional code.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>memory</strong> : 1D ndarray of ints</p>
+<blockquote>
+<div><p>Number of memory elements per input of the convolutional encoder.</p>
+</div></blockquote>
+<p><strong>g_matrix</strong> : 2D ndarray of ints (octal representation)</p>
+<blockquote>
+<div><p>Generator matrix G(D) of the convolutional encoder. Each element of 
+G(D) represents a polynomial.</p>
+</div></blockquote>
+<p><strong>feedback</strong> : int, optional</p>
+<blockquote>
+<div><p>Feedback polynomial of the convolutional encoder. Default value is 00.</p>
+</div></blockquote>
+<p><strong>code_type</strong> : {&#8216;default&#8217;, &#8216;rsc&#8217;}, optional</p>
+<blockquote class="last">
+<div><p>Use &#8216;rsc&#8217; to generate a recursive systematic convolutional code.</p>
+<p>If &#8216;rsc&#8217; is specified, then the first &#8216;k x k&#8217; sub-matrix of</p>
+<p>G(D) must represent a identity matrix along with a non-zero 
+feedback polynomial.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">array</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">commpy.channelcoding.convcode</span> <span class="kn">as</span> <span class="nn">cc</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">memory</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">g_matrix</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="mo">05</span><span class="p">,</span> <span class="mo">07</span><span class="p">]])</span> <span class="c"># G(D) = [1+D^2, 1+D+D^2]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">trellis</span> <span class="o">=</span> <span class="n">cc</span><span class="o">.</span><span class="n">Trellis</span><span class="p">(</span><span class="n">memory</span><span class="p">,</span> <span class="n">g_matrix</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">trellis</span><span class="o">.</span><span class="n">k</span>
+<span class="go">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">trellis</span><span class="o">.</span><span class="n">n</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">trellis</span><span class="o">.</span><span class="n">total_memory</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">trellis</span><span class="o">.</span><span class="n">number_states</span>
+<span class="go">4</span>
+<span class="go">print trellis.number_inputs</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">trellis</span><span class="o">.</span><span class="n">next_state_table</span>
+<span class="go">[[0 2]</span>
+<span class="go"> [0 2]</span>
+<span class="go"> [1 3]</span>
+<span class="go"> [1 3]]</span>
+<span class="go">&gt;&gt;&gt;print trellis.output_table</span>
+<span class="go">[[0 3]</span>
+<span class="go"> [3 0]</span>
+<span class="go"> [1 2]</span>
+<span class="go"> [2 1]]</span>
+</pre></div>
+</div>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">visualize</span></tt>([trellis_length,&nbsp;state_order,&nbsp;...])</td>
+<td>Plot the trellis diagram.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="commpy.channelcoding.Trellis.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>memory</em>, <em>g_matrix</em>, <em>feedback=0</em>, <em>code_type='default'</em><big>)</big><a class="headerlink" href="#commpy.channelcoding.Trellis.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#commpy.channelcoding.Trellis.__init__" title="commpy.channelcoding.Trellis.__init__"><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt></a>(memory,&nbsp;g_matrix[,&nbsp;feedback,&nbsp;code_type])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">visualize</span></tt>([trellis_length,&nbsp;state_order,&nbsp;...])</td>
+<td>Plot the trellis diagram.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../commpydoc.html">CommPy 0.1 documentation</a> &raquo;</li>
+          <li><a href="../channelcoding.html" >Channel Coding (<tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">commpy.channelcoding</span></tt>)</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CommPy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

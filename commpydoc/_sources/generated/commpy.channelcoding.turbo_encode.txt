@@ -1,0 +1,6 @@
+commpy.channelcoding.turbo_encode
+=================================
+
+.. currentmodule:: commpy.channelcoding
+
+.. autofunction:: turbo_encode

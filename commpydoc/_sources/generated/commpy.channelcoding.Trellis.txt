@@ -1,0 +1,23 @@
+commpy.channelcoding.Trellis
+============================
+
+.. currentmodule:: commpy.channelcoding
+
+.. autoclass:: Trellis
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Trellis.__init__
+      ~Trellis.visualize
+   
+   
+
+   
+   
+   
