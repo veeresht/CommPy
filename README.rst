@@ -42,4 +42,4 @@ Requirements
 Currently there is no installer for CommPy. You can clone the github repo and starting using it. Remember to build the Cython modules. You can also look at a very preliminary version of the Commpy Documentation_.
 
 .. _here: https://trello.com/board/commpy/4f44785f28107d10684bbd7d 
-.. _Documentation: http://veeresht.github.com/CommPy/commpydoc.html
+.. _Documentation: http://veeresht.github.com/CommPy/commpydoc/commpydoc.html
