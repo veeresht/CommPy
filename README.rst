@@ -8,9 +8,6 @@ Objectives
 ----------
 - To provide readable and useable implementations of algorithms used in the research, design and implementation of digital communication systems.
 
-py
-
-
 FAQs
 ----
 Why are you developing this?
@@ -38,12 +35,14 @@ Requirements/Dependencies
 Installation
 ^^^^^^^^^^^^
 
-- Download the latest distribution from PyPi here: http://pypi.python.org/pypi/scikit-commpy, unzip and use
-$ sudo python setup.py install 
+- Download the latest distribution from PyPi here: http://pypi.python.org/pypi/scikit-commpy, unzip and use::
 
-- To install using pip or easy_install use the following commands
-$ sudo pip-install scikit-commpy
-$ sudo easy_install scikit-comm 
+                $ sudo python setup.py install 
+
+- To install using pip or easy_install use the following commands::
+        
+                $ sudo pip-install scikit-commpy
+                $ sudo easy_install scikit-commpy 
 
 For more details on CommPy, please visit http://veeresht.github.com/CommPy
 
