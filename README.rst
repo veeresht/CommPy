@@ -41,7 +41,7 @@ Installation
 
 - To install using pip or easy_install use the following commands::
         
-                $ sudo pip-install scikit-commpy
+                $ sudo pip install scikit-commpy
                 $ sudo easy_install scikit-commpy 
 
 For more details on CommPy, please visit http://veeresht.github.com/CommPy
