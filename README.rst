@@ -8,12 +8,8 @@ Objectives
 ----------
 - To provide readable and useable implementations of algorithms used in the research, design and implementation of digital communication systems.
 
-Planned Features (0.1 release)
-------------------------------
-- Channel Coding
-	- Convolutional Codes
-	- Turbo Codes
-	- Low Density Parity Check (LDPC) Codes
+py
+
 
 FAQs
 ----
@@ -31,15 +27,24 @@ I have put a board on Trello to track the progress of CommPy. Take a look here_.
 
 How do I use CommPy?
 ~~~~~~~~~~~~~~~~~~~~
-Requirements
-^^^^^^^^^^^^
+Requirements/Dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^
 - Python 2.7 or above
 - NumPy 1.6 or above
 - SciPy 0.10 or above
 - Matplotlib 1.1 or above
 - Cython 0.15 or above
 
-Currently there is no installer for CommPy. You can clone the github repo and starting using it. Remember to build the Cython modules. You can also look at a very preliminary version of the Commpy Documentation_.
+Installation
+^^^^^^^^^^^^
+
+- Download the latest distribution from PyPi here: http://pypi.python.org/pypi/scikit-commpy, unzip and use
+$ sudo python setup.py install 
+
+- To install using pip or easy_install use the following commands
+$ sudo pip-install scikit-commpy
+$ sudo easy_install scikit-comm 
+
+For more details on CommPy, please visit http://veeresht.github.com/CommPy
 
 .. _here: https://trello.com/board/commpy/4f44785f28107d10684bbd7d 
-.. _Documentation: http://veeresht.github.com/CommPy/commpydoc/commpydoc.html
