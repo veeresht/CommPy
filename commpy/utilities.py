@@ -98,5 +98,26 @@ def euclid_dist(in_array1, in_array2):
         
     return distance
     
+def upsample(x, n):
+    """
+    Upsample the input array by a factor of n 
+    
+    Adds n-1 zeros between consecutive samples of x
 
+    Parameters
+    ----------
+    x: 1-D ndarray
+        Input array.
+
+    n: int
+        Upsampling factor
+    """
+    y = np.empty(len(x)*n, dtype=complex)
+    y[0::n] = x
+    zero_array = np.zeros(len(x), dtype=complex)
+    for i in xrange(1, n):
+        y[i::n] = zero_array
+
+    return y
+    
 

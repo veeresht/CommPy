@@ -166,3 +166,11 @@ def gaussianfilter(N, alpha, Ts, Fs):
     h_gaussian = (np.sqrt(np.pi)/alpha)*np.exp(-((np.pi*time_index/alpha)*(np.pi*time_index/alpha)))
         
     return time_idx, h_gaussian  
+    
+def rectfilter(N, Ts, Fs):
+    
+    h_rect = np.ones(N)
+    T_delta = 1/float(Fs)
+    time_idx = ((np.arange(N)-N/2))*T_delta
+    
+    return time_idx, h_rect
