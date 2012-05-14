@@ -110,7 +110,7 @@ def acs_traceback(np.ndarray[np.float64_t, ndim=1] r_codeword,
                 
             # Compute Branch Metrics
             if decoding_type == 'hard':
-                branch_metric = hamming_dist_c(r_codeword, i_codeword_array, n)
+                branch_metric = hamming_dist_c(r_codeword.astype(int), i_codeword_array.astype(int), n)
             elif decoding_type == 'soft':
                 pass
             elif decoding_type == 'unquantized':
