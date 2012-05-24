@@ -1,0 +1,5 @@
+CommPy
+======
+
+CommPy is an open source toolkit implementing digital communications algorithms 
+in Python using SciPy, NumPy and Cython.
