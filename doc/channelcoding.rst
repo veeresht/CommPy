@@ -1,2 +1,2 @@
-.. automodule:: commpy.channelcoding
+.. automodule:: scikit-commpy.channelcoding
 	:members:
