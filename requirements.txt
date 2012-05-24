@@ -1,0 +1,5 @@
+commpy
+numpy==1.6.1
+scipy==0.10.0
+matplotlib==1.1.0
+cython==0.16
