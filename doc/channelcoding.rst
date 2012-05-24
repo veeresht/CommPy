@@ -1,6 +1,2 @@
-============================================
-Channel Coding (:mod:`commpy.channelcoding`)
-============================================
-
-.. automodule:: scikit-commpy.channelcoding
+.. automodule:: commpy.channelcoding
 	:members:

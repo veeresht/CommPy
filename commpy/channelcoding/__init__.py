@@ -3,7 +3,7 @@
 Channel Coding (:mod:`commpy.channelcoding`)
 ============================================
 
-.. currentmodule:: channelcoding
+.. module:: commpy.channelcoding
 
 Convolutional Codes
 ===================

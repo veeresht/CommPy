@@ -1,1 +1,1 @@
-.. automodule:: scikit-commpy.filters
+.. automodule:: commpy.filters
