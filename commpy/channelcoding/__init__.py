@@ -1,9 +1,9 @@
 """
 ============================================
-Channel Coding (:mod:`scikit-commpy.channelcoding`)
+Channel Coding (:mod:`commpy.channelcoding`)
 ============================================
 
-.. module:: scikit-commpy.channelcoding
+.. currentmodule:: channelcoding
 
 Convolutional Codes
 ===================
