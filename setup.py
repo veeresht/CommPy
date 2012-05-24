@@ -15,7 +15,7 @@ VERSION = '0.1.0'
 #This is a list of files to install, and where
 #(relative to the 'root' dir, where setup.py is)
 #You could be more specific.
-files = ["channelcoding/*"]
+files = ["channelcoding/*", "channelcoding/tests/*"]
 
 setup(
     name = DISTNAME,
