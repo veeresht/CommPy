@@ -16,6 +16,18 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""  
+============================================
+Modulation Demodulation (:mod:`commpy.modulation`)
+============================================
+
+.. autosummary::
+   :toctree: generated/
+    
+   PSKModem             -- Phase Shift Keying (PSK) Modem.
+   QAMModem             -- Quadrature Amplitude Modulation (QAM) Modem.
+
+"""
 from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, hstack
 from itertools import product
 from commpy.utilities import bitarray2dec, dec2bitarray
