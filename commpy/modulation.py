@@ -17,22 +17,23 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """  
-============================================
+==================================================
 Modulation Demodulation (:mod:`commpy.modulation`)
-============================================
+==================================================
 
 .. autosummary::
    :toctree: generated/
     
    PSKModem             -- Phase Shift Keying (PSK) Modem.
    QAMModem             -- Quadrature Amplitude Modulation (QAM) Modem.
+   mimo_ml              -- MIMO Maximum Likelihood (ML) Detection.
 
 """
-from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, hstack
+from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, hstack, repeat, tile, dot, sum
 from itertools import product
 from commpy.utilities import bitarray2dec, dec2bitarray
 
-__all__ = ['PSKModem', 'QAMModem']
+__all__ = ['PSKModem', 'QAMModem', 'mimo_ml']
 
 class Modem:
 
@@ -122,3 +123,28 @@ class QAMModem(Modem):
         mapping_array = arange(1, sqrt(self.m)+1) - (sqrt(self.m)/2)
         self.constellation = array(map(self._constellation_symbol,
                                  list(product(mapping_array, repeat=2))))
+
+
+def mimo_ml(y, h, constellation):
+    """ MIMO ML Detection.
+
+    parameters
+    ----------
+    y : 1D ndarray of complex floats
+        Received complex symbols (shape: num_receive_antennas x 1)
+
+    h : 2D ndarray of complex floats
+        Channel Matrix (shape: num_receive_antennas x num_transmit_antennas)
+    
+    constellation : 1D ndarray of complex floats
+        Constellation used to modulate the symbols
+
+    """
+    m = len(constellation)
+    x_ideal = array([tile(constellation, m), repeat(constellation, m)])
+    y_vector = tile(y, m*m)
+    min_idx = argmin(sum(abs(y_vector - dot(h, x_ideal)), axis=0))
+    x_r = x_ideal[:, min_idx]
+
+    return x_r
+
