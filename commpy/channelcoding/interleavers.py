@@ -19,7 +19,7 @@
 """ Interleavers and De-interleavers """
 
 from numpy import array, arange, zeros
-from numpy.random.mtrand import RandomState
+from numpy.random import mtrand
 
 __all__ = ['RandInterlv']
 
@@ -87,7 +87,7 @@ class RandInterlv(_Interleaver):
     
     """ 
     def __init__(self, length, seed):
-        rand_gen = RandomState(seed)
+        rand_gen = mtrand.RandomState(seed)
         self.p_array = rand_gen.permutation(arange(length))
 
 
