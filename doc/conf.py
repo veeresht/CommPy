@@ -31,7 +31,8 @@ class Mock(object):
         else:
             return Mock()
 
-MOCK_MODULES = ['numpy', 'scipy', 'matplotlib', 'cython', 'matplotlib.pyplot', 'matplotlib.collections', 'matplotlib.patches']
+MOCK_MODULES = ['numpy', 'scipy', 'matplotlib', 'cython', 'matplotlib.pyplot', 'matplotlib.collections', 'matplotlib.patches', 
+                'commpy.channelcoding.acstb', 'commpy.channelcoding.map_c']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
 
