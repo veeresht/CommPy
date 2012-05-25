@@ -15,3 +15,5 @@ Subpackages
 """
 #from channelcoding import *
 from filters import *
+from modulation import *
+from impairments import *
