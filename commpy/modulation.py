@@ -29,9 +29,11 @@ Modulation Demodulation (:mod:`commpy.modulation`)
    mimo_ml              -- MIMO Maximum Likelihood (ML) Detection.
 
 """
-from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, hstack, repeat, tile, dot, sum
+from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
+                  hstack, repeat, tile, dot, sum, shape, concatenate
 from itertools import product
 from commpy.utilities import bitarray2dec, dec2bitarray
+from numpy.fft import fft, ifft
 
 __all__ = ['PSKModem', 'QAMModem', 'mimo_ml']
 
@@ -124,6 +126,37 @@ class QAMModem(Modem):
         self.constellation = array(map(self._constellation_symbol,
                                  list(product(mapping_array, repeat=2))))
 
+def ofdm_tx(x, nfft, nsc, cp_length):
+    """ OFDM Transmit signal generation """ 
+
+    nfft = float(nfft)
+    nsc = float(nsc)
+    cp_length = float(cp_length)
+    ofdm_tx_signal = array([])
+
+    for i in xrange(0, shape(x)[1]):
+        symbols = x[:,i]
+        ofdm_sym_freq = zeros(nfft, dtype=complex)
+        ofdm_sym_freq[1:(nsc/2)+1] = symbols[nsc/2:]
+        ofdm_sym_freq[-(nsc/2):] = symbols[0:nsc/2]
+        ofdm_sym_time = ifft(ofdm_sym_freq)
+        cp = ofdm_sym_time[-cp_length:]
+        ofdm_tx_signal = concatenate((ofdm_tx_signal, cp, ofdm_sym_time))
+    
+    return ofdm_tx_signal
+
+def ofdm_rx(y, nfft, nsc, cp_length):
+    """ OFDM Receive Signal Processing """
+
+    num_ofdm_symbols = int(len(y)/(nfft + cp_length))
+    x_hat = zeros([nsc, num_ofdm_symbols], dtype=complex)
+    
+    for i in xrange(0, num_ofdm_symbols):
+        ofdm_symbol = y[i*nfft + (i+1)*cp_length:(i+1)*(nfft + cp_length)]
+        symbols_freq = fft(ofdm_symbol)
+        x_hat[:,i] = concatenate((symbols_freq[-nsc/2:], symbols_freq[1:(nsc/2)+1]))
+    
+    return x_hat
 
 def mimo_ml(y, h, constellation):
     """ MIMO ML Detection.
