@@ -17,3 +17,4 @@ Subpackages
 from filters import *
 from modulation import *
 from impairments import *
+from sequences import *

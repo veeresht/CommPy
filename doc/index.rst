@@ -17,5 +17,6 @@ Reference
     channelcoding
     filters
     modulation
+    sequences
 
 
