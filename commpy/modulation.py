@@ -30,7 +30,7 @@ Modulation Demodulation (:mod:`commpy.modulation`)
 
 """
 from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
-                  hstack, repeat, tile, dot, sum, shape, concatenate
+                  hstack, repeat, tile, dot, sum, shape, concatenate, exp, log
 from itertools import product
 from commpy.utilities import bitarray2dec, dec2bitarray
 from numpy.fft import fft, ifft
@@ -53,14 +53,14 @@ class Modem:
             Modulated complex symbols.
         
         """
-        num_bits_symbol = int(log2(self.m))
-        index_list = map(lambda i: bitarray2dec(input_bits[i:i+num_bits_symbol]), \
-                         xrange(0, len(input_bits), num_bits_symbol))
+     
+        index_list = map(lambda i: bitarray2dec(input_bits[i:i+self.num_bits_symbol]), \
+                         xrange(0, len(input_bits), self.num_bits_symbol))
         baseband_symbols = self.constellation[index_list]
 
         return baseband_symbols
         
-    def demodulate(self, input_symbols):
+    def demodulate(self, input_symbols, demod_type, noise_var = 0):
         """ Demodulate (map) a set of constellation symbols to corresponding bits.
         
         Supports hard-decision demodulation only.
@@ -69,6 +69,13 @@ class Modem:
         ----------
         input_symbols : 1D ndarray of complex floats
             Input symbols to be demodulated.
+        
+        demod_type : string
+            'hard' for hard decision output (bits)
+            'soft' for soft decision output (LLRs)
+
+        noise_var : float
+            AWGN variance. Needs to be specified only if demod_type is 'soft'
 
         Returns
         -------
@@ -76,10 +83,27 @@ class Modem:
             Corresponding demodulated bits.
             
         """
-        num_bits_symbol = int(log2(self.m))
-        index_list = map(lambda i: argmin(abs(input_symbols[i] - self.constellation)), \
-                         xrange(0, len(input_symbols)))
-        demod_bits = hstack(map(lambda i: dec2bitarray(i, num_bits_symbol), index_list))
+        if demod_type == 'hard':
+            index_list = map(lambda i: argmin(abs(input_symbols[i] - self.constellation)), \
+                             xrange(0, len(input_symbols)))
+            demod_bits = hstack(map(lambda i: dec2bitarray(i, self.num_bits_symbol), 
+                                index_list))
+        elif demod_type == 'soft':
+            demod_bits = zeros(len(input_symbols) * self.num_bits_symbol)
+            for i in arange(len(input_symbols)):
+                current_symbol = input_symbols[i]
+                for bit_index in arange(self.num_bits_symbol):
+                    llr_num = 0
+                    llr_den = 0
+                    for const_index in self.symbol_mapping:
+                        if (const_index >> bit_index) & 1:
+                            llr_num = llr_num + exp((-abs(current_symbol - self.constellation[const_index])**2)/noise_var)
+                        else:
+                            llr_den = llr_den + exp((-abs(current_symbol - self.constellation[const_index])**2)/noise_var)
+                    demod_bits[i*self.num_bits_symbol + self.num_bits_symbol - 1 - bit_index] = log(llr_num/llr_den)
+        else:
+            pass
+            # throw an error
 
         return demod_bits
 
@@ -100,6 +124,7 @@ class PSKModem(Modem):
         
         """
         self.m = m
+        self.num_bits_symbol = int(log2(self.m))
         self.symbol_mapping = arange(self.m)
         self.constellation = map(self._constellation_symbol, 
                                  self.symbol_mapping)
@@ -121,6 +146,7 @@ class QAMModem(Modem):
         """
 
         self.m = m
+        self.num_bits_symbol = int(log2(self.m))
         self.symbol_mapping = arange(self.m)
         mapping_array = arange(1, sqrt(self.m)+1) - (sqrt(self.m)/2)
         self.constellation = array(map(self._constellation_symbol,
