@@ -26,6 +26,13 @@ Turbo Codes
     map_decode      -- Convolutional Code decoder using MAP algorithm.
     turbo_decode    -- Turbo Decoder.
 
+LDPC Codes
+==========
+
+.. autosummary::
+
+    ldpc_decode     -- LDPC Code Decoder using Belief propagation for AWGN.
+
 Interleavers and De-interleavers
 ================================
 
@@ -39,4 +46,5 @@ Interleavers and De-interleavers
 from convcode import Trellis, conv_encode, viterbi_decode
 from interleavers import *
 from turbo import turbo_encode, map_decode, turbo_decode
+from ldpc import ldpc_decode
 
