@@ -83,7 +83,7 @@ def awgn(input_signal, snr_dB):
     """
 
     avg_energy = sum(input_signal * input_signal)/len(input_signal)
-    snr_linear = power(10, snr_dB/10)
+    snr_linear = 10**(snr_dB/10.0)
     noise_variance = avg_energy/(2*snr_linear)
     
     if input_signal.dtype is complex:
