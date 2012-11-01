@@ -16,7 +16,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from numpy import complex, sum, pi, arange, array, size, shape, real
+from numpy import complex, sum, pi, arange, array, size, shape, real, sqrt 
 from numpy import matrix, sqrt, sum, zeros, concatenate, sinc
 from numpy.random import randn, seed, random
 from scipy.special import gamma, jn     
@@ -65,7 +65,7 @@ def bsc(input_bits, p_t):
     output_bits[flip_locs] = 1 ^ output_bits[flip_locs]
     return output_bits
 
-def awgn(input_signal, snr_dB):
+def awgn(input_signal, snr_dB, rate=1.0):
     """ Addditive White Gaussian Noise (AWGN) Channel.
 
     Parameters
@@ -75,6 +75,9 @@ def awgn(input_signal, snr_dB):
 
     snr_dB : float 
         Output SNR required in dB. 
+    
+    rate : float
+        Rate of the a FEC code used if any, otherwise 1.
 
     Returns
     _______
@@ -84,12 +87,14 @@ def awgn(input_signal, snr_dB):
 
     avg_energy = sum(input_signal * input_signal)/len(input_signal)
     snr_linear = 10**(snr_dB/10.0)
-    noise_variance = avg_energy/(2*snr_linear)
+    noise_variance = avg_energy/(2*rate*snr_linear)
+
+    print noise_variance
     
     if input_signal.dtype is complex:
-        noise = p.sqrt(noise_variance) * np.random.randn(len(input_signal)) * (1+1j)
+        noise = sqrt(noise_variance) * randn(len(input_signal)) * (1+1j)
     else:
-        noise = p.sqrt(2*noise_variance) * np.random.randn(len(input_signal))
+        noise = sqrt(2*noise_variance) * randn(len(input_signal))
     
     output_signal = input_signal + noise
     
