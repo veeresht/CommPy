@@ -1,5 +1,29 @@
-import os
-from setuptools import setup, find_packages
+import os, sys, shutil
+from setuptools import find_packages
+from distutils.core import setup
+from distutils.extension import Extension
+
+try:
+    from Cython.Distutils import build_ext
+except ImportError:
+    use_cython = False
+else:
+    use_cython = True
+
+cmdclass = { }
+ext_modules = [ ]
+
+if use_cython:
+    ext_modules += [
+        Extension("commpy.channelcoding.acstb", [ "commpy/channelcoding/acstb.pyx" ]),
+        Extension("commpy.channelcoding.map_c", [ "commpy/channelcoding/map_c.pyx" ])
+    ]
+    cmdclass.update({ 'build_ext': build_ext })
+else:
+    ext_modules += [
+        Extension("commpy.channelcoding.acstb", [ "commpy/channelcoding/acstb.pyx" ]),
+        Extension("commpy.channelcoding.map_c", [ "commpy/channelcoding/map_c.pyx" ])
+    ]
 
 # Taken from scikit-learn setup.py
 DISTNAME = 'scikit-commpy'
@@ -36,6 +60,8 @@ setup(
     package_data = {'commpy' : files },
     #'runner' is in the root.
     scripts = ["runner"],
+    cmdclass = cmdclass,
+    ext_modules = ext_modules,
     long_description = """ Work in progress """, 
     classifiers = [
         'Development Status :: 1 - Planning',
@@ -46,4 +72,4 @@ setup(
         'Topic :: Scientific/Engineering',
         'Topic :: Software Development',
     ]
-) 
+)
