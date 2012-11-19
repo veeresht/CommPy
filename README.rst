@@ -12,7 +12,7 @@ FAQs
 ----
 Why are you developing this?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-I am currently enrolled in graduate courses on Digital Communications and Probabilistic Coding. During the coursework, I realized that the best way to actually learn and understand the theory is to try and implement ''the Math'' in practice :). Having used Scipy before, I thought there should be a similar package for Digital Communications in Python. This is a start!
+During my coursework in communication theory and systems at UCSD, I realized that the best way to actually learn and understand the theory is to try and implement ''the Math'' in practice :). Having used Scipy before, I thought there should be a similar package for Digital Communications in Python. This is a start!
 
 What programming languages do you use?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -20,7 +20,7 @@ CommPy uses Python as its base programming language and python packages like Num
 
 How can I contribute?
 ~~~~~~~~~~~~~~~~~~~~~
-Implement any feature you want and send me a pull request :). If you want to suggest new features or discuss anything related to CommPy, please get in touch with me.
+Implement any feature you want and send me a pull request :). If you want to suggest new features or discuss anything related to CommPy, please get in touch with me (veeresht@gmail.com).
 
 How do I use CommPy?
 ~~~~~~~~~~~~~~~~~~~~
@@ -35,8 +35,11 @@ Requirements/Dependencies
 Installation
 ^^^^^^^^^^^^
 
-- Download the latest distribution from PyPi here: http://pypi.python.org/pypi/scikit-commpy, unzip and use::
+- Clone from github and install as follows (recommended)::
 
+                $ git clone https://github.com/veeresht/CommPy.git
+                $ cd CommPy
+                $ sudo python setup.py build_ext --inplace
                 $ sudo python setup.py install 
 
 - To install using pip or easy_install use the following commands::
