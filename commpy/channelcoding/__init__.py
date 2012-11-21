@@ -47,4 +47,7 @@ from convcode import Trellis, conv_encode, viterbi_decode
 from interleavers import *
 from turbo import turbo_encode, map_decode, turbo_decode
 from ldpc import ldpc_decode
+from gfields import gf
 
+from numpy.testing import Tester
+test = Tester().test

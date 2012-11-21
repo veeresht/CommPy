@@ -18,3 +18,7 @@ from filters import *
 from modulation import *
 from impairments import *
 from sequences import *
+
+
+from numpy.testing import Tester
+test = Tester().test
