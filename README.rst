@@ -47,6 +47,10 @@ Installation
                 $ sudo pip install scikit-commpy
                 $ sudo easy_install scikit-commpy 
 
+
+** I would greatly appreciate your feedback if you have found CommPy useful. Just send me a mail at veeresht.gmail.com **
+
+
 For more details on CommPy, please visit http://veeresht.github.com/CommPy
 
 .. _here: https://trello.com/board/commpy/4f44785f28107d10684bbd7d 
