@@ -45,5 +45,32 @@ class TestGaloisFields(object):
         z = gf(array([4, 5, 4, 4, 6, 0, 5, 0]), m)
         assert_array_equal((x*y).elements, z.elements)
 
+    def test_tuple_form(self):
+        m = 3
+        x = gf(arange(0, 2**m-1), m)
+        y = x.power_to_tuple()
+        z = gf(array([1, 2, 4, 3, 6, 7, 5]), m)
+        assert_array_equal(y.elements, z.elements)
+
+    def test_power_form(self):
+        m = 3
+        x = gf(arange(1, 2**m), m)
+        y = x.tuple_to_power()
+        z = gf(array([0, 1, 3, 2, 6, 4, 5]), m)
+        assert_array_equal(y.elements, z.elements)
+        m = 4
+        x = gf(arange(1, 2**m), m)
+        y = x.tuple_to_power()
+        z = gf(array([0, 1, 4, 2, 8, 5, 10, 3, 14, 9, 7, 6, 13, 11, 12]), m)
+        assert_array_equal(y.elements, z.elements)
+
+    def test_order(self):
+        m = 4
+        x = gf(arange(1, 2**m), m)
+        y = x.order()
+        z = array([1, 15, 15, 15, 15, 3, 3, 5, 15, 5, 15, 5, 15, 15, 5])
+        assert_array_equal(y, z)
+
+
 
         

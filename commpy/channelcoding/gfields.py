@@ -18,7 +18,8 @@
 
 """ Galois Fields """
 
-import numpy as np
+from fractions import gcd
+from numpy import array, zeros, arange, convolve, ndarray
 from itertools import *
 from commpy.utilities import dec2bitarray, bitarray2dec
 
@@ -53,12 +54,12 @@ class gf:
     # Initialization
     def __init__(self, x, m):
         self.m = m
-        primpoly_array = np.array([0, 3, 7, 11, 19, 37, 67, 137, 285, 529, 1033, 
+        primpoly_array = array([0, 3, 7, 11, 19, 37, 67, 137, 285, 529, 1033, 
                                    2053, 4179, 8219, 17475, 32771, 69643])
         self.prim_poly = primpoly_array[self.m]
         if type(x) is int and x >= 0 and x < pow(2, m):
-            self.elements = np.array([x])
-        elif type(x) is np.ndarray and len(x) >= 1:
+            self.elements = array([x])
+        elif type(x) is ndarray and len(x) >= 1:
             self.elements = x
 
     # Overloading addition operator for Galois Field
@@ -71,13 +72,47 @@ class gf:
     # Overloading multiplication operator for Galois Field
     def __mul__(self, x):
         if len(x.elements) == len(self.elements):
-            prod_elements = np.arange(len(self.elements))
+            prod_elements = arange(len(self.elements))
             for i in xrange(len(self.elements)):
                 prod_elements[i] = polymultiply(self.elements[i], x.elements[i], self.m, self.prim_poly)
             return gf(prod_elements, self.m)
         else:
              raise ValueError, "Two sets of elements cannot be multiplied"
 
+    def power_to_tuple(self):
+        y = zeros(len(self.elements))
+        for idx, i in enumerate(self.elements):
+            if 2**i < 2**self.m:
+                y[idx] = 2**i
+            else:
+                y[idx] = polydivide(2**i, self.prim_poly)
+        return gf(y, self.m)
+
+    def tuple_to_power(self):
+        y = zeros(len(self.elements))
+        for idx, i in enumerate(self.elements):
+            if i != 0:
+                init_state = 1
+                cur_state = 1
+                power = 0
+                while cur_state != i:
+                    cur_state = ((cur_state << 1) & (2**self.m-1)) ^ (-((cur_state & 2**(self.m-1)) >> (self.m - 1)) & 
+                                (self.prim_poly & (2**self.m-1)))
+                    power+=1
+                y[idx] = power
+            else:
+                y[idx] = 0
+        return gf(y, self.m)
+
+    def order(self):
+        orders = zeros(len(self.elements))
+        power_gf = self.tuple_to_power()
+        for idx, i in enumerate(power_gf.elements):
+            orders[idx] = (2**self.m - 1)/(gcd(i, 2**self.m-1))
+
+        return orders
+
+   
 # Divide two polynomials and returns the remainder
 def polydivide(x, y):
     r = y
@@ -94,60 +129,34 @@ def polydivide(x, y):
 def polymultiply(x, y, m, prim_poly):
     x_array = dec2bitarray(x, m)
     y_array = dec2bitarray(y, m)
-    #print x_array, y_array
-    #print np.convolve(x_array, y_array) 
-    prod = bitarray2dec(np.convolve(x_array, y_array) % 2)
-    #print prod
+    prod = bitarray2dec(convolve(x_array, y_array) % 2)
     return polydivide(prod, prim_poly)
-
-def power2tuple(x, m):
-    """  Convert a GF element from Power to Tuple format. 
-    
-    Parameters
-    __________
-    x : int
-    GF element.
-
-    m : int
-    Order of the GF.
-    
-    Returns
-    _______
-    x_tuple : int
-    Tuple format of x
-    
-    """
-    y = pow(2, x)
-    if y < pow(2, m):
-        return y
-    else:
-        return polydivide(y, primpoly(m))
 
 
 #def cosets(m):
 #    """ Returns the cyclotomic cosets for the binary galois field. 
 #    A cyclotomic coset consists of elements which are the roots of 
 #    the same polynomial called the mimimal polynomial.
-
+#
 #    Parameters
 #    __________
 #    m : int 
 #    Specifies the order of the Galois Field.
-
+#
 #    Returns
 #    _______
 #    co_sets : 2d list 
 #    Each 1D list represents a cyclotomic coset within the 2D list.
-
+#
 #    Examples
 #    ________
 #    >>> print cosets(4)
 #    [[1], [2, 4, 3, 5], [8, 12, 10, 15], [6, 7], [11, 14, 13, 9]]
 #    """
-#    N = pow(2, m)
-#    mark_list = [0]*(N-1)
+#    N = 2**m
+#    mark_list = zeros(N-1)
 #    coset_no = 1
-#    for i in range(N-1):
+#    for i in xrange(N-1):
 #        if mark_list[i] == 0:
 #            j = i
 #            s = 0
@@ -156,14 +165,14 @@ def power2tuple(x, m):
 #                s += 1
 #                j = (j*2) % (N-1)
 #            coset_no += 1
-#    co_sets = np.array([gf(np.array([1]), m)] * max(mark_list))
+#    co_sets = array([gf(array([1]), m)] * max(mark_list))
 #    gf_array_coset = [[]* 1 for i in xrange(max(mark_list))]
 #    for i in range(len(mark_list)):
 #        gf_array_coset[mark_list[i]-1].append(power2tuple(i, m))
-
+#
 #    for i in range(len(gf_array_coset)):
 #        co_sets[i] = gf(np.array(gf_array_coset[i]), m)
-
+#
 #    return co_sets
 
 # Generate the minimal polynomials for elements in the Galois Field
