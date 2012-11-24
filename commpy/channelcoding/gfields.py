@@ -109,9 +109,30 @@ class gf:
         power_gf = self.tuple_to_power()
         for idx, i in enumerate(power_gf.elements):
             orders[idx] = (2**self.m - 1)/(gcd(i, 2**self.m-1))
-
         return orders
+    
+    def cosets(self):
+        coset_list = []
+        x = self.tuple_to_power().elements
+        mark_list = zeros(len(x))
+        coset_count = 1
+        for idx in xrange(len(x)):
+            if mark_list[idx] == 0:
+                a = x[idx]
+                mark_list[idx] = coset_count 
+                i = 1
+                while (a*(2**i) % (2**self.m-1)) != a:
+                    for idx2 in xrange(len(x)):
+                        if (mark_list[idx2] == 0) and (x[idx2] == a*(2**i)%(2**self.m-1)):
+                            mark_list[idx2] = coset_count
+                    i+=1
+                coset_count+=1
 
+        for counts in xrange(1, coset_count):
+            coset_list.append(gf(self.elements[mark_list==counts], self.m))
+
+        return coset_list
+    
    
 # Divide two polynomials and returns the remainder
 def polydivide(x, y):
