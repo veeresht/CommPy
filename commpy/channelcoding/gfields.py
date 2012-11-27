@@ -19,7 +19,7 @@
 """ Galois Fields """
 
 from fractions import gcd
-from numpy import array, zeros, arange, convolve, ndarray
+from numpy import array, zeros, arange, convolve, ndarray, concatenate
 from itertools import *
 from commpy.utilities import dec2bitarray, bitarray2dec
 
@@ -132,7 +132,27 @@ class gf:
             coset_list.append(gf(self.elements[mark_list==counts], self.m))
 
         return coset_list
+
+    def minpolys(self):
+        minpol_list = array([])
+        full_gf = gf(arange(2**self.m), self.m)
+        full_cosets = full_gf.cosets()
+        for x in self.elements:
+            for i in xrange(len(full_cosets)):
+                if x in full_cosets[i].elements:
+                    t = array([1, full_cosets[i].elements[0]])[::-1]
+                    for root in full_cosets[i].elements[1:]:
+                        t2 = concatenate((zeros(len(t)-1), array([1, root]), zeros(len(t)-1)))
+                        prod_poly = array([])
+                        for n in xrange(len(t2)-len(t)+1):
+                            root_sum = 0
+                            for k in xrange(len(t)):
+                                root_sum = root_sum ^ polymultiply(int(t[k]), int(t2[n+k]), self.m, self.prim_poly)
+                            prod_poly = concatenate((prod_poly, array([root_sum])))
+                        t = prod_poly[::-1]
+                    minpol_list = concatenate((minpol_list, array([bitarray2dec(t[::-1])])))
     
+        return minpol_list.astype(int)
    
 # Divide two polynomials and returns the remainder
 def polydivide(x, y):
@@ -153,98 +173,3 @@ def polymultiply(x, y, m, prim_poly):
     prod = bitarray2dec(convolve(x_array, y_array) % 2)
     return polydivide(prod, prim_poly)
 
-
-#def cosets(m):
-#    """ Returns the cyclotomic cosets for the binary galois field. 
-#    A cyclotomic coset consists of elements which are the roots of 
-#    the same polynomial called the mimimal polynomial.
-#
-#    Parameters
-#    __________
-#    m : int 
-#    Specifies the order of the Galois Field.
-#
-#    Returns
-#    _______
-#    co_sets : 2d list 
-#    Each 1D list represents a cyclotomic coset within the 2D list.
-#
-#    Examples
-#    ________
-#    >>> print cosets(4)
-#    [[1], [2, 4, 3, 5], [8, 12, 10, 15], [6, 7], [11, 14, 13, 9]]
-#    """
-#    N = 2**m
-#    mark_list = zeros(N-1)
-#    coset_no = 1
-#    for i in xrange(N-1):
-#        if mark_list[i] == 0:
-#            j = i
-#            s = 0
-#            while mark_list[j] == 0:
-#                mark_list[j] = coset_no
-#                s += 1
-#                j = (j*2) % (N-1)
-#            coset_no += 1
-#    co_sets = array([gf(array([1]), m)] * max(mark_list))
-#    gf_array_coset = [[]* 1 for i in xrange(max(mark_list))]
-#    for i in range(len(mark_list)):
-#        gf_array_coset[mark_list[i]-1].append(power2tuple(i, m))
-#
-#    for i in range(len(gf_array_coset)):
-#        co_sets[i] = gf(np.array(gf_array_coset[i]), m)
-#
-#    return co_sets
-
-# Generate the minimal polynomials for elements in the Galois Field
-#def minpol(gfield):
-#    co_sets = cosets(gfield.m)
-#    min_polynomial = [[]* 1 for i in xrange(len(co_sets))]
-#    for i in range(len(co_sets)):
-#        set_elements = co_sets[i].elements
-#        psets = powerset(set_elements)
-        #print psets
-#        d = {}
-#        for count in range(1, len(set_elements)+1):
-#            d[count] = 0
-#        for c_set in psets:
-            #print len(c_set)
-#            d[len(c_set)] ^= reduce(lambda x,y: polymultiply(x, y, gfield.m), c_set)
-#        min_polynomial[i].append(1)
-#        for key in d.keys():
-#           min_polynomial[i].append(d[key])
-#    minpol_list = []
-#    for poly in min_polynomial:
-#        val = 0
-#        for i in range(len(poly)):
-#            val += poly[-i-1]*pow(2, i)
-#        minpol_list.append(val)
-#    minpol_table = [2]*pow(2, gfield.m)
-#    count = 0
-#    for cset in co_sets:
-#        for value in cset.elements:
-#            minpol_table[value] = minpol_list[count]
-#        count += 1
-#
-#    return minpol_table
-
-# Convert an integer to string of bits
-#def int2bin(n, count=24):
-#    """returns the binary of integer n, using count number of digits"""
-#    return "".join([str((n >> y) & 1) for y in range(count-1, -1, -1)])
-
-# Generate the powerset given a list of elements
-#def powerset(original_list):
-#    list_size = len(original_list)
-#    num_sets = 2**list_size
-#    powerset = []
-    # Don't include empty set
-#    for i in range(num_sets)[1:]:
-#        subset = []
-#        binary_digits = list(int2bin(i, list_size))
-#        list_indices = range(list_size)
-#        for (bit,index) in zip(binary_digits,list_indices):
-#            if bit == '1':
-#                subset.append(original_list[index])
-#        powerset.append(subset)
-#    return powerset

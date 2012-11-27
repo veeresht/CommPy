@@ -71,6 +71,16 @@ class TestGaloisFields(object):
         z = array([1, 15, 15, 15, 15, 3, 3, 5, 15, 5, 15, 5, 15, 15, 5])
         assert_array_equal(y, z)
 
+    def test_minpols(self):
+        m = 4
+        x = gf(arange(2**m), m)
+        z = array([2, 3, 19, 19, 19, 19, 7, 7, 31, 25, 31, 25, 31, 25, 25, 31])
+        assert_array_equal(x.minpolys(), z)
+        m = 6
+        x = gf(array([2, 8, 32, 6, 24, 35, 10, 40, 59, 41, 14, 37]), m)
+        z = array([67, 87, 103, 73, 13, 109, 91, 117, 7, 115, 11, 97])
+        assert_array_equal(x.minpolys(), z)
+
 
 
         
