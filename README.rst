@@ -1,3 +1,10 @@
+.. -*- mode: rst -*-
+
+|Travis|_
+
+.. |Travis| image:: https://secure.travis-ci.org/veeresht/CommPy.png?branch=master
+.. _Travis: https://secure.travis-ci.org/veeresht/CommPy
+
 CommPy
 ======
 
