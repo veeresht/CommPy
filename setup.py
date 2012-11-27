@@ -54,6 +54,14 @@ setup(
     #put them into the package directory - they will be found 
     #recursively.)
     packages = ['commpy'],
+    install_requires=[
+          'numpy',
+          'scipy',
+          'matplotlib',
+          'cython',
+    ],
+    test_suite='nose.collector',
+    tests_require=['nose'],
     #'package' package must contain files (see list above)
     #This dict maps the package name =to=> directories
     #It says, package *needs* these files.
