@@ -23,6 +23,9 @@ from numpy import array, zeros, arange, convolve, ndarray, concatenate
 from itertools import *
 from commpy.utilities import dec2bitarray, bitarray2dec
 
+__all__ = ['gf', 'polydivide', 'polymultiply', 'poly_to_string']
+
+
 class gf:
     """ Defines a Binary Galois Field of order m, containing n, 
     where n can be a single element or a list of elements within the field.
@@ -173,3 +176,16 @@ def polymultiply(x, y, m, prim_poly):
     prod = bitarray2dec(convolve(x_array, y_array) % 2)
     return polydivide(prod, prim_poly)
 
+
+def poly_to_string(x):
+
+    i = 0
+    polystr = ""
+    while x != 0:
+        y = x%2
+        x = x >> 1
+        if y == 1:
+            polystr = polystr + "x^" + str(i) + " + "
+        i+=1
+
+    return polystr[:-2]
