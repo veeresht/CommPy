@@ -49,5 +49,8 @@ from turbo import turbo_encode, map_decode, turbo_decode
 from ldpc import ldpc_decode
 from gfields import *
 
-from numpy.testing import Tester
-test = Tester().test
+try:
+    from numpy.testing import Tester
+    test = Tester().test
+except:
+    pass
