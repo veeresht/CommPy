@@ -23,10 +23,10 @@ from numpy import array, zeros, arange, convolve, ndarray, concatenate
 from itertools import *
 from commpy.utilities import dec2bitarray, bitarray2dec
 
-__all__ = ['gf', 'polydivide', 'polymultiply', 'poly_to_string']
+__all__ = ['GF', 'polydivide', 'polymultiply', 'poly_to_string']
 
 
-class gf:
+class GF:
     """ Defines a Binary Galois Field of order m, containing n, 
     where n can be a single element or a list of elements within the field.
 
@@ -45,13 +45,15 @@ class gf:
 
     Examples
     ________
-    >>> from GF import gf
-    >>> n = range(16)
+    >>> from numpy import arange
+    >>> from gfields import GF
+    >>> x = arange(16)
     >>> m = 4
-    >>> x = gf(n, m)
+    >>> x = GF(x, m)
     >>> print x.elements
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-
+    >>> print x.prim_poly
+    19
     """
 
     # Initialization
@@ -68,7 +70,7 @@ class gf:
     # Overloading addition operator for Galois Field
     def __add__(self, x):
         if len(self.elements) == len(x.elements):
-            return gf(self.elements ^ x.elements, self.m)
+            return GF(self.elements ^ x.elements, self.m)
         else:
             raise ValueError, "The arguments should have the same number of elements"
 
@@ -78,7 +80,7 @@ class gf:
             prod_elements = arange(len(self.elements))
             for i in xrange(len(self.elements)):
                 prod_elements[i] = polymultiply(self.elements[i], x.elements[i], self.m, self.prim_poly)
-            return gf(prod_elements, self.m)
+            return GF(prod_elements, self.m)
         else:
              raise ValueError, "Two sets of elements cannot be multiplied"
 
@@ -89,7 +91,7 @@ class gf:
                 y[idx] = 2**i
             else:
                 y[idx] = polydivide(2**i, self.prim_poly)
-        return gf(y, self.m)
+        return GF(y, self.m)
 
     def tuple_to_power(self):
         y = zeros(len(self.elements))
@@ -105,7 +107,7 @@ class gf:
                 y[idx] = power
             else:
                 y[idx] = 0
-        return gf(y, self.m)
+        return GF(y, self.m)
 
     def order(self):
         orders = zeros(len(self.elements))
@@ -132,13 +134,13 @@ class gf:
                 coset_count+=1
 
         for counts in xrange(1, coset_count):
-            coset_list.append(gf(self.elements[mark_list==counts], self.m))
+            coset_list.append(GF(self.elements[mark_list==counts], self.m))
 
         return coset_list
 
     def minpolys(self):
         minpol_list = array([])
-        full_gf = gf(arange(2**self.m), self.m)
+        full_gf = GF(arange(2**self.m), self.m)
         full_cosets = full_gf.cosets()
         for x in self.elements:
             for i in xrange(len(full_cosets)):
