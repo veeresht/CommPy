@@ -5,23 +5,6 @@ Channel Coding (:mod:`commpy.channelcoding`)
 
 .. module:: commpy.channelcoding
 
-Galois Fields
-=============
-
-.. autosummary::
-    :toctree: generated/
-
-    GF               -- Class representing a Galois Field object. 
-    
-Algebraic Codes
-===============
-
-.. autosummary::
-    :toctree: generated/
-
-    cyclic_code_genpoly -- Generate a cylic code generator polynomial.
-
-
 Convolutional Codes
 ===================
 
@@ -65,7 +48,6 @@ from interleavers import *
 from turbo import turbo_encode, map_decode, turbo_decode
 from ldpc import ldpc_decode
 from gfields import *
-from algcode import *
 
 try:
     from numpy.testing import Tester
