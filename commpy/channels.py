@@ -19,7 +19,7 @@
 from numpy import complex, sum, pi, arange, array, size, shape, real, sqrt 
 from numpy import matrix, sqrt, sum, zeros, concatenate, sinc
 from numpy.random import randn, seed, random
-from scipy.special import gamma, jn     
+#from scipy.special import gamma, jn     
 from scipy.signal import hamming, convolve, resample
 from scipy.fftpack import ifft, fftshift, fftfreq
 from scipy.interpolate import interp1d
@@ -88,11 +88,12 @@ def awgn(input_signal, snr_dB, rate=1.0):
     avg_energy = sum(input_signal * input_signal)/len(input_signal)
     snr_linear = 10**(snr_dB/10.0)
     noise_variance = avg_energy/(2*rate*snr_linear)
-    
+   
+    #print sqrt(noise_variance)
     if input_signal.dtype is complex:
         noise = sqrt(noise_variance) * randn(len(input_signal)) * (1+1j)
     else:
-        noise = sqrt(2*noise_variance) * randn(len(input_signal))
+        noise = sqrt(noise_variance) * randn(len(input_signal))
     
     output_signal = input_signal + noise
     
