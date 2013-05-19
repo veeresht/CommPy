@@ -3,12 +3,14 @@ from setuptools import find_packages
 from distutils.core import setup
 from distutils.extension import Extension
 
+use_cython = False
+
 try:
     from Cython.Distutils import build_ext
+    #use_cython = True
 except ImportError:
+    #from distutils.command import build_ext
     use_cython = False
-else:
-    use_cython = True
 
 cmdclass = { }
 ext_modules = [ ]
@@ -19,10 +21,11 @@ if use_cython:
         Extension("commpy.channelcoding.map_c", [ "commpy/channelcoding/map_c.pyx" ])
     ]
     cmdclass.update({ 'build_ext': build_ext })
+    print "Using Cython"
 else:
     ext_modules += [
-        Extension("commpy.channelcoding.acstb", [ "commpy/channelcoding/acstb.pyx" ]),
-        Extension("commpy.channelcoding.map_c", [ "commpy/channelcoding/map_c.pyx" ])
+        Extension("commpy.channelcoding.acstb", [ "commpy/channelcoding/acstb.c" ]),
+        Extension("commpy.channelcoding.map_c", [ "commpy/channelcoding/map_c.c" ])
     ]
 
 # Taken from scikit-learn setup.py
@@ -34,7 +37,7 @@ MAINTAINER_EMAIL = 'veeresht@gmail.com'
 URL = 'http://veeresht.github.com/CommPy'
 LICENSE = 'GPL'
 # DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
-VERSION = '0.1.0'
+VERSION = '0.2.0'
 
 #This is a list of files to install, and where
 #(relative to the 'root' dir, where setup.py is)
@@ -54,6 +57,9 @@ setup(
     #put them into the package directory - they will be found 
     #recursively.)
     packages = ['commpy', 'commpy.channelcoding', 'commpy.channelcoding.tests'],
+    #package_dir={
+    #    'commpy' : 'commpy',
+    #},
     install_requires=[
           'numpy',
           'scipy',
