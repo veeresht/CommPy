@@ -1,4 +1,4 @@
-import os, sys, shutil
+import os, sys, shutil, numpy
 from setuptools import find_packages
 from distutils.core import setup
 from distutils.extension import Extension
@@ -76,6 +76,7 @@ setup(
     ext_modules = ext_modules,
     test_suite='nose.collector',
     tests_require=['nose'],
+    include_dirs=[numpy.get_include()],
 
     long_description = """ Work in progress """, 
     classifiers = [
