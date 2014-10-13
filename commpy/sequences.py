@@ -92,6 +92,6 @@ def zcsequence(u, seq_length):
     zcseq : 1D ndarray of complex floats
         ZC sequence generated.
     """
-    zcseq = exp((-1j * pi * arange(seq_length) * (arange(seq_length)+1)) / seq_length)
+    zcseq = exp((-1j * pi * u * arange(seq_length) * (arange(seq_length)+1)) / seq_length)
 
     return zcseq
