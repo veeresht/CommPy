@@ -76,6 +76,7 @@ setup(
     ext_modules = ext_modules,
     test_suite='nose.collector',
     tests_require=['nose'],
+    include_dirs=[numpy.get_include()],
 
     long_description = """ Work in progress """, 
     classifiers = [
