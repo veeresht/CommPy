@@ -3,30 +3,30 @@ from setuptools import find_packages
 from distutils.core import setup
 from distutils.extension import Extension
 
-use_cython = False
+#use_cython = False
 
-try:
-    from Cython.Distutils import build_ext
+#try:
+#    from Cython.Distutils import build_ext
     #use_cython = True
-except ImportError:
+#except ImportError:
     #from distutils.command import build_ext
-    use_cython = False
+#    use_cython = False
 
-cmdclass = { }
-ext_modules = [ ]
+#cmdclass = { }
+#ext_modules = [ ]
 
-if use_cython:
-    ext_modules += [
-        Extension("commpy.channelcoding.acstb", [ "commpy/channelcoding/acstb.pyx" ], include_dirs=[numpy.get_include()]),
-        Extension("commpy.channelcoding.map_c", [ "commpy/channelcoding/map_c.pyx" ], include_dirs=[numpy.get_include()])
-    ]
-    cmdclass.update({ 'build_ext': build_ext })
-    print "Using Cython"
-else:
-    ext_modules += [
-        Extension("commpy.channelcoding.acstb", [ "commpy/channelcoding/acstb.c" ], include_dirs=[numpy.get_include()]),
-        Extension("commpy.channelcoding.map_c", [ "commpy/channelcoding/map_c.c" ], include_dirs=[numpy.get_include()])
-    ]
+#if use_cython:
+#    ext_modules += [
+#        Extension("commpy.channelcoding.acstb", [ "commpy/channelcoding/acstb.pyx" ], include_dirs=[numpy.get_include()]),
+#        Extension("commpy.channelcoding.map_c", [ "commpy/channelcoding/map_c.pyx" ], include_dirs=[numpy.get_include()])
+#    ]
+#    cmdclass.update({ 'build_ext': build_ext })
+#    print "Using Cython"
+#else:
+#    ext_modules += [
+#        Extension("commpy.channelcoding.acstb", [ "commpy/channelcoding/acstb.c" ], include_dirs=[numpy.get_include()]),
+#        Extension("commpy.channelcoding.map_c", [ "commpy/channelcoding/map_c.c" ], include_dirs=[numpy.get_include()])
+#    ]
 
 # Taken from scikit-learn setup.py
 DISTNAME = 'scikit-commpy'
@@ -54,7 +54,7 @@ setup(
     version=VERSION,
     #Name the folder where your packages live:
     #(If you have other packages (dirs) or modules (py files) then
-    #put them into the package directory - they will be found 
+    #put them into the package directory - they will be found
     #recursively.)
     packages = ['commpy', 'commpy.channelcoding', 'commpy.channelcoding.tests'],
     #package_dir={
@@ -64,7 +64,6 @@ setup(
           'numpy',
           'scipy',
           'matplotlib',
-          'cython',
     ],
        #'package' package must contain files (see list above)
     #This dict maps the package name =to=> directories
@@ -72,12 +71,10 @@ setup(
     package_data = {'commpy' : files },
     #'runner' is in the root.
     scripts = ["runner"],
-    cmdclass = cmdclass,
-    ext_modules = ext_modules,
     test_suite='nose.collector',
     tests_require=['nose'],
 
-    long_description = """ Work in progress """, 
+    long_description = """ Work in progress """,
     classifiers = [
         'Development Status :: 1 - Planning',
         'Intended Audience :: Science/Research',
