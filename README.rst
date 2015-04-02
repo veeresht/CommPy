@@ -8,8 +8,8 @@
 CommPy
 ======
 
-CommPy is an open source toolkit implementing digital communications algorithms 
-in Python using SciPy, NumPy and Cython.
+CommPy is an open source toolkit implementing digital communications algorithms
+in Python using NumPy and SciPy.
 
 Objectives
 ----------
@@ -25,10 +25,10 @@ Channel Coding
 - Encoder for a rate-1/3 systematic parallel concatenated Turbo Code.
 - Turbo Decoder for a rate-1/3 systematic parallel concatenated turbo code (Based on the MAP decoder/BCJR algorithm).
 - Binary Galois Field GF(2^m) with minimal polynomials and cyclotomic cosets.
-- Create all possible generator polynomials for a (n,k) cyclic code. 
+- Create all possible generator polynomials for a (n,k) cyclic code.
 - Random Interleavers and De-interleavers.
 
-Channel Models 
+Channel Models
 ~~~~~~~~~~~~~~
 - Binary Erasure Channel (BEC)
 - Binary Symmetric Channel (BSC)
@@ -50,7 +50,7 @@ Modulation/Demodulation
 - Quadrature Amplitude Modulation (QAM)
 - OFDM Tx/Rx signal processing
 
-Sequences 
+Sequences
 ~~~~~~~~~
 - PN Sequence
 - Zadoff-Chu (ZC) Sequence
@@ -69,7 +69,7 @@ During my coursework in communication theory and systems at UCSD, I realized tha
 
 What programming languages do you use?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-CommPy uses Python as its base programming language and python packages like NumPy, SciPy and Matplotlib. Some algorithms which are too slow in a pure Python implementation are implemented using Cython.
+CommPy uses Python as its base programming language and python packages like NumPy, SciPy and Matplotlib.
 
 How can I contribute?
 ~~~~~~~~~~~~~~~~~~~~~
@@ -79,11 +79,11 @@ How do I use CommPy?
 ~~~~~~~~~~~~~~~~~~~~
 Requirements/Dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-- Python 2.7 or above
-- NumPy 1.6 or above
-- SciPy 0.10 or above
-- Matplotlib 1.1 or above
-- Cython 0.15 or above
+- python 2.7 or above
+- numpy 1.9 or above
+- scipy 0.15 or above
+- matplotlib 1.4 or above
+- nose 1.3 or above
 
 Installation
 ^^^^^^^^^^^^
@@ -92,18 +92,15 @@ Installation
 
                 $ git clone https://github.com/veeresht/CommPy.git
                 $ cd CommPy
-                $ sudo python setup.py build_ext --inplace
-                $ sudo python setup.py install 
+                $ sudo python setup.py install
 
 - To install using pip or easy_install use the following commands::
-        
+
                 $ sudo pip install scikit-commpy
-                $ sudo easy_install scikit-commpy 
+                $ sudo easy_install scikit-commpy
 
 
 I would greatly appreciate your feedback if you have found CommPy useful. Just send me a mail: veeresht@gmail.com
 
 
 For more details on CommPy, please visit http://veeresht.github.com/CommPy
-
-.. _here: https://trello.com/board/commpy/4f44785f28107d10684bbd7d 
