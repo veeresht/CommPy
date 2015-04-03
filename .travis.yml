@@ -10,9 +10,14 @@ before_install:
 install:
 #    - pip install -r requirements.txt
     - pip install nose
+    - pip install coveralls
     - python setup.py install
+#script:
+#    - nosetests
 script:
-    - nosetests
+    - coverage run --source=commpy setup.py test
+after_success:
+    - coveralls
 
 #language: python
 #python:
