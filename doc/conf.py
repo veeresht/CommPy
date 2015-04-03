@@ -15,31 +15,35 @@ import sys, os
 
 import sphinx
 
-class Mock(object):
-    def __init__(self, *args, **kwargs):
-        pass
+import mock
 
-    def __call__(self, *args, **kwargs):
-        return Mock()
+#class Mock(object):
+#    def __init__(self, *args, **kwargs):
+#        pass
 
-    @classmethod
-    def __getattr__(self, name):
-        if name in ('__file__', '__path__'):
-            return '/dev/null'
-        elif name[0] == name[0].upper():
-            return type(name, (), {})
-        else:
-            return Mock()
+#    def __call__(self, *args, **kwargs):
+#        return Mock()
 
-MOCK_MODULES = ['numpy', 'numpy.fft', 'scipy', 'matplotlib', 'cython', 'matplotlib.pyplot', 'matplotlib.collections', 'matplotlib.patches', 
-                'commpy.channelcoding.acstb', 'commpy.channelcoding.map_c', 'numpy.random']
+#    @classmethod
+#    def __getattr__(self, name):
+#        if name in ('__file__', '__path__'):
+#            return '/dev/null'
+#        elif name[0] == name[0].upper():
+#            return type(name, (), {})
+#        else:
+#            return Mock()
+
+MOCK_MODULES = ['numpy', 'numpy.fft', 'scipy', 'matplotlib', 'matplotlib.pyplot',
+                'matplotlib.collections', 'matplotlib.patches',
+                'commpy.channelcoding', 'numpy.random']
 for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = Mock()
+    #sys.modules[mod_name] = Mock()
+    sys.modules[mod_name] = mock.Mock()
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('/home/veeresht//Development/commpy-dev/commpy-dev-py27/commpy/commpy'))
+#sys.path.insert(0, os.path.abspath('/home/veeresht//Development/commpy-dev/commpy-dev-py27/commpy/commpy'))
 sys.path.insert(0, os.path.abspath('sphinxext'))
 # -- General configuration -----------------------------------------------------
 
@@ -48,8 +52,8 @@ sys.path.insert(0, os.path.abspath('sphinxext'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 
-		'sphinx.ext.todo', 'sphinx.ext.coverage', 
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
+		'sphinx.ext.todo', 'sphinx.ext.coverage',
 		'sphinx.ext.mathjax', 'sphinx.ext.autosummary', 'sphinx.ext.intersphinx', 'numpydoc']
 
 # Add any paths that contain templates here, relative to this directory.
@@ -274,6 +278,6 @@ texinfo_documents = [
 # Autosummary
 # -----------------------------------------------------------------------------
 
-if sphinx.__version__ >= "0.7": 
+if sphinx.__version__ >= "0.7":
     import glob
     autosummary_generate = glob.glob("*.rst")
