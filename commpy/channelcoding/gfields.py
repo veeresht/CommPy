@@ -44,7 +44,7 @@ class GF:
         A Galois Field GF(2\ :sup:`m`) object.
 
     Examples
-    ________
+    --------
     >>> from numpy import arange
     >>> from gfields import GF
     >>> x = arange(16)
