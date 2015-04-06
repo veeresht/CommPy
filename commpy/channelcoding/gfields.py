@@ -1,7 +1,7 @@
 
 #   Copyright 2012 Veeresh Taranalli <veeresht@gmail.com>
 #
-#   This file is part of CommPy.   
+#   This file is part of CommPy.
 #
 #   CommPy is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -25,23 +25,23 @@ from commpy.utilities import dec2bitarray, bitarray2dec
 
 __all__ = ['GF', 'polydivide', 'polymultiply', 'poly_to_string']
 
-
 class GF:
-    """ Defines a Binary Galois Field of order m, containing n, 
+    """
+    Defines a Binary Galois Field of order m, containing n,
     where n can be a single element or a list of elements within the field.
 
     Parameters
     ----------
-    n : int 
-    Represents the Galois field element(s).
+    n : int
+        Represents the Galois field element(s).
 
-    m : int 
-    Specifies the order of the Galois Field.
+    m : int
+        Specifies the order of the Galois Field.
 
     Returns
     -------
-    x : int 
-    A Galois Field GF(2\ :sup:`m`) object.
+    x : int
+        A Galois Field GF(2\ :sup:`m`) object.
 
     Examples
     ________
@@ -54,12 +54,13 @@ class GF:
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     >>> print x.prim_poly
     19
+
     """
 
     # Initialization
     def __init__(self, x, m):
         self.m = m
-        primpoly_array = array([0, 3, 7, 11, 19, 37, 67, 137, 285, 529, 1033, 
+        primpoly_array = array([0, 3, 7, 11, 19, 37, 67, 137, 285, 529, 1033,
                                    2053, 4179, 8219, 17475, 32771, 69643])
         self.prim_poly = primpoly_array[self.m]
         if type(x) is int and x >= 0 and x < pow(2, m):
@@ -101,7 +102,7 @@ class GF:
                 cur_state = 1
                 power = 0
                 while cur_state != i:
-                    cur_state = ((cur_state << 1) & (2**self.m-1)) ^ (-((cur_state & 2**(self.m-1)) >> (self.m - 1)) & 
+                    cur_state = ((cur_state << 1) & (2**self.m-1)) ^ (-((cur_state & 2**(self.m-1)) >> (self.m - 1)) &
                                 (self.prim_poly & (2**self.m-1)))
                     power+=1
                 y[idx] = power
@@ -115,7 +116,7 @@ class GF:
         for idx, i in enumerate(power_gf.elements):
             orders[idx] = (2**self.m - 1)/(gcd(i, 2**self.m-1))
         return orders
-    
+
     def cosets(self):
         coset_list = []
         x = self.tuple_to_power().elements
@@ -124,7 +125,7 @@ class GF:
         for idx in xrange(len(x)):
             if mark_list[idx] == 0:
                 a = x[idx]
-                mark_list[idx] = coset_count 
+                mark_list[idx] = coset_count
                 i = 1
                 while (a*(2**i) % (2**self.m-1)) != a:
                     for idx2 in xrange(len(x)):
@@ -156,9 +157,9 @@ class GF:
                             prod_poly = concatenate((prod_poly, array([root_sum])))
                         t = prod_poly[::-1]
                     minpol_list = concatenate((minpol_list, array([bitarray2dec(t[::-1])])))
-    
+
         return minpol_list.astype(int)
-   
+
 # Divide two polynomials and returns the remainder
 def polydivide(x, y):
     r = y
