@@ -1,7 +1,7 @@
 
 #   Copyright 2012 Veeresh Taranalli <veeresht@gmail.com>
 #
-#   This file is part of CommPy.   
+#   This file is part of CommPy.
 #
 #   CommPy is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -25,7 +25,25 @@ from commpy.utilities import dec2bitarray, bitarray2dec
 __all__ = ['cyclic_code_genpoly']
 
 def cyclic_code_genpoly(n, k):
-    
+    """
+    Generate all possible generator polynomials for a (n, k)-cyclic code.
+
+    Parameters
+    ----------
+    n : int
+        Code blocklength of the cyclic code.
+
+    k : int
+        Information blocklength of the cyclic code.
+
+    Returns
+    -------
+    poly_list : 1D ndarray of ints
+        A list of generator polynomials (represented as integers) for the (n, k)-cyclic code.
+
+    """
+
+
     if n%2 == 0:
         raise ValueError, "n cannot be an even number"
 
@@ -35,18 +53,18 @@ def cyclic_code_genpoly(n, k):
 
     x_gf = GF(arange(1, 2**m), m)
     coset_fields = x_gf.cosets()
-    
+
     coset_leaders = array([])
     minpol_degrees = array([])
     for field in coset_fields:
         coset_leaders = concatenate((coset_leaders, array([field.elements[0]])))
         minpol_degrees = concatenate((minpol_degrees, array([len(field.elements)])))
-    
+
     y_gf = GF(coset_leaders, m)
     minpol_list = y_gf.minpolys()
     idx_list = arange(1, len(minpol_list))
     poly_list = array([])
-    
+
     for i in xrange(1, 2**len(minpol_list)):
         i_array = dec2bitarray(i, len(minpol_list))
         subset_array = minpol_degrees[i_array == 1]
@@ -66,7 +84,3 @@ if __name__ == "__main__":
     genpolys = cyclic_code_genpoly(31, 21)
     for poly in genpolys:
         print poly_to_string(poly)
-    
-
-
-
