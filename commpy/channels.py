@@ -16,6 +16,20 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+============================================
+Channel Models (:mod:`commpy.channels`)
+============================================
+
+.. autosummary::
+   :toctree: generated/
+
+   bec                 -- Binary Erasure Channel.
+   bsc                 -- Binary Symmetric Channel.
+   awgn                -- Additive White Gaussian Noise Channel.
+
+"""
+
 from numpy import complex, sum, pi, arange, array, size, shape, real, sqrt
 from numpy import matrix, sqrt, sum, zeros, concatenate, sinc
 from numpy.random import randn, seed, random
