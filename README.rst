@@ -1,9 +1,7 @@
 .. -*- mode: rst -*-
 
-|Travis|_
-
-.. |Travis| image:: https://secure.travis-ci.org/veeresht/CommPy.png?branch=master
-.. _Travis: https://secure.travis-ci.org/veeresht/CommPy
+.. image:: https://secure.travis-ci.org/veeresht/CommPy.png?branch=master
+    :target: https://secure.travis-ci.org/veeresht/CommPy
 
 .. image:: https://coveralls.io/repos/veeresht/CommPy/badge.svg
     :target: https://coveralls.io/r/veeresht/CommPy
