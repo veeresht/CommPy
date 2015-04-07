@@ -66,7 +66,7 @@ def bsc(input_bits, p_t):
     Binary Symmetric Channel.
 
     Parameters
-    __________
+    ----------
     input_bits : 1D ndarray containing {0, 1}
         Input arrary of bits to the channel.
 
@@ -74,7 +74,7 @@ def bsc(input_bits, p_t):
         Transition/Error probability of the channel.
 
     Returns
-    _______
+    -------
     output_bits : 1D ndarray containing {0, 1}
         Output bits from the channel.
     """
