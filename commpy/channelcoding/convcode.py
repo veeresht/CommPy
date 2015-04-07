@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
 import matplotlib.patches as mpatches
 
-from commpy.utilities import dec2bitarray, bitarray2dec, hamming_dist
+from commpy.utilities import dec2bitarray, bitarray2dec, hamming_dist, euclid_dist
 #from commpy.channelcoding.acstb import acs_traceback
 
 __all__ = ['Trellis', 'conv_encode', 'viterbi_decode']
@@ -445,7 +445,7 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
                 pass
             elif decoding_type == 'unquantized':
                 i_codeword_array = 2*i_codeword_array - 1
-                branch_metric = euclid_dist_c(r_codeword, i_codeword_array, n)
+                branch_metric = euclid_dist(r_codeword, i_codeword_array)
             else:
                 pass
 
@@ -474,7 +474,6 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
 
             dec_symbol = decoded_symbols[current_state, j]
             previous_state = paths[current_state, j]
-            #dec2bitarray_c(dec_symbol, k, decoded_bitarray)
             decoded_bitarray = dec2bitarray(dec_symbol, k)
             decoded_bits[(t-tb_depth-1)+(j+1)*k+count:(t-tb_depth-1)+(j+2)*k+count] =  \
                     decoded_bitarray
@@ -504,8 +503,10 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     tb_length : int
         Traceback depth (Typically set to 5*(M+1)).
 
-    decoding_type : str {'hard', 'soft', 'unquantized'}
+    decoding_type : str {'hard', 'unquantized'}
         The type of decoding to be used.
+        'hard' option is used for hard inputs (bits) to the decoder, e.g., BSC channel.
+        'unquantized' option is used for soft inputs (real numbers) to the decoder, e.g., BAWGN channel.
 
     Returns
     -------
@@ -536,15 +537,15 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     L = int(len(coded_bits)*rate)
 
     path_metrics = np.empty([number_states, 2])
-    path_metrics[:, :] = 10000
+    path_metrics[:, :] = 1000000
     path_metrics[0][0] = 0
     paths = np.empty([number_states, tb_depth], 'int')
-    paths[:, :] = 10000
+    paths[:, :] = 1000000
     paths[0][0] = 0
 
     decoded_symbols = np.zeros([number_states, tb_depth], 'int')
-    decoded_bits = np.empty(L+tb_depth+k, 'int')
-    r_codeword = np.empty(n, 'int')
+    decoded_bits = np.zeros(L+tb_depth+k, 'int')
+    r_codeword = np.zeros(n, 'int')
 
     tb_count = 1
     count = 0
@@ -561,7 +562,7 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
                 pass
             elif decoding_type == 'unquantized':
                 r_codeword[:] = 0
-                r_codeword = r_codeword - 1
+                r_codeword = 2*r_codeword - 1
             else:
                 pass
 
@@ -583,4 +584,3 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
             current_number_states = 1
 
     return decoded_bits[0:len(decoded_bits)-tb_depth-1]
-    #return decoded_bits[0:len(decoded_bits)-tb_depth-total_memory-total_memory%k-k]
