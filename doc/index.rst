@@ -65,5 +65,7 @@ Reference
     channelcoding
     channels
     filters
+    impairments
     modulation
     sequences
+    utilities

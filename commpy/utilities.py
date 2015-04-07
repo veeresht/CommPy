@@ -16,9 +16,25 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-""" Utilities module """
+"""
+============================================
+Utilities (:mod:`commpy.utilities`)
+============================================
+
+.. autosummary::
+   :toctree: generated/
+
+   dec2bitarray         -- Integer to binary (bit array).
+   bitarray2dec         -- Binary (bit array) to integer.
+   hamming_dist         -- Hamming distance.
+   euclid_dist          -- Squared Euclidean distance.
+   upsample             -- Upsample by an integral factor (zero insertion).
+
+"""
 
 import numpy as np
+
+__all__ = ['dec2bitarray', 'bitarray2dec', 'hamming_dist', 'euclid_dist', 'upsample']
 
 def dec2bitarray(in_number, bit_width):
     """
@@ -54,8 +70,13 @@ def bitarray2dec(in_bitarray):
 
     Parameters
     ----------
-    in_bitarray: 1D ndarray of ints
+    in_bitarray : 1D ndarray of ints
         Input NumPy array of bits.
+
+    Returns
+    -------
+    number : int
+        Integer representation of input bit array.
     """
 
     number = 0
@@ -71,11 +92,16 @@ def hamming_dist(in_bitarray_1, in_bitarray_2):
 
     Parameters
     ----------
-    in_bit_array_1: 1D ndarray of ints
+    in_bit_array_1 : 1D ndarray of ints
         NumPy array of bits.
 
-    in_bit_array_2: 1-D ndarray of ints
+    in_bit_array_2 : 1D ndarray of ints
         NumPy array of bits.
+
+    Returns
+    -------
+    distance : int
+        Hamming distance between input bit arrays.
     """
 
     distance = np.bitwise_xor(in_bitarray_1, in_bitarray_2).sum()
@@ -88,11 +114,16 @@ def euclid_dist(in_array1, in_array2):
 
     Parameters
     ----------
-    in_array1: 1-D ndarray of floats
+    in_array1 : 1D ndarray of floats
         NumPy array of real values.
 
-    in_array2: 1-D ndarray of floats
+    in_array2 : 1D ndarray of floats
         NumPy array of real values.
+
+    Returns
+    -------
+    distance : float
+        Squared Euclidean distance between two input arrays.
     """
     distance = ((in_array1 - in_array2)*(in_array1 - in_array2)).sum()
 
@@ -106,11 +137,16 @@ def upsample(x, n):
 
     Parameters
     ----------
-    x: 1-D ndarray
+    x : 1D ndarray
         Input array.
 
-    n: int
+    n : int
         Upsampling factor
+
+    Returns
+    -------
+    y : 1D ndarray
+        Output upsampled array.
     """
     y = np.empty(len(x)*n, dtype=complex)
     y[0::n] = x
