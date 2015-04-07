@@ -8,7 +8,6 @@
 
 .. image:: https://readthedocs.org/projects/commpy/badge/?version=latest
     :target: https://readthedocs.org/projects/commpy/?badge=latest
-    :alt: Documentation Status
 
 
 CommPy
