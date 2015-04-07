@@ -18,6 +18,7 @@ from filters import *
 from modulation import *
 from impairments import *
 from sequences import *
+from channels import *
 
 try:
     from numpy.testing import Tester
