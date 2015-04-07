@@ -6,15 +6,15 @@
 CommPy
 ==================================
 
-CommPy is an open source package implementing digital communications algorithms 
-in Python using NumPy, SciPy, Matplotlib and Cython.
+CommPy is an open source package implementing digital communications algorithms
+in Python using NumPy, SciPy and Matplotlib.
 
 Reference
 ---------
 .. toctree::
     :maxdepth: 1
-    
+
     channelcoding
+    channels
     filters
-
-
+    sequences

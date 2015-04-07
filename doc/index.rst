@@ -63,6 +63,7 @@ Reference
     :maxdepth: 1
 
     channelcoding
+    channels
     filters
     modulation
     sequences
