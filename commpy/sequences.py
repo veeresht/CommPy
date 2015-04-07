@@ -33,8 +33,8 @@ __all__ = ['pnsequence', 'zcsequence']
 from numpy import array, empty, zeros, roll, exp, pi, arange
 
 def pnsequence(pn_order, pn_seed, pn_mask, seq_length):
-    """ Generate a PN (Pseudo-Noise) sequence using a
-        Linear Feedback Shift Register (LFSR).
+    """
+    Generate a PN (Pseudo-Noise) sequence using a Linear Feedback Shift Register (LFSR).
 
     Parameters
     ----------
@@ -77,7 +77,8 @@ def pnsequence(pn_order, pn_seed, pn_mask, seq_length):
     return pnseq.astype(int)
 
 def zcsequence(u, seq_length):
-    """ Generate a Zadoff-Chu (ZC) sequence.
+    """
+    Generate a Zadoff-Chu (ZC) sequence.
 
     Parameters
     ----------
