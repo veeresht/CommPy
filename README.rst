@@ -4,11 +4,13 @@
 
 .. |Travis| image:: https://secure.travis-ci.org/veeresht/CommPy.png?branch=master
 .. _Travis: https://secure.travis-ci.org/veeresht/CommPy
+
 .. image:: https://coveralls.io/repos/veeresht/CommPy/badge.svg
-:target: https://coveralls.io/r/veeresht/CommPy
+    :target: https://coveralls.io/r/veeresht/CommPy
+
 .. image:: https://readthedocs.org/projects/commpy/badge/?version=latest
-:target: https://readthedocs.org/projects/commpy/?badge=latest
-:alt: Documentation Status
+    :target: https://readthedocs.org/projects/commpy/?badge=latest
+    :alt: Documentation Status
 
 
 CommPy
