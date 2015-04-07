@@ -19,10 +19,10 @@
 from numpy import complex, sum, pi, arange, array, size, shape, real, sqrt
 from numpy import matrix, sqrt, sum, zeros, concatenate, sinc
 from numpy.random import randn, seed, random
-from scipy.special import gamma, jn
-from scipy.signal import hamming, convolve, resample
-from scipy.fftpack import ifft, fftshift, fftfreq
-from scipy.interpolate import interp1d
+#from scipy.special import gamma, jn
+#from scipy.signal import hamming, convolve, resample
+#from scipy.fftpack import ifft, fftshift, fftfreq
+#from scipy.interpolate import interp1d
 
 __all__=['bec', 'bsc', 'awgn']
 
