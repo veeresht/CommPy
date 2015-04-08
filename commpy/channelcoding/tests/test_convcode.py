@@ -72,6 +72,16 @@ class TestConvCode(object):
             decoded_bits = viterbi_decode(coded_bits.astype(float), self.trellis_1, 15)
             assert_array_equal(decoded_bits[:-2], msg)
 
+            coded_bits = conv_encode(msg, self.trellis_1)
+            coded_syms = 2.0*coded_bits - 1
+            decoded_bits = viterbi_decode(coded_syms, self.trellis_1, 15, 'unquantized')
+            assert_array_equal(decoded_bits[:-2], msg)
+
             coded_bits = conv_encode(msg, self.trellis_2)
             decoded_bits = viterbi_decode(coded_bits.astype(float), self.trellis_2, 15)
+            assert_array_equal(decoded_bits[:-2], msg)
+
+            coded_bits = conv_encode(msg, self.trellis_2)
+            coded_syms = 2.0*coded_bits - 1
+            decoded_bits = viterbi_decode(coded_syms, self.trellis_2, 15, 'unquantized')
             assert_array_equal(decoded_bits[:-2], msg)
