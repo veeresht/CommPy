@@ -106,7 +106,7 @@ Installation
 
 Citing CommPy
 ^^^^^^^^^^^^^
-If you use CommPy in a publication, presentation or a demo, I request you to please cite CommPy as follows:
+If you use CommPy for a publication, presentation or a demo, I request you to please cite CommPy as follows:
 
 Veeresh Taranalli, "CommPy: Digital Communication with Python, version 0.3.0. Available at https://github.com/veeresht/CommPy", 2015.
 
