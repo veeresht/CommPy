@@ -73,6 +73,9 @@ class GF:
              raise ValueError, "Two sets of elements cannot be multiplied"
 
     def power_to_tuple(self):
+        """
+        Convert Galois field elements from power form to tuple form representation.
+        """
         y = zeros(len(self.elements))
         for idx, i in enumerate(self.elements):
             if 2**i < 2**self.m:
@@ -82,6 +85,9 @@ class GF:
         return GF(y, self.m)
 
     def tuple_to_power(self):
+        """
+        Convert Galois field elements from tuple form to power form representation.
+        """
         y = zeros(len(self.elements))
         for idx, i in enumerate(self.elements):
             if i != 0:
@@ -98,6 +104,9 @@ class GF:
         return GF(y, self.m)
 
     def order(self):
+        """
+        Compute the orders of the Galois field elements.
+        """
         orders = zeros(len(self.elements))
         power_gf = self.tuple_to_power()
         for idx, i in enumerate(power_gf.elements):
@@ -105,6 +114,9 @@ class GF:
         return orders
 
     def cosets(self):
+        """
+        Compute the cyclotomic cosets of the Galois field.
+        """
         coset_list = []
         x = self.tuple_to_power().elements
         mark_list = zeros(len(x))
@@ -127,6 +139,9 @@ class GF:
         return coset_list
 
     def minpolys(self):
+        """
+        Compute the minimal polynomials for all elements of the Galois field.
+        """
         minpol_list = array([])
         full_gf = GF(arange(2**self.m), self.m)
         full_cosets = full_gf.cosets()

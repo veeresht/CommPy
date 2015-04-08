@@ -86,7 +86,7 @@ class Trellis:
     2
     >>> print trellis.number_states
     4
-    print trellis.number_inputs
+    >>> print trellis.number_inputs
     2
     >>> print trellis.next_state_table
     [[0 2]
