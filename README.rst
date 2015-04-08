@@ -93,19 +93,23 @@ Requirements/Dependencies
 Installation
 ^^^^^^^^^^^^
 
-- Clone from github and install as follows (recommended)::
+- To use the released version on PyPi, use pip or conda to install as follows::
+
+                $ pip install scikit-commpy
+                $ conda install -c https://conda.binstar.org/veeresht scikit-commpy
+
+- To work with the development branch, clone from github and install as follows::
 
                 $ git clone https://github.com/veeresht/CommPy.git
                 $ cd CommPy
-                $ sudo python setup.py install
+                $ python setup.py install
 
-- To install using pip or easy_install use the following commands::
+Citing CommPy
+^^^^^^^^^^^^^
+If you use it in a publication, presentation or a demo, I request you to please cite CommPy as follows::
 
-                $ sudo pip install scikit-commpy
-                $ sudo easy_install scikit-commpy
+V. Taranalli, "CommPy: Digital Communications in Python, version 0.3.0. Available at https://github.com/veeresht/CommPy", 2015.
 
-
-I would greatly appreciate your feedback if you have found CommPy useful. Just send me a mail: veeresht@gmail.com
-
+I would also greatly appreciate your feedback if you have found CommPy useful. Just send me a mail: veeresht@gmail.com
 
 For more details on CommPy, please visit http://veeresht.github.com/CommPy
