@@ -1,20 +1,7 @@
 
-#   Copyright 2012 Veeresh Taranalli <veeresht@gmail.com>
-#
-#   This file is part of CommPy.   
-#
-#   CommPy is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-#
-#   CommPy is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# License: BSD 3-Clause
 
 """ LDPC Codes """
 from numpy import zeros, shape, tanh, arctanh, array, delete, prod, dot
@@ -22,7 +9,7 @@ from numpy import zeros, shape, tanh, arctanh, array, delete, prod, dot
 __all__ = ['ldpc_decode']
 
 def ldpc_decode(pcheck_matrix, rx_codeword, n_iters):
-    """ 
+    """
     LDPC Decoder using belief propagation for an AWGN channel.
 
     Parameters
@@ -53,10 +40,10 @@ def ldpc_decode(pcheck_matrix, rx_codeword, n_iters):
                     prev_llrs = delete(llr_vals, v_node)
                     prev_llrs = prev_llrs[delete(pcheck_matrix[c_node, :], v_node) == 1]
                     prev_compvals = delete(comp_mat[c_node, :], v_node)
-                    prev_compvals = prev_compvals[delete(pcheck_matrix[c_node, :], v_node) == 1]        
+                    prev_compvals = prev_compvals[delete(pcheck_matrix[c_node, :], v_node) == 1]
                     llr_prod = prod(tanh(-(prev_llrs - prev_compvals)/2))
                     comp_mat[c_node, v_node] = -2 * arctanh(llr_prod)
-        
+
         # Variable Node Update
         for v_node in xrange(n_v_nodes):
             llr_vals[v_node] = llr_vals[v_node] + sum(comp_mat[:,v_node][pcheck_matrix[:,v_node]==1])
@@ -65,12 +52,12 @@ def ldpc_decode(pcheck_matrix, rx_codeword, n_iters):
         if not (dot(pcheck_matrix, decoded_bits)%2).any():
             print "Perfect Decoding, # Iterations: " + str(i+1)
             break
-    
+
     return decoded_bits
 
 if __name__ == '__main__':
 
-    pcheck_matrix = array([[1, 1, 1, 0, 0, 1, 1, 0, 0, 1], 
+    pcheck_matrix = array([[1, 1, 1, 0, 0, 1, 1, 0, 0, 1],
                            [1, 0, 1, 0, 1, 1, 0, 1, 1, 0],
                            [0, 0, 1, 1, 1, 0, 1, 0, 1, 1],
                            [0, 1, 0, 1, 1, 1, 0, 1, 0, 1],
@@ -78,7 +65,5 @@ if __name__ == '__main__':
     rx_codeword = array([-1.3, -1.7, -1.5, -0.08, 0.2, 1.9, -1.5, 1.3, -1.1, 1.2])
     n_iters = 10
     decoded_bits = ldpc_decode(pcheck_matrix, rx_codeword, n_iters)
-        
+
     print decoded_bits
-
-

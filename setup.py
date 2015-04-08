@@ -1,3 +1,7 @@
+
+# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# License: BSD 3-Clause
+
 import os, sys, shutil, numpy
 from setuptools import find_packages
 from distutils.core import setup
@@ -35,9 +39,9 @@ LONG_DESCRIPTION = open('README').read()
 MAINTAINER = 'Veeresh Taranalli'
 MAINTAINER_EMAIL = 'veeresht@gmail.com'
 URL = 'http://veeresht.github.com/CommPy'
-LICENSE = 'GPL'
+LICENSE = 'BSD 3-Clause'
 # DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
-VERSION = '0.2.0'
+VERSION = '0.3.0'
 
 #This is a list of files to install, and where
 #(relative to the 'root' dir, where setup.py is)
@@ -74,7 +78,7 @@ setup(
     test_suite='nose.collector',
     tests_require=['nose'],
 
-    long_description = """ Work in progress """,
+    long_description = LONG_DESCRIPTION,
     classifiers = [
         'Development Status :: 1 - Planning',
         'Intended Audience :: Science/Research',

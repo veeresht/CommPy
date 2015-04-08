@@ -1,20 +1,7 @@
 
-#   Copyright 2012 Veeresh Taranalli <veeresht@gmail.com>
-#
-#   This file is part of CommPy.   
-#
-#   CommPy is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-#
-#   CommPy is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# License: BSD 3-Clause
 
 """ Interleavers and De-interleavers """
 
@@ -41,7 +28,7 @@ class _Interleaver:
         """
         out_array = array(map(lambda x: in_array[x], self.p_array))
         return out_array
-    
+
     def deinterlv(self, in_array):
         """ De-interleave input array using the specific interleaver.
 
@@ -62,7 +49,7 @@ class _Interleaver:
         return out_array
 
 class RandInterlv(_Interleaver):
-    """ Random Interleaver. 
+    """ Random Interleaver.
 
     Parameters
     ----------
@@ -70,10 +57,10 @@ class RandInterlv(_Interleaver):
         Length of the interleaver.
 
     seed : int
-        Seed to initialize the random number generator 
-        which generates the random permutation for 
-        interleaving. 
-    
+        Seed to initialize the random number generator
+        which generates the random permutation for
+        interleaving.
+
     Returns
     -------
     random_interleaver : RandInterlv object
@@ -81,11 +68,11 @@ class RandInterlv(_Interleaver):
 
     Note
     ----
-    The random number generator is the 
-    RandomState object from NumPy, 
-    which uses the Mersenne Twister algorithm. 
-    
-    """ 
+    The random number generator is the
+    RandomState object from NumPy,
+    which uses the Mersenne Twister algorithm.
+
+    """
     def __init__(self, length, seed):
         rand_gen = mtrand.RandomState(seed)
         self.p_array = rand_gen.permutation(arange(length))
@@ -95,6 +82,3 @@ class RandInterlv(_Interleaver):
 
 
 #class QPPInterlv(_Interleaver):
-
-
-

@@ -1,20 +1,6 @@
 
-#   Copyright 2012 Veeresh Taranalli <veeresht@gmail.com>
-#
-#   This file is part of CommPy.   
-#
-#   CommPy is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-#
-#   CommPy is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# License: BSD 3 clause
 
 from numpy import array, ones_like, arange
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_, assert_equal
@@ -80,7 +66,3 @@ class TestGaloisFields(object):
         x = GF(array([2, 8, 32, 6, 24, 35, 10, 40, 59, 41, 14, 37]), m)
         z = array([67, 87, 103, 73, 13, 109, 91, 117, 7, 115, 11, 97])
         assert_array_equal(x.minpolys(), z)
-
-
-
-        

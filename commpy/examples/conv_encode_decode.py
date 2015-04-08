@@ -1,24 +1,13 @@
-#   Copyright 2012 Veeresh Taranalli <veeresht@gmail.com>
-#
-#   This program is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# License: BSD 3-Clause
 
 import numpy as np
 import commpy.channelcoding.convcode as cc
 from commpy.utilities import *
 
 # =============================================================================
-# Example showing the encoding and decoding of convolutional codes 
+# Example showing the encoding and decoding of convolutional codes
 # =============================================================================
 
 # G(D) corresponding to the convolutional encoder
@@ -47,10 +36,10 @@ for i in range(10):
 
     # Decode the received bits
     decoded_bits = cc.viterbi_decode(coded_bits.astype(float), trellis, tb_depth)
-    
+
     num_bit_errors = hamming_dist(message_bits, decoded_bits[:-M])
     #num_bit_errors = 1
-    
+
     if num_bit_errors !=0:
         #print num_bit_errors, "Bit Errors found!"
         #print message_bits
@@ -66,4 +55,3 @@ for i in range(10):
 #print coded_bits
 #print "==== Decoded Bits ==="
 #print decoded_bits[tb_depth:]
-
