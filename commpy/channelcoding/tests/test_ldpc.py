@@ -7,11 +7,15 @@ from numpy.testing import assert_allclose
 from commpy.channelcoding.ldpc import get_ldpc_code_params, ldpc_bp_decode
 from commpy.utilities import hamming_dist
 
+import os
+
 class TestLDPCCode(object):
 
     @classmethod
     def setup_class(cls):
-        ldpc_design_file_1 = "channelcoding/designs/ldpc/gallager/96.33.964.txt"
+        dir = os.path.dirname(__file__)
+        ldpc_design_file_1 = os.path.join(dir, '../designs/ldpc/gallager/96.33.964.txt')
+        #ldpc_design_file_1 = "../designs/ldpc/gallager/96.33.964.txt"
         cls.ldpc_code_params = get_ldpc_code_params(ldpc_design_file_1)
 
     @classmethod
