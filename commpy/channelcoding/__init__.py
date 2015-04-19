@@ -11,8 +11,8 @@ Galois Fields
 .. autosummary::
     :toctree: generated/
 
-    GF               -- Class representing a Galois Field object. 
-    
+    GF               -- Class representing a Galois Field object.
+
 Algebraic Codes
 ===============
 
@@ -27,7 +27,7 @@ Convolutional Codes
 
 .. autosummary::
     :toctree: generated/
-    
+
     Trellis          -- Class representing convolutional code trellis.
     conv_encode      -- Convolutional Encoder.
     viterbi_decode   -- Convolutional Decoder using the Viterbi algorithm.
@@ -48,7 +48,7 @@ LDPC Codes
 
 .. autosummary::
 
-    ldpc_decode     -- LDPC Code Decoder using Belief propagation for AWGN.
+    ldpc_bp_decode     -- LDPC Code Decoder using Belief propagation.
 
 Interleavers and De-interleavers
 ================================
@@ -63,7 +63,7 @@ Interleavers and De-interleavers
 from convcode import Trellis, conv_encode, viterbi_decode
 from interleavers import *
 from turbo import turbo_encode, map_decode, turbo_decode
-from ldpc import ldpc_decode
+from ldpc import get_ldpc_code_params, ldpc_bp_decode
 from gfields import *
 from algcode import *
 
