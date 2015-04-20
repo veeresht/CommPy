@@ -6,9 +6,11 @@ from numpy.random import randn
 from numpy.testing import assert_allclose
 from commpy.channelcoding.ldpc import get_ldpc_code_params, ldpc_bp_decode
 from commpy.utilities import hamming_dist
-
 import os
 
+from nose.plugins.attrib import attr
+
+@attr('slow')
 class TestLDPCCode(object):
 
     @classmethod

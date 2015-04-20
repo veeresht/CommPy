@@ -13,8 +13,7 @@ install:
     - pip install coveralls
     - python setup.py install
 script:
-    - nosetests
-    - nosetests  --with-coverage --cover-package=commpy
+    - nosetests -a '!slow' --with-coverage --cover-package=commpy
 after_success:
     - coveralls
 
