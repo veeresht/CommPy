@@ -47,8 +47,10 @@ LDPC Codes
 ==========
 
 .. autosummary::
+    :toctree: generated/
 
-    ldpc_bp_decode     -- LDPC Code Decoder using Belief propagation.
+    get_ldpc_code_params    -- Extract parameters from LDPC code design file.
+    ldpc_bp_decode          -- LDPC Code Decoder using Belief propagation.
 
 Interleavers and De-interleavers
 ================================
