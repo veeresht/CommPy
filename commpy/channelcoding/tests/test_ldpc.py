@@ -27,13 +27,13 @@ class TestLDPCCode(object):
         k = 48
         rate = 0.5
         Es = 1.0
-        snr_list = array([1.0, 1.5, 2.0, 2.5])
+        snr_list = array([2.0, 2.5])
         niters = 10000000
         tx_codeword = zeros(N, int)
         ldpcbp_iters = 100
 
-        fer_array_ref = array([200.0/350, 200.0/550, 200.0/1000, 200.0/2000])
-        fer_array_test = zeros(4)
+        fer_array_ref = array([200.0/1000, 200.0/2000])
+        fer_array_test = zeros(len(snr_list))
 
         for idx, ebno in enumerate(snr_list):
 
