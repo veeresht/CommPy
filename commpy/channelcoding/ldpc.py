@@ -136,6 +136,8 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, n_iters):
     cnode_msgs = np.zeros(n_cnodes*max_cnode_deg)
     vnode_msgs = np.zeros(n_vnodes*max_vnode_deg)
 
+    _limit_llr_v = np.vectorize(_limit_llr)
+
     # Initialize vnode messages with the LLR values received
     for vnode_idx in xrange(n_vnodes):
         start_idx = vnode_idx*max_vnode_deg
@@ -149,39 +151,30 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, n_iters):
 
         # Check Node Update
         for cnode_idx in xrange(n_cnodes):
-            #start_idx = cnode_idx*max_cnode_deg
-            #offset = cnode_deg_list[cnode_idx]
-            #vnode_list = cnode_adj_list[start_idx:start_idx+offset]
-            #msg_prod = np.prod(np.tanh(vnode_msgs[vnode_list*max_vnode_deg + cnode_vnode_map[cnode_idx*max_cnode_deg + np.arange(cnode_deg_list[cnode_idx], int)]]/2.0))
 
-            msg_prod = 1.0
-            for i in xrange(cnode_deg_list[cnode_idx]):
-                vnode = cnode_adj_list[cnode_idx*max_cnode_deg + i]
-                msg_prod *= np.tanh(vnode_msgs[vnode*max_vnode_deg +
-                                    cnode_vnode_map[cnode_idx*max_cnode_deg + i]]/2.0)
+            start_idx = cnode_idx*max_cnode_deg
+            offset = cnode_deg_list[cnode_idx]
+            vnode_list = cnode_adj_list[start_idx:start_idx+offset]
+            vnode_list_msgs_tanh = np.tanh(vnode_msgs[vnode_list*max_vnode_deg +
+                                           cnode_vnode_map[start_idx:start_idx+offset]]/2.0)
+            msg_prod = np.prod(vnode_list_msgs_tanh)
 
             # Compute messages on outgoing edges using the incoming message product
-            for i in xrange(cnode_deg_list[cnode_idx]):
-                vnode = cnode_adj_list[cnode_idx*max_cnode_deg + i]
-                c_msg = 2.0*np.arctanh(msg_prod/np.tanh(vnode_msgs[vnode*max_vnode_deg +
-                                                     cnode_vnode_map[cnode_idx*max_cnode_deg + i]]/2.0))
-                cnode_msgs[cnode_idx*max_cnode_deg + i] = c_msg
-
+            cnode_msgs[start_idx:start_idx+offset]= 2.0*np.arctanh(msg_prod/vnode_list_msgs_tanh)
 
         # Variable Node Update
         for vnode_idx in xrange(n_vnodes):
 
-            msg_sum = 0
             # Compute sum of all incoming messages at the variable node
-            for i in xrange(vnode_deg_list[vnode_idx]):
-                cnode = vnode_adj_list[vnode_idx*max_vnode_deg + i]
-                msg_sum += cnode_msgs[cnode*max_cnode_deg + vnode_cnode_map[vnode_idx*max_vnode_deg + i]]
+            start_idx = vnode_idx*max_vnode_deg
+            offset = vnode_deg_list[vnode_idx]
+            cnode_list = vnode_adj_list[start_idx:start_idx+offset]
+            cnode_list_msgs = cnode_msgs[cnode_list*max_cnode_deg + vnode_cnode_map[start_idx:start_idx+offset]]
+            msg_sum = np.sum(cnode_list_msgs)
 
             # Compute messages on outgoing edges using the incoming message sum
-            for i in xrange(vnode_deg_list[vnode_idx]):
-                cnode = vnode_adj_list[vnode_idx*max_vnode_deg + i]
-                v_msg = _limit_llr(llr_vec[vnode_idx] + msg_sum - cnode_msgs[cnode*max_cnode_deg + vnode_cnode_map[vnode_idx*max_vnode_deg + i]])
-                vnode_msgs[vnode_idx*max_vnode_deg + i] = v_msg
+            vnode_msgs[start_idx:start_idx+offset] = _limit_llr_v(llr_vec[vnode_idx] + msg_sum -
+                                                                  cnode_list_msgs)
 
             # Update output LLRs and decoded word
             out_llrs[vnode_idx] = llr_vec[vnode_idx] + msg_sum
