@@ -32,6 +32,7 @@ Channel Coding
 - Binary Galois Field GF(2^m) with minimal polynomials and cyclotomic cosets.
 - Create all possible generator polynomials for a (n,k) cyclic code.
 - Random Interleavers and De-interleavers.
+- Belief Propagation (BP) Decoder for LDPC Codes.
 
 Channel Models
 ~~~~~~~~~~~~~~
