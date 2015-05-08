@@ -150,7 +150,7 @@ def gaussianfilter(N, alpha, Ts, Fs):
 
     T_delta = 1/float(Fs)
     time_idx = ((np.arange(N)-N/2))*T_delta
-    h_gaussian = (np.sqrt(np.pi)/alpha)*np.exp(-((np.pi*time_index/alpha)*(np.pi*time_index/alpha)))
+    h_gaussian = (np.sqrt(np.pi)/alpha)*np.exp(-((np.pi*time_idx/alpha)*(np.pi*time_idx/alpha)))
 
     return time_idx, h_gaussian
 
