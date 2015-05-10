@@ -94,8 +94,38 @@ def _limit_llr(in_llr):
 
     return out_llr
 
+def sum_product_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
+                       vnode_msgs, cnode_vnode_map, max_cnode_deg, max_vnode_deg):
 
-def ldpc_bp_decode(llr_vec, ldpc_code_params, n_iters):
+    start_idx = cnode_idx*max_cnode_deg
+    offset = cnode_deg_list[cnode_idx]
+    vnode_list = cnode_adj_list[start_idx:start_idx+offset]
+    vnode_list_msgs_tanh = np.tanh(vnode_msgs[vnode_list*max_vnode_deg +
+                                   cnode_vnode_map[start_idx:start_idx+offset]]/2.0)
+    msg_prod = np.prod(vnode_list_msgs_tanh)
+
+    # Compute messages on outgoing edges using the incoming message product
+    cnode_msgs[start_idx:start_idx+offset]= 2.0*np.arctanh(msg_prod/vnode_list_msgs_tanh)
+
+
+def min_sum_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
+                   vnode_msgs, cnode_vnode_map, max_cnode_deg, max_vnode_deg):
+
+    start_idx = cnode_idx*max_cnode_deg
+    offset = cnode_deg_list[cnode_idx]
+    vnode_list = cnode_adj_list[start_idx:start_idx+offset]
+    vnode_list_msgs = vnode_msgs[vnode_list*max_vnode_deg +
+                                      cnode_vnode_map[start_idx:start_idx+offset]]
+    vnode_list_msgs = np.ma.array(vnode_list_msgs, mask=False)
+
+    # Compute messages on outgoing edges using the incoming messages
+    for i in xrange(start_idx, start_idx+offset):
+        vnode_list_msgs.mask[i-start_idx] = True
+        cnode_msgs[i] = np.prod(np.sign(vnode_list_msgs))*np.min(np.abs(vnode_list_msgs))
+        vnode_list_msgs.mask[i-start_idx] = False
+        #print cnode_msgs[i]
+
+def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
     """
     LDPC Decoder using Belief Propagation (BP).
 
@@ -106,6 +136,11 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, n_iters):
 
     ldpc_code_params : dictionary
         Parameters of the LDPC code.
+
+    decoder_algorithm: string
+        Specify the decoder algorithm type.
+        SPA for Sum-Product Algorithm
+        MSA for Min-Sum Algorithm
 
     n_iters : int
         Max. number of iterations of decoding to be done.
@@ -138,6 +173,13 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, n_iters):
 
     _limit_llr_v = np.vectorize(_limit_llr)
 
+    if decoder_algorithm == 'SPA':
+        check_node_update = sum_product_update
+    elif decoder_algorithm == 'MSA':
+        check_node_update = min_sum_update
+    else:
+        raise NameError('Please input a valid decoder_algorithm string.')
+
     # Initialize vnode messages with the LLR values received
     for vnode_idx in xrange(n_vnodes):
         start_idx = vnode_idx*max_vnode_deg
@@ -152,15 +194,8 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, n_iters):
         # Check Node Update
         for cnode_idx in xrange(n_cnodes):
 
-            start_idx = cnode_idx*max_cnode_deg
-            offset = cnode_deg_list[cnode_idx]
-            vnode_list = cnode_adj_list[start_idx:start_idx+offset]
-            vnode_list_msgs_tanh = np.tanh(vnode_msgs[vnode_list*max_vnode_deg +
-                                           cnode_vnode_map[start_idx:start_idx+offset]]/2.0)
-            msg_prod = np.prod(vnode_list_msgs_tanh)
-
-            # Compute messages on outgoing edges using the incoming message product
-            cnode_msgs[start_idx:start_idx+offset]= 2.0*np.arctanh(msg_prod/vnode_list_msgs_tanh)
+            check_node_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
+                              vnode_msgs, cnode_vnode_map, max_cnode_deg, max_vnode_deg)
 
         # Variable Node Update
         for vnode_idx in xrange(n_vnodes):
