@@ -68,7 +68,7 @@ def _compute_branch_prob(code_bit_0, code_bit_1, rx_symbol_0, rx_symbol_1,
     y = rx_symbol_1 - code_symbol_1
 
     # Normalized branch transition probability
-    branch_prob = np.exp(-(x*x + y*y)/(2*noise_variance))
+    branch_prob = exp(-(x*x + y*y)/(2*noise_variance))
 
     return branch_prob
 
@@ -80,7 +80,7 @@ def _backward_recursion(trellis, msg_length, noise_variance,
     number_states = trellis.number_states
     number_inputs = trellis.number_inputs
 
-    codeword_array = np.empty(n, 'int')
+    codeword_array = empty(n, 'int')
     next_state_table = trellis.next_state_table
     output_table = trellis.output_table
 
@@ -117,7 +117,7 @@ def _forward_recursion_decoding(trellis, mode, msg_length, noise_variance,
     number_states = trellis.number_states
     number_inputs = trellis.number_inputs
 
-    codeword_array = np.empty(n, 'int')
+    codeword_array = empty(n, 'int')
     next_state_table = trellis.next_state_table
     output_table = trellis.output_table
 
@@ -139,7 +139,7 @@ def _forward_recursion_decoding(trellis, mode, msg_length, noise_variance,
                                        branch_prob *
                                        b_state_metrics[next_state, time_index])
 
-        lappr = L_int[time_index-1] + np.log(app[1]/app[0])
+        lappr = L_int[time_index-1] + log(app[1]/app[0])
         L_ext[time_index-1] = lappr
 
         if mode == 'decode':
