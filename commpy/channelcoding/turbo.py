@@ -51,7 +51,9 @@ def turbo_encode(msg_bits, trellis1, trellis2, interleaver):
     puncture_matrix = array([[0, 1]])
     non_sys_stream_2 = conv_encode(interlv_msg_bits, trellis2, 'rsc', puncture_matrix)
 
-    non_sys_stream_2 = non_sys_stream_2[0:-2]
+    sys_stream = sys_stream[0:-trellis1.total_memory]
+    non_sys_stream_1 = non_sys_stream_1[0:-trellis1.total_memory]
+    non_sys_stream_2 = non_sys_stream_2[0:-trellis2.total_memory]
 
     return [sys_stream, non_sys_stream_1, non_sys_stream_2]
 
