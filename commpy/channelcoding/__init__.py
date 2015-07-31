@@ -11,7 +11,7 @@ Galois Fields
 .. autosummary::
     :toctree: generated/
 
-    GF               -- Class representing a Galois Field object.
+    GF   -- Class representing a Galois Field object.
 
 Algebraic Codes
 ===============
