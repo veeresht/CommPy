@@ -112,8 +112,8 @@ class PSKModem(Modem):
         self.m = m
         self.num_bits_symbol = int(log2(self.m))
         self.symbol_mapping = arange(self.m)
-        self.constellation = map(self._constellation_symbol,
-                                 self.symbol_mapping)
+        self.constellation = array(map(self._constellation_symbol,
+                                 self.symbol_mapping))
 
 class QAMModem(Modem):
     """ Creates a Quadrature Amplitude Modulation (QAM) Modem object."""
