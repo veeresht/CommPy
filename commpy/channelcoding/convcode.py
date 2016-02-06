@@ -432,7 +432,6 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
                 pass
             elif decoding_type == 'unquantized':
                 i_codeword_array = 2*i_codeword_array - 1
-                print r_codeword
                 branch_metric = euclid_dist(r_codeword, i_codeword_array)
             else:
                 pass
@@ -539,16 +538,10 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     count = 0
     current_number_states = number_states
 
-    #for t in xrange(1, (L+total_memory+total_memory%k)/k + 1):
-    for t in xrange(1, (L/k) + 1):
-
+    for t in xrange(1, (L+total_memory+total_memory%k)/k + 1):
         # Get the received codeword corresponding to t
         if t <= L:
-            print "t less than L"
-            print "t =", t
-            print "L =", L
             r_codeword = coded_bits[(t-1)*n:t*n]
-            print r_codeword
         else:
             if decoding_type == 'hard':
                 r_codeword[:] = 0
