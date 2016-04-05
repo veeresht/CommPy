@@ -93,6 +93,14 @@ class Modem:
 
         return demod_bits
 
+    def mapping(self, input_symbols, map_type, noise_var = 0):
+        if map_type == 'hard':
+            index_list = map(lambda i: self.constellation[argmin(abs(input_symbols[i] - self.constellation))], \
+                             xrange(0, len(input_symbols)))
+        else:
+            pass
+        return index_list
+
 
 class PSKModem(Modem):
     """ Creates a Phase Shift Keying (PSK) Modem object. """
