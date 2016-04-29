@@ -8,8 +8,9 @@ before_install:
     - virtualenv --system-site-packages ~/virtualenv/this
     - source ~/virtualenv/this/bin/activate
 install:
-#    - pip install -r requirements.txt
+    - pip install -r requirements.txt
     - pip install nose
+    - pip install coverage
     - pip install coveralls
     - python setup.py install
 script:
