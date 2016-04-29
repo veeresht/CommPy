@@ -15,7 +15,7 @@ import sys, os
 
 import sphinx
 
-from mock import Mock as MagicMock
+#from mock import Mock as MagicMock
 
 #class Mock(object):
 #    def __init__(self, *args, **kwargs):
@@ -33,19 +33,19 @@ from mock import Mock as MagicMock
 #        else:
 #            return Mock()
 
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-            return Mock()
+# class Mock(MagicMock):
+#     @classmethod
+#     def __getattr__(cls, name):
+#             return Mock()
 
 
-MOCK_MODULES = ['numpy', 'numpy.fft', 'scipy', 'matplotlib', 'matplotlib.pyplot',
-                'matplotlib.collections', 'matplotlib.patches',
-                'numpy.random']
-for mod_name in MOCK_MODULES:
-    #sys.modules[mod_name] = Mock()
-    #sys.modules[mod_name] = mock.Mock()
-    sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+# MOCK_MODULES = ['numpy', 'numpy.fft', 'scipy', 'matplotlib', 'matplotlib.pyplot',
+#                 'matplotlib.collections', 'matplotlib.patches',
+#                 'numpy.random']
+# for mod_name in MOCK_MODULES:
+#     #sys.modules[mod_name] = Mock()
+#     #sys.modules[mod_name] = mock.Mock()
+#     sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
