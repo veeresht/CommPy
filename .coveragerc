@@ -1,5 +1,6 @@
-[report]
+[run]
+branch = True
+source = commpy
+include = */commpy/*
 omit =
-    */python?.?/*
-    */site-packages/nose/*
-    *__init__*
+    */setup.py
