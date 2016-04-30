@@ -1,10 +1,13 @@
 .. -*- mode: rst -*-
 
-.. image:: https://secure.travis-ci.org/veeresht/CommPy.png?branch=master
+.. image:: https://secure.travis-ci.org/veeresht/CommPy.svg?branch=master
     :target: https://secure.travis-ci.org/veeresht/CommPy
 
 .. image:: https://coveralls.io/repos/veeresht/CommPy/badge.svg
     :target: https://coveralls.io/r/veeresht/CommPy
+
+.. image:: https://badge.fury.io/py/scikit-commpy.svg
+    :target: https://badge.fury.io/py/scikit-commpy
 
 .. image:: https://readthedocs.org/projects/commpy/badge/?version=latest
     :target: https://readthedocs.org/projects/commpy/?badge=latest
