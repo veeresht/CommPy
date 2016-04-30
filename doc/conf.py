@@ -77,7 +77,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'CommPy'
-copyright = u'2012 - 2015, CommPy'
+copyright = u'2012 - 2016, CommPy'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

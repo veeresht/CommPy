@@ -34,4 +34,4 @@ script:
     - nosetests -a '!slow' --with-coverage --cover-package=commpy --logging-level=INFO
 # Calculate coverage
 after_success:
-    - coveralls --config_file .coveragerc
+    - coveralls
