@@ -10,7 +10,8 @@
     :target: https://badge.fury.io/py/scikit-commpy
 
 .. image:: https://readthedocs.org/projects/commpy/badge/?version=latest
-    :target: https://readthedocs.org/projects/commpy/?badge=latest
+    :target: http://commpy.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 
 CommPy
