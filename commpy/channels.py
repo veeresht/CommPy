@@ -94,7 +94,7 @@ def awgn(input_signal, snr_dB, rate=1.0):
     snr_linear = 10**(snr_dB/10.0)
     noise_variance = avg_energy/(2*rate*snr_linear)
 
-    if input_signal.dtype is complex:
+    if input_signal.dtype == complex:
         noise = (sqrt(noise_variance) * randn(len(input_signal))) + (sqrt(noise_variance) * randn(len(input_signal))*1j)
     else:
         noise = sqrt(2*noise_variance) * randn(len(input_signal))
