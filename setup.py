@@ -35,7 +35,7 @@ from distutils.extension import Extension
 # Taken from scikit-learn setup.py
 DISTNAME = 'scikit-commpy'
 DESCRIPTION = 'Digital Communication Algorithms with Python'
-LONG_DESCRIPTION = open('README').read()
+LONG_DESCRIPTION = open('README.md').read()
 MAINTAINER = 'Veeresh Taranalli'
 MAINTAINER_EMAIL = 'veeresht@gmail.com'
 URL = 'http://veeresht.github.com/CommPy'
