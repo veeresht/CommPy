@@ -90,11 +90,11 @@ def awgn(input_signal, snr_dB, rate=1.0):
         Output signal from the channel with the specified SNR.
     """
 
-    avg_energy = sum(input_signal * input_signal)/len(input_signal)
+    avg_energy = sum(abs(input_signal) * abs(input_signal))/len(input_signal)
     snr_linear = 10**(snr_dB/10.0)
     noise_variance = avg_energy/(2*rate*snr_linear)
 
-    if input_signal.dtype is complex:
+    if input_signal.dtype == complex:
         noise = (sqrt(noise_variance) * randn(len(input_signal))) + (sqrt(noise_variance) * randn(len(input_signal))*1j)
     else:
         noise = sqrt(2*noise_variance) * randn(len(input_signal))
