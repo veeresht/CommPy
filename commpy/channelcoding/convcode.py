@@ -105,7 +105,7 @@ class Trellis:
         [self.k, self.n] = g_matrix.shape
 
         if code_type == 'rsc':
-            for i in xrange(self.k):
+            for i in range(self.k):
                 g_matrix[i][i] = feedback
 
         self.total_memory = memory.sum()
@@ -117,19 +117,19 @@ class Trellis:
                                       self.number_inputs], 'int')
 
         # Compute the entries in the next state table and the output table
-        for current_state in xrange(self.number_states):
+        for current_state in range(self.number_states):
 
-            for current_input in xrange(self.number_inputs):
+            for current_input in range(self.number_inputs):
                 outbits = np.zeros(self.n, 'int')
 
                 # Compute the values in the output_table
-                for r in xrange(self.n):
+                for r in range(self.n):
 
                     output_generator_array = np.zeros(self.k, 'int')
                     shift_register = dec2bitarray(current_state,
                                                   self.total_memory)
 
-                    for l in xrange(self.k):
+                    for l in range(self.k):
 
                         # Convert the number representing a polynomial into a
                         # bit array
@@ -138,7 +138,7 @@ class Trellis:
 
                         # Loop over M delay elements of the shift register
                         # to compute their contribution to the r-th output
-                        for i in xrange(memory[l]):
+                        for i in range(memory[l]):
                             outbits[r] = (outbits[r] + \
                                 (shift_register[i+l]*generator_array[i+1])) % 2
 
@@ -184,7 +184,7 @@ class Trellis:
         """ Private method """
         state_patches = []
 
-        for state_count in xrange(self.number_states * trellis_length):
+        for state_count in range(self.number_states * trellis_length):
             state_patch = mpatches.Circle(grid[:,state_count], state_radius,
                     color="#003399", ec="#cccccc")
             state_patches.append(state_patch)
@@ -198,11 +198,11 @@ class Trellis:
         """ Private method """
         edge_patches = []
 
-        for current_time_index in xrange(trellis_length-1):
+        for current_time_index in range(trellis_length-1):
             grid_subset = grid[:,self.number_states * current_time_index:]
-            for state_count_1 in xrange(self.number_states):
+            for state_count_1 in range(self.number_states):
                 input_count = 0
-                for state_count_2 in xrange(self.number_states):
+                for state_count_2 in range(self.number_states):
                     dx = grid_subset[0, state_count_2+self.number_states] - grid_subset[0,state_count_1] - 2*state_radius
                     dy = grid_subset[1, state_count_2+self.number_states] - grid_subset[1,state_count_1]
                     if np.count_nonzero(self.next_state_table[state_order[state_count_1],:] == state_order[state_count_2]):
@@ -219,8 +219,8 @@ class Trellis:
     def _generate_labels(self, grid, state_order, state_radius, font):
         """ Private method """
 
-        for state_count in xrange(self.number_states):
-            for input_count in xrange(self.number_inputs):
+        for state_count in range(self.number_states):
+            for input_count in range(self.number_inputs):
                 edge_label = str(input_count) + "/" + str(
                         self.output_table[state_order[state_count], input_count])
                 plt.text(grid[0, state_count]-1.5*state_radius,
@@ -333,8 +333,8 @@ def conv_encode(message_bits, trellis, code_type = 'default', puncture_matrix=No
         number_outbits = int((number_inbits + total_memory)/rate)
 
     outbits = np.zeros(number_outbits, 'int')
-    p_outbits = np.zeros(number_outbits*
-            puncture_matrix[0:].sum()/np.size(puncture_matrix, 1), 'int')
+    p_outbits = np.zeros(int(number_outbits*
+            puncture_matrix[0:].sum()/np.size(puncture_matrix, 1)), 'int')
     next_state_table = trellis.next_state_table
     output_table = trellis.output_table
 
@@ -342,7 +342,7 @@ def conv_encode(message_bits, trellis, code_type = 'default', puncture_matrix=No
     current_state = 0
     j = 0
 
-    for i in xrange(number_inbits/k): # Loop through all input bits
+    for i in range(int(number_inbits/k)): # Loop through all input bits
         current_input = bitarray2dec(inbits[i*k:(i+1)*k])
         current_output = output_table[current_state][current_input]
         outbits[j*n:(j+1)*n] = dec2bitarray(current_output, n)
@@ -353,7 +353,7 @@ def conv_encode(message_bits, trellis, code_type = 'default', puncture_matrix=No
 
         term_bits = dec2bitarray(current_state, trellis.total_memory)
         term_bits = term_bits[::-1]
-        for i in xrange(trellis.total_memory):
+        for i in range(trellis.total_memory):
             current_input = bitarray2dec(term_bits[i*k:(i+1)*k])
             current_output = output_table[current_state][current_input]
             outbits[j*n:(j+1)*n] = dec2bitarray(current_output, n)
@@ -361,7 +361,7 @@ def conv_encode(message_bits, trellis, code_type = 'default', puncture_matrix=No
             j += 1
 
     j = 0
-    for i in xrange(number_outbits):
+    for i in range(number_outbits):
         if puncture_matrix[0][i % np.size(puncture_matrix, 1)] == 1:
             p_outbits[j] = outbits[i]
             j = j + 1
@@ -373,8 +373,8 @@ def _where_c(inarray, rows, cols, search_value, index_array):
 
     #cdef int i, j,
     number_found = 0
-    for i in xrange(rows):
-        for j in xrange(cols):
+    for i in range(rows):
+        for j in range(cols):
             if inarray[i, j] == search_value:
                 index_array[number_found, 0] = i
                 index_array[number_found, 1] = j
@@ -407,14 +407,14 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
     decoded_bitarray = np.empty(k, 'int')
 
     # Loop over all the current states (Time instant: t)
-    for state_num in xrange(current_number_states):
+    for state_num in range(current_number_states):
 
         # Using the next state table find the previous states and inputs
         # leading into the current state (Trellis)
         number_found = _where_c(next_state_table, number_states, number_inputs, state_num, index_array)
 
         # Loop over all the previous states (Time instant: t-1)
-        for i in xrange(number_found):
+        for i in range(number_found):
 
             previous_state = index_array[i, 0]
             previous_input = index_array[i, 1]
@@ -457,7 +457,7 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
         current_state = path_metrics[:,1].argmin()
 
         # Traceback Loop
-        for j in reversed(xrange(1, tb_depth)):
+        for j in reversed(range(1, tb_depth)):
 
             dec_symbol = decoded_symbols[current_state, j]
             previous_state = paths[current_state, j]
@@ -538,7 +538,7 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     count = 0
     current_number_states = number_states
 
-    for t in xrange(1, (L+total_memory+total_memory%k)/k + 1):
+    for t in range(1, int((L+total_memory+total_memory%k)/k) + 1):
         # Get the received codeword corresponding to t
         if t <= L:
             r_codeword = coded_bits[(t-1)*n:t*n]

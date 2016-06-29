@@ -6,7 +6,7 @@
 from fractions import gcd
 from numpy import array, arange, concatenate, convolve
 
-from gfields import GF, polymultiply, poly_to_string
+from commpy.channelcoding.gfields import GF, polymultiply, poly_to_string
 from commpy.utilities import dec2bitarray, bitarray2dec
 
 __all__ = ['cyclic_code_genpoly']
@@ -32,7 +32,7 @@ def cyclic_code_genpoly(n, k):
 
 
     if n%2 == 0:
-        raise ValueError, "n cannot be an even number"
+        raise ValueError("n cannot be an even number")
 
     for m in arange(1, 18):
         if (2**m-1)%n == 0:
@@ -52,7 +52,7 @@ def cyclic_code_genpoly(n, k):
     idx_list = arange(1, len(minpol_list))
     poly_list = array([])
 
-    for i in xrange(1, 2**len(minpol_list)):
+    for i in range(1, 2**len(minpol_list)):
         i_array = dec2bitarray(i, len(minpol_list))
         subset_array = minpol_degrees[i_array == 1]
         if int(subset_array.sum()) == (n-k):
@@ -70,4 +70,4 @@ def cyclic_code_genpoly(n, k):
 if __name__ == "__main__":
     genpolys = cyclic_code_genpoly(31, 21)
     for poly in genpolys:
-        print poly_to_string(poly)
+        print(poly_to_string(poly))

@@ -17,7 +17,6 @@ Utilities (:mod:`commpy.utilities`)
    upsample             -- Upsample by an integral factor (zero insertion).
 
 """
-
 import numpy as np
 
 __all__ = ['dec2bitarray', 'bitarray2dec', 'hamming_dist', 'euclid_dist', 'upsample']
@@ -45,7 +44,7 @@ def dec2bitarray(in_number, bit_width):
     binary_string = bin(in_number)
     length = len(binary_string)
     bitarray = np.zeros(bit_width, 'int')
-    for i in xrange(length-2):
+    for i in range(length-2):
         bitarray[bit_width-i-1] = int(binary_string[length-i-1])
 
     return bitarray
@@ -67,7 +66,7 @@ def bitarray2dec(in_bitarray):
 
     number = 0
 
-    for i in xrange(len(in_bitarray)):
+    for i in range(len(in_bitarray)):
         number = number + in_bitarray[i]*pow(2, len(in_bitarray)-1-i)
 
     return number
@@ -137,7 +136,7 @@ def upsample(x, n):
     y = np.empty(len(x)*n, dtype=complex)
     y[0::n] = x
     zero_array = np.zeros(len(x), dtype=complex)
-    for i in xrange(1, n):
+    for i in range(1, n):
         y[i::n] = zero_array
 
     return y

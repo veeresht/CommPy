@@ -60,17 +60,17 @@ class GF:
         if len(self.elements) == len(x.elements):
             return GF(self.elements ^ x.elements, self.m)
         else:
-            raise ValueError, "The arguments should have the same number of elements"
+            raise ValueError("The arguments should have the same number of elements")
 
     # Overloading multiplication operator for Galois Field
     def __mul__(self, x):
         if len(x.elements) == len(self.elements):
             prod_elements = arange(len(self.elements))
-            for i in xrange(len(self.elements)):
+            for i in range(len(self.elements)):
                 prod_elements[i] = polymultiply(self.elements[i], x.elements[i], self.m, self.prim_poly)
             return GF(prod_elements, self.m)
         else:
-             raise ValueError, "Two sets of elements cannot be multiplied"
+             raise ValueError("Two sets of elements cannot be multiplied")
 
     def power_to_tuple(self):
         """
@@ -121,19 +121,19 @@ class GF:
         x = self.tuple_to_power().elements
         mark_list = zeros(len(x))
         coset_count = 1
-        for idx in xrange(len(x)):
+        for idx in range(len(x)):
             if mark_list[idx] == 0:
                 a = x[idx]
                 mark_list[idx] = coset_count
                 i = 1
                 while (a*(2**i) % (2**self.m-1)) != a:
-                    for idx2 in xrange(len(x)):
+                    for idx2 in range(len(x)):
                         if (mark_list[idx2] == 0) and (x[idx2] == a*(2**i)%(2**self.m-1)):
                             mark_list[idx2] = coset_count
                     i+=1
                 coset_count+=1
 
-        for counts in xrange(1, coset_count):
+        for counts in range(1, coset_count):
             coset_list.append(GF(self.elements[mark_list==counts], self.m))
 
         return coset_list
@@ -146,15 +146,15 @@ class GF:
         full_gf = GF(arange(2**self.m), self.m)
         full_cosets = full_gf.cosets()
         for x in self.elements:
-            for i in xrange(len(full_cosets)):
+            for i in range(len(full_cosets)):
                 if x in full_cosets[i].elements:
                     t = array([1, full_cosets[i].elements[0]])[::-1]
                     for root in full_cosets[i].elements[1:]:
                         t2 = concatenate((zeros(len(t)-1), array([1, root]), zeros(len(t)-1)))
                         prod_poly = array([])
-                        for n in xrange(len(t2)-len(t)+1):
+                        for n in range(len(t2)-len(t)+1):
                             root_sum = 0
-                            for k in xrange(len(t)):
+                            for k in range(len(t)):
                                 root_sum = root_sum ^ polymultiply(int(t[k]), int(t2[n+k]), self.m, self.prim_poly)
                             prod_poly = concatenate((prod_poly, array([root_sum])))
                         t = prod_poly[::-1]

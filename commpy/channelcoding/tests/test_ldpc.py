@@ -42,13 +42,13 @@ class TestLDPCCode(object):
             noise_std = 1/sqrt((10**(ebno/10.0))*rate*2/Es)
             fer_cnt_bp = 0
 
-            for iter_cnt in xrange(niters):
+            for iter_cnt in range(niters):
 
                 awgn_array = noise_std * randn(N)
                 rx_word = 1-(2*tx_codeword) + awgn_array
                 rx_llrs = 2.0*rx_word/(noise_std**2)
 
-                [dec_word, out_llrs] = ldpc_bp_decode(rx_llrs, self.ldpc_code_params,
+                [dec_word, out_llrs] = ldpc_bp_decode(rx_llrs, self.ldpc_code_params, 'SPA',
                                                       ldpcbp_iters)
 
                 num_bit_errors = hamming_dist(tx_codeword, dec_word)
@@ -59,4 +59,4 @@ class TestLDPCCode(object):
                     fer_array_test[idx] = float(fer_cnt_bp)/(iter_cnt+1)
                     break
 
-        assert_allclose(fer_array_test, fer_array_ref, rtol=1e-1, atol=0)
+        assert_allclose(fer_array_test, fer_array_ref, rtol=2e-1, atol=0)

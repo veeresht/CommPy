@@ -38,11 +38,11 @@ def get_ldpc_code_params(ldpc_design_filename):
     cnode_adj_list = -np.ones([n_cnodes, max_cnode_deg], int)
     vnode_adj_list = -np.ones([n_vnodes, max_vnode_deg], int)
 
-    for vnode_idx in xrange(n_vnodes):
+    for vnode_idx in range(n_vnodes):
         vnode_adj_list[vnode_idx, 0:vnode_deg_list[vnode_idx]] = \
             np.array([int(x)-1 for x in ldpc_design_file.readline().split('\t')])
 
-    for cnode_idx in xrange(n_cnodes):
+    for cnode_idx in range(n_cnodes):
         cnode_adj_list[cnode_idx, 0:cnode_deg_list[cnode_idx]] = \
             np.array([int(x)-1 for x in ldpc_design_file.readline().split('\t')])
 
@@ -51,13 +51,13 @@ def get_ldpc_code_params(ldpc_design_filename):
     cnode_list = np.arange(n_cnodes)
     vnode_list = np.arange(n_vnodes)
 
-    for cnode in xrange(n_cnodes):
+    for cnode in range(n_cnodes):
         for i, vnode in enumerate(cnode_adj_list[cnode, 0:cnode_deg_list[cnode]]):
-            cnode_vnode_map[cnode, i] = cnode_list[vnode_adj_list[vnode, :] == cnode]
+            cnode_vnode_map[cnode, i] = cnode_list[np.where(vnode_adj_list[vnode, :] == cnode)]
 
-    for vnode in xrange(n_vnodes):
+    for vnode in range(n_vnodes):
         for i, cnode in enumerate(vnode_adj_list[vnode, 0:vnode_deg_list[vnode]]):
-            vnode_cnode_map[vnode, i] = vnode_list[cnode_adj_list[cnode, :] == vnode]
+            vnode_cnode_map[vnode, i] = vnode_list[np.where(cnode_adj_list[cnode, :] == vnode)]
 
 
     cnode_adj_list_1d = cnode_adj_list.flatten().astype(np.int32)
@@ -66,7 +66,7 @@ def get_ldpc_code_params(ldpc_design_filename):
     vnode_cnode_map_1d = vnode_cnode_map.flatten().astype(np.int32)
 
     pmat = np.zeros([n_cnodes, n_vnodes], int)
-    for cnode_idx in xrange(n_cnodes):
+    for cnode_idx in range(n_cnodes):
         pmat[cnode_idx, cnode_adj_list[cnode_idx, :]] = 1
 
     ldpc_code_params['n_vnodes'] = n_vnodes
@@ -79,6 +79,8 @@ def get_ldpc_code_params(ldpc_design_filename):
     ldpc_code_params['vnode_cnode_map'] = vnode_cnode_map_1d
     ldpc_code_params['cnode_deg_list'] = cnode_deg_list
     ldpc_code_params['vnode_deg_list'] = vnode_deg_list
+
+    ldpc_design_file.close()
 
     return ldpc_code_params
 
@@ -119,7 +121,7 @@ def min_sum_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
     vnode_list_msgs = np.ma.array(vnode_list_msgs, mask=False)
 
     # Compute messages on outgoing edges using the incoming messages
-    for i in xrange(start_idx, start_idx+offset):
+    for i in range(start_idx, start_idx+offset):
         vnode_list_msgs.mask[i-start_idx] = True
         cnode_msgs[i] = np.prod(np.sign(vnode_list_msgs))*np.min(np.abs(vnode_list_msgs))
         vnode_list_msgs.mask[i-start_idx] = False
@@ -181,24 +183,24 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
         raise NameError('Please input a valid decoder_algorithm string.')
 
     # Initialize vnode messages with the LLR values received
-    for vnode_idx in xrange(n_vnodes):
+    for vnode_idx in range(n_vnodes):
         start_idx = vnode_idx*max_vnode_deg
         offset = vnode_deg_list[vnode_idx]
         vnode_msgs[start_idx : start_idx+offset] = llr_vec[vnode_idx]
 
     # Main loop of Belief Propagation (BP) decoding iterations
-    for iter_cnt in xrange(n_iters):
+    for iter_cnt in range(n_iters):
 
         continue_flag = 0
 
         # Check Node Update
-        for cnode_idx in xrange(n_cnodes):
+        for cnode_idx in range(n_cnodes):
 
             check_node_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
                               vnode_msgs, cnode_vnode_map, max_cnode_deg, max_vnode_deg)
 
         # Variable Node Update
-        for vnode_idx in xrange(n_vnodes):
+        for vnode_idx in range(n_vnodes):
 
             # Compute sum of all incoming messages at the variable node
             start_idx = vnode_idx*max_vnode_deg
@@ -219,9 +221,9 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
                 dec_word[vnode_idx] = 1
 
         # Compute if early termination using parity check matrix
-        for cnode_idx in xrange(n_cnodes):
+        for cnode_idx in range(n_cnodes):
             p_sum = 0
-            for i in xrange(cnode_deg_list[cnode_idx]):
+            for i in range(cnode_deg_list[cnode_idx]):
                 p_sum ^= dec_word[cnode_adj_list[cnode_idx*max_cnode_deg + i]]
 
             if p_sum != 0:

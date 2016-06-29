@@ -14,7 +14,7 @@ class TestConvCode(object):
     def setup_class(cls):
         # Convolutional Code 1: G(D) = [1+D^2, 1+D+D^2]
         memory = array([2])
-        g_matrix = array([[05, 07]])
+        g_matrix = array([[0o5, 0o7]])
         cls.code_type_1 = 'default'
         cls.trellis_1 = Trellis(memory, g_matrix, 0, cls.code_type_1)
         cls.desired_next_state_table_1 = array([[0, 2],
@@ -29,8 +29,8 @@ class TestConvCode(object):
 
         # Convolutional Code 2: G(D) = [1 1+D+D^2/1+D]
         memory = array([2])
-        g_matrix = array([[01, 07]])
-        feedback = 05
+        g_matrix = array([[0o1, 0o7]])
+        feedback = 0o5
         cls.code_type_2 = 'rsc'
         cls.trellis_2 = Trellis(memory, g_matrix, feedback, cls.code_type_2)
         cls.desired_next_state_table_2 = array([[0, 2],
@@ -65,7 +65,7 @@ class TestConvCode(object):
         niters = 10
         blocklength = 1000
 
-        for i in xrange(niters):
+        for i in range(niters):
             msg = randint(0, 2, blocklength)
 
             coded_bits = conv_encode(msg, self.trellis_1)

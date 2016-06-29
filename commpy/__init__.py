@@ -14,11 +14,11 @@ Subpackages
 
 """
 #from channelcoding import *
-from filters import *
-from modulation import *
-from impairments import *
-from sequences import *
-from channels import *
+from commpy.filters import *
+from commpy.modulation import *
+from commpy.impairments import *
+from commpy.sequences import *
+from commpy.channels import *
 
 try:
     from numpy.testing import Tester
