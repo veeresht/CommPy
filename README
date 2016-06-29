@@ -1,18 +1,9 @@
-.. -*- mode: rst -*-
 
-.. image:: https://secure.travis-ci.org/veeresht/CommPy.svg?branch=master
-    :target: https://secure.travis-ci.org/veeresht/CommPy
 
-.. image:: https://coveralls.io/repos/veeresht/CommPy/badge.svg
-    :target: https://coveralls.io/r/veeresht/CommPy
-
-.. image:: https://badge.fury.io/py/scikit-commpy.svg
-    :target: https://badge.fury.io/py/scikit-commpy
-
-.. image:: https://readthedocs.org/projects/commpy/badge/?version=latest
-    :target: http://commpy.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
-
+[![Build Status](https://secure.travis-ci.org/veeresht/CommPy.svg?branch=master)](https://secure.travis-ci.org/veeresht/CommPy)
+[![Coverage](https://coveralls.io/repos/veeresht/CommPy/badge.svg)](https://coveralls.io/r/veeresht/CommPy)
+[![PyPi](https://badge.fury.io/py/scikit-commpy.svg)](https://badge.fury.io/py/scikit-commpy)
+[![Docs](https://readthedocs.org/projects/commpy/badge/?version=latest)](http://commpy.readthedocs.io/en/latest/?badge=latest)
 
 CommPy
 ======
@@ -27,7 +18,7 @@ Objectives
 Available Features
 ------------------
 Channel Coding
-~~~~~~~~~~~~~~
+--------------
 - Encoder for Convolutional Codes (Polynomial, Recursive Systematic). Supports all rates and puncture matrices.
 - Viterbi Decoder for Convolutional Codes (Hard Decision Output).
 - MAP Decoder for Convolutional Codes (Based on the BCJR algorithm).
@@ -39,34 +30,34 @@ Channel Coding
 - Belief Propagation (BP) Decoder for LDPC Codes.
 
 Channel Models
-~~~~~~~~~~~~~~
+--------------
 - Binary Erasure Channel (BEC)
 - Binary Symmetric Channel (BSC)
 - Binary AWGN Channel (BAWGNC)
 
 Filters
-~~~~~~~
+-------
 - Rectangular
 - Raised Cosine (RC), Root Raised Cosine (RRC)
 - Gaussian
 
 Impairments
-~~~~~~~~~~~
+-----------
 - Carrier Frequency Offset (CFO)
 
 Modulation/Demodulation
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 - Phase Shift Keying (PSK)
 - Quadrature Amplitude Modulation (QAM)
 - OFDM Tx/Rx signal processing
 
 Sequences
-~~~~~~~~~
+---------
 - PN Sequence
 - Zadoff-Chu (ZC) Sequence
 
 Utilities
-~~~~~~~~~
+---------
 - Decimal to bit-array, bit-array to decimal.
 - Hamming distance, Euclidean distance.
 - Upsample
@@ -74,43 +65,44 @@ Utilities
 FAQs
 ----
 Why are you developing this?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 During my coursework in communication theory and systems at UCSD, I realized that the best way to actually learn and understand the theory is to try and implement ''the Math'' in practice :). Having used Scipy before, I thought there should be a similar package for Digital Communications in Python. This is a start!
 
 What programming languages do you use?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------
 CommPy uses Python as its base programming language and python packages like NumPy, SciPy and Matplotlib.
 
 How can I contribute?
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 Implement any feature you want and send me a pull request :). If you want to suggest new features or discuss anything related to CommPy, please get in touch with me (veeresht@gmail.com).
 
 How do I use CommPy?
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 Requirements/Dependencies
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 - python 2.7 or above
-- numpy 1.9 or above
+- numpy 1.10 or above
 - scipy 0.15 or above
 - matplotlib 1.4 or above
 - nose 1.3 or above
 
 Installation
-^^^^^^^^^^^^
+------------
 
 - To use the released version on PyPi, use pip or conda to install as follows::
-
-                $ pip install scikit-commpy
-                $ conda install -c https://conda.binstar.org/veeresht scikit-commpy
-
+```
+$ pip install scikit-commpy
+$ conda install -c https://conda.binstar.org/veeresht scikit-commpy
+```
 - To work with the development branch, clone from github and install as follows::
-
-                $ git clone https://github.com/veeresht/CommPy.git
-                $ cd CommPy
-                $ python setup.py install
+```
+$ git clone https://github.com/veeresht/CommPy.git
+$ cd CommPy
+$ python setup.py install
+```
 
 Citing CommPy
-^^^^^^^^^^^^^
+-------------
 If you use CommPy for a publication, presentation or a demo, I request you to please cite CommPy as follows:
 
 Veeresh Taranalli, "CommPy: Digital Communication with Python, version 0.3.0. Available at https://github.com/veeresht/CommPy", 2015.
