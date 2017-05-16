@@ -16,7 +16,7 @@ Channel Models (:mod:`commpy.channels`)
 
 """
 
-from numpy import complex, sum, pi, arange, array, size, shape, real, sqrt
+from numpy import complex, sum, abs, pi, arange, array, size, shape, real, sqrt
 from numpy import matrix, sqrt, sum, zeros, concatenate, sinc
 from numpy.random import randn, seed, random
 #from scipy.special import gamma, jn
@@ -94,7 +94,7 @@ def awgn(input_signal, snr_dB, rate=1.0):
     snr_linear = 10**(snr_dB/10.0)
     noise_variance = avg_energy/(2*rate*snr_linear)
 
-    if input_signal.dtype == complex:
+    if type(input_signal[0]) == complex:
         noise = (sqrt(noise_variance) * randn(len(input_signal))) + (sqrt(noise_variance) * randn(len(input_signal))*1j)
     else:
         noise = sqrt(2*noise_variance) * randn(len(input_signal))
