@@ -113,7 +113,7 @@ class PSKModem(Modem):
         self.m = m
         self.num_bits_symbol = int(log2(self.m))
         self.symbol_mapping = arange(self.m)
-        self.constellation = array(map(self._constellation_symbol,
+        self.constellation = list(map(self._constellation_symbol,
                                  self.symbol_mapping))
 
 class QAMModem(Modem):
@@ -136,7 +136,7 @@ class QAMModem(Modem):
         self.num_bits_symbol = int(log2(self.m))
         self.symbol_mapping = arange(self.m)
         mapping_array = arange(1, sqrt(self.m)+1) - (sqrt(self.m)/2)
-        self.constellation = array(map(self._constellation_symbol,
+        self.constellation = list(map(self._constellation_symbol,
                                  list(product(mapping_array, repeat=2))))
 
 def ofdm_tx(x, nfft, nsc, cp_length):
