@@ -16,7 +16,8 @@ Modulation Demodulation (:mod:`commpy.modulation`)
 
 """
 from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
-                  hstack, repeat, tile, dot, sum, shape, concatenate, exp, log
+                  hstack, repeat, tile, dot, sum, shape, concatenate, exp, \
+                  log, vectorize
 from itertools import product
 from commpy.utilities import bitarray2dec, dec2bitarray
 from numpy.fft import fft, ifft
@@ -39,10 +40,10 @@ class Modem:
             Modulated complex symbols.
 
         """
+        mapfunc = vectorize(lambda i:
+            self.constellation[bitarray2dec(input_bits[i:i+self.num_bits_symbol])])
 
-        index_list = map(lambda i: bitarray2dec(input_bits[i:i+self.num_bits_symbol]), \
-                         xrange(0, len(input_bits), self.num_bits_symbol))
-        baseband_symbols = self.constellation[index_list]
+        baseband_symbols = mapfunc(arange(0, len(input_bits), self.num_bits_symbol))
 
         return baseband_symbols
 
