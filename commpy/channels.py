@@ -162,7 +162,7 @@ def awgn(input_signal, snr_dB, rate=1.0):
 #    g_var = 0.5
 #    gain_process = zeros([len(path_gains), block_length], dtype=complex)
 #    delay_process = zeros([n2+1-n1, len(path_delays)])
-#    for k in xrange(len(path_gains)):
+#    for k in range(len(path_gains)):
 #        g = (g_var**0.5) * (randn(channel_length) + 1j*randn(channel_length))
 #        g_filt = convolve(g, h_jakes, mode='same')
 #        g_filt_interp = resample(g_filt, block_length)

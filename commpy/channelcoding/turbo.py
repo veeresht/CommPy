@@ -87,10 +87,10 @@ def _backward_recursion(trellis, msg_length, noise_variance,
     output_table = trellis.output_table
 
     # Backward recursion
-    for reverse_time_index in reversed(xrange(1, msg_length+1)):
+    for reverse_time_index in reversed(range(1, msg_length+1)):
 
-        for current_state in xrange(number_states):
-            for current_input in xrange(number_inputs):
+        for current_state in range(number_states):
+            for current_input in range(number_inputs):
                 next_state = next_state_table[current_state, current_input]
                 code_symbol = output_table[current_state, current_input]
                 codeword_array = dec2bitarray(code_symbol, n)
@@ -124,11 +124,11 @@ def _forward_recursion_decoding(trellis, mode, msg_length, noise_variance,
     output_table = trellis.output_table
 
     # Forward Recursion
-    for time_index in xrange(1, msg_length+1):
+    for time_index in range(1, msg_length+1):
 
         app[:] = 0
-        for current_state in xrange(number_states):
-            for current_input in xrange(number_inputs):
+        for current_state in range(number_states):
+            for current_input in range(number_inputs):
                 next_state = next_state_table[current_state, current_input]
                 branch_prob = branch_probs[current_input, current_state, time_index-1]
                 # Compute the forward state metrics
@@ -308,7 +308,7 @@ def turbo_decode(sys_symbols, non_sys_symbols_1, non_sys_symbols_2, trellis,
     # Interleave systematic symbols for input to second decoder
     sys_symbols_i = interleaver.interlv(sys_symbols)
 
-    for iteration_count in xrange(number_iterations):
+    for iteration_count in range(number_iterations):
 
         # MAP Decoder - 1
         [L_ext_1, decoded_bits] = map_decode(sys_symbols, non_sys_symbols_1,

@@ -72,7 +72,7 @@ class Modem:
         """
         if demod_type == 'hard':
             index_list = map(lambda i: argmin(abs(input_symbols[i] - self.constellation)), \
-                             xrange(0, len(input_symbols)))
+                             range(0, len(input_symbols)))
             demod_bits = hstack(map(lambda i: dec2bitarray(i, self.num_bits_symbol),
                                 index_list))
         elif demod_type == 'soft':
@@ -147,7 +147,7 @@ def ofdm_tx(x, nfft, nsc, cp_length):
     cp_length = float(cp_length)
     ofdm_tx_signal = array([])
 
-    for i in xrange(0, shape(x)[1]):
+    for i in range(0, shape(x)[1]):
         symbols = x[:,i]
         ofdm_sym_freq = zeros(nfft, dtype=complex)
         ofdm_sym_freq[1:(nsc/2)+1] = symbols[nsc/2:]
@@ -164,7 +164,7 @@ def ofdm_rx(y, nfft, nsc, cp_length):
     num_ofdm_symbols = int(len(y)/(nfft + cp_length))
     x_hat = zeros([nsc, num_ofdm_symbols], dtype=complex)
 
-    for i in xrange(0, num_ofdm_symbols):
+    for i in range(0, num_ofdm_symbols):
         ofdm_symbol = y[i*nfft + (i+1)*cp_length:(i+1)*(nfft + cp_length)]
         symbols_freq = fft(ofdm_symbol)
         x_hat[:,i] = concatenate((symbols_freq[-nsc/2:], symbols_freq[1:(nsc/2)+1]))

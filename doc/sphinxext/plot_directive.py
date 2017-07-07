@@ -520,7 +520,7 @@ def makefig(code, code_path, output_dir, output_base, config):
     all_exists = True
     for i, code_piece in enumerate(code_pieces):
         images = []
-        for j in xrange(1000):
+        for j in range(1000):
             img = ImageFile('%s_%02d_%02d' % (output_base, i, j), output_dir)
             for format, dpi in formats:
                 if out_of_date(code_path, img.filename(format)):
