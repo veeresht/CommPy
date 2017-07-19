@@ -49,11 +49,11 @@ def pnsequence(pn_order, pn_seed, pn_mask, seq_length):
     pnseq = zeros(seq_length)
 
     # Initialize shift register with the pn_seed
-    sr = array(map(lambda i: int(pn_seed[i]), xrange(0, len(pn_seed))))
+    sr = array(map(lambda i: int(pn_seed[i]), range(0, len(pn_seed))))
 
-    for i in xrange(seq_length):
+    for i in range(seq_length):
         new_bit = 0
-        for j in xrange(pn_order):
+        for j in range(pn_order):
             if int(pn_mask[j]) == 1:
                 new_bit = new_bit ^ sr[j]
         pnseq[i] = sr[pn_order-1]
