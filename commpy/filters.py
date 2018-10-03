@@ -42,11 +42,11 @@ def rcosfilter(N, alpha, Ts, Fs):
     Returns
     -------
 
-    h_rc : 1-D ndarray (float)
-        Impulse response of the raised cosine filter.
-
     time_idx : 1-D ndarray (float)
         Array containing the time indices, in seconds, for the impulse response.
+
+    h_rc : 1-D ndarray (float)
+        Impulse response of the raised cosine filter.
     """
 
     T_delta = 1/float(Fs)
@@ -89,12 +89,12 @@ def rrcosfilter(N, alpha, Ts, Fs):
     Returns
     ---------
 
-    h_rrc : 1-D ndarray of floats
-        Impulse response of the root raised cosine filter.
-
     time_idx : 1-D ndarray of floats
         Array containing the time indices, in seconds, for
         the impulse response.
+
+    h_rrc : 1-D ndarray of floats
+        Impulse response of the root raised cosine filter.
     """
 
     T_delta = 1/float(Fs)
@@ -141,11 +141,11 @@ def gaussianfilter(N, alpha, Ts, Fs):
     Returns
     -------
 
-    h_gaussian : 1-D ndarray of floats
-        Impulse response of the gaussian filter.
-
     time_index : 1-D ndarray of floats
         Array containing the time indices for the impulse response.
+
+    h_gaussian : 1-D ndarray of floats
+        Impulse response of the gaussian filter.
     """
 
     T_delta = 1/float(Fs)
@@ -173,11 +173,11 @@ def rectfilter(N, Ts, Fs):
     Returns
     -------
 
-    h_rect : 1-D ndarray of floats
-        Impulse response of the rectangular filter.
-
     time_index : 1-D ndarray of floats
         Array containing the time indices for the impulse response.
+
+    h_rect : 1-D ndarray of floats
+        Impulse response of the rectangular filter.
     """
 
     h_rect = np.ones(N)
