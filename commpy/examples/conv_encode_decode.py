@@ -11,8 +11,8 @@ from commpy.utilities import *
 # =============================================================================
 
 # G(D) corresponding to the convolutional encoder
-generator_matrix = np.array([[05, 07]])
-#generator_matrix = np.array([[03, 00, 02], [07, 04, 06]])
+generator_matrix = np.array([[0o5, 0o7]])
+#generator_matrix = np.array([[0o3, 0o0, 0o2], [0o7, 0o4, 0o6]])
 
 # Number of delay elements in the convolutional encoder
 M = np.array([2])
@@ -41,17 +41,17 @@ for i in range(10):
     #num_bit_errors = 1
 
     if num_bit_errors !=0:
-        #print num_bit_errors, "Bit Errors found!"
-        #print message_bits
-        #print decoded_bits[tb_depth+3:]
-        #print decoded_bits
+        #print(num_bit_errors, "Bit Errors found!")
+        #print(message_bits)
+        #print(decoded_bits[tb_depth+3:])
+        #print(decoded_bits)
         break
     else:
-        print "No Bit Errors :)"
+        print("No Bit Errors :)")
 
-#print "==== Message Bits ==="
-#print message_bits
-#print "==== Coded Bits ====="
-#print coded_bits
-#print "==== Decoded Bits ==="
-#print decoded_bits[tb_depth:]
+#print("==== Message Bits ===")
+#print(message_bits)
+#print("==== Coded Bits =====")
+#print(coded_bits)
+#print("==== Decoded Bits ===")
+#print(decoded_bits[tb_depth:])

@@ -76,7 +76,7 @@ class Trellis:
     >>> from numpy import array
     >>> import commpy.channelcoding.convcode as cc
     >>> memory = array([2])
-    >>> g_matrix = array([[05, 07]]) # G(D) = [1+D^2, 1+D+D^2]
+    >>> g_matrix = array([[0o5, 0o7]]) # G(D) = [1+D^2, 1+D+D^2]
     >>> trellis = cc.Trellis(memory, g_matrix)
     >>> print trellis.k
     1
