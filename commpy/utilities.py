@@ -1,5 +1,4 @@
-
-# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# Authors: Veeresh Taranalli <veeresht@gmail.com> & Bastien Trotobas <bastien.trotobas@gmail.com>
 # License: BSD 3-Clause
 
 """
@@ -15,11 +14,14 @@ Utilities (:mod:`commpy.utilities`)
    hamming_dist         -- Hamming distance.
    euclid_dist          -- Squared Euclidean distance.
    upsample             -- Upsample by an integral factor (zero insertion).
+   signal_power         -- Compute the power of a discrete time signal.
+
 
 """
 import numpy as np
 
-__all__ = ['dec2bitarray', 'bitarray2dec', 'hamming_dist', 'euclid_dist', 'upsample']
+__all__ = ['dec2bitarray', 'bitarray2dec', 'hamming_dist', 'euclid_dist', 'upsample', 'signal_power']
+
 
 def dec2bitarray(in_number, bit_width):
     """
@@ -44,10 +46,11 @@ def dec2bitarray(in_number, bit_width):
     binary_string = bin(in_number)
     length = len(binary_string)
     bitarray = np.zeros(bit_width, 'int')
-    for i in range(length-2):
-        bitarray[bit_width-i-1] = int(binary_string[length-i-1])
+    for i in range(length - 2):
+        bitarray[bit_width - i - 1] = int(binary_string[length - i - 1])
 
     return bitarray
+
 
 def bitarray2dec(in_bitarray):
     """
@@ -67,9 +70,10 @@ def bitarray2dec(in_bitarray):
     number = 0
 
     for i in range(len(in_bitarray)):
-        number = number + in_bitarray[i]*pow(2, len(in_bitarray)-1-i)
+        number = number + in_bitarray[i] * pow(2, len(in_bitarray) - 1 - i)
 
     return number
+
 
 def hamming_dist(in_bitarray_1, in_bitarray_2):
     """
@@ -93,6 +97,7 @@ def hamming_dist(in_bitarray_1, in_bitarray_2):
 
     return distance
 
+
 def euclid_dist(in_array1, in_array2):
     """
     Computes the squared euclidean distance between two NumPy arrays
@@ -110,9 +115,10 @@ def euclid_dist(in_array1, in_array2):
     distance : float
         Squared Euclidean distance between two input arrays.
     """
-    distance = ((in_array1 - in_array2)*(in_array1 - in_array2)).sum()
+    distance = ((in_array1 - in_array2) * (in_array1 - in_array2)).sum()
 
     return distance
+
 
 def upsample(x, n):
     """
@@ -133,10 +139,33 @@ def upsample(x, n):
     y : 1D ndarray
         Output upsampled array.
     """
-    y = np.empty(len(x)*n, dtype=complex)
+    y = np.empty(len(x) * n, dtype=complex)
     y[0::n] = x
     zero_array = np.zeros(len(x), dtype=complex)
     for i in range(1, n):
         y[i::n] = zero_array
 
     return y
+
+
+def signal_power(signal):
+    """
+    Compute the power of a discrete time signal.
+
+    Parameters
+    ----------
+    signal : 1D ndarray
+             Input signal.
+
+    Returns
+    -------
+    P : float
+        Power of the input signal.
+    """
+
+    @np.vectorize
+    def square_abs(s):
+        return abs(s)**2
+
+    P = np.mean(square_abs(signal))
+    return P
