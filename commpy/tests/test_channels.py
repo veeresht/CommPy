@@ -1,6 +1,8 @@
 # Authors: Bastien Trotobas <bastien.trotobas@gmail.com>
 # License: BSD 3-Clause
 
+from __future__ import division, print_function  # Python 2 compatibility
+
 from numpy import ones, inf, sqrt, array, identity, zeros, dot, trace, einsum, absolute
 from numpy.random import seed, choice, randn
 from numpy.testing import run_module_suite, assert_raises, assert_equal, assert_allclose, \
@@ -174,7 +176,7 @@ class TestSISOFlatChannel:
                         err_msg='Wrong k-factor with rician fading in SISO channels')
 
 
-class MIMOTestCase:
+class MIMOTestCase(object):
     msg_length = 100000
     real_mods = array((-1, 1)), array((-3, 3))
     all_mods = array((-1, 1)), array((-3, 3)), \
@@ -218,6 +220,9 @@ class MIMOTestCase:
 
 
 class TestMIMODefaultArgs(MIMOTestCase):
+    def __init__(self):
+        super(TestMIMODefaultArgs, self).__init__()
+
     def do(self, nb_tx, nb_rx):
         def check(chan):
             assert_equal(chan.noises, None,
@@ -242,6 +247,9 @@ class TestMIMODefaultArgs(MIMOTestCase):
 
 @dec.slow
 class TestMIMOFading(MIMOTestCase):
+    def __init__(self):
+        super(TestMIMOFading, self).__init__()
+
     def do(self, nb_tx, nb_rx):
         def check_chan_gain(mod, chan):
             msg = choice(mod, self.msg_length)
@@ -315,6 +323,9 @@ class TestMIMOFading(MIMOTestCase):
 
 @dec.slow
 class TestMIMONoiseGeneration(MIMOTestCase):
+    def __init__(self):
+        super(TestMIMONoiseGeneration, self).__init__()
+
     def do(self, nb_tx, nb_rx):
         def check_noise(mod, chan, corrected_SNR_lin):
             msg = choice(mod, self.msg_length)
@@ -348,6 +359,9 @@ class TestMIMONoiseGeneration(MIMOTestCase):
 
 
 class TestMIMOTypeCheck(MIMOTestCase):
+    def __init__(self):
+        super(TestMIMOTypeCheck, self).__init__()
+
     def do(self, nb_tx, nb_rx):
         chan = MIMOFlatChannel(nb_tx, nb_rx, 0)
         with assert_raises(TypeError):
@@ -355,6 +369,9 @@ class TestMIMOTypeCheck(MIMOTestCase):
 
 
 class TestMIMOShapes(MIMOTestCase):
+    def __init__(self):
+        super(TestMIMOShapes, self).__init__()
+
     def do(self, nb_tx, nb_rx):
         # Without padding
         chan = MIMOFlatChannel(nb_tx, nb_rx, 0)
@@ -382,6 +399,9 @@ class TestMIMOShapes(MIMOTestCase):
 
 
 class TestMIMOkFactor(MIMOTestCase):
+    def __init__(self):
+        super(TestMIMOkFactor, self).__init__()
+
     def do(self, nb_tx, nb_rx):
         prod_nb = nb_tx * nb_rx
 

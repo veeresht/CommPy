@@ -18,6 +18,8 @@ Channel Models (:mod:`commpy.channels`)
 
 """
 
+from __future__ import division, print_function  # Python 2 compatibility
+
 from numpy import complex, abs, sqrt, sum, zeros, identity, hstack, einsum, trace, kron, absolute
 from numpy.random import randn, random, standard_normal
 from scipy.linalg import sqrtm
@@ -25,7 +27,7 @@ from scipy.linalg import sqrtm
 __all__ = ['SISOFlatChannel', 'MIMOFlatChannel', 'bec', 'bsc', 'awgn']
 
 
-class _FlatChannel:
+class _FlatChannel(object):
 
     def __init__(self):
         self.noises = None
@@ -172,7 +174,7 @@ class SISOFlatChannel(_FlatChannel):
         return 1
 
     def __init__(self, noise_std=None, fading_param=(1, 0)):
-        super().__init__()
+        super(SISOFlatChannel, self).__init__()
         self.noise_std = noise_std
         self.fading_param = fading_param
 
@@ -317,7 +319,7 @@ class MIMOFlatChannel(_FlatChannel):
     """
 
     def __init__(self, nb_tx, nb_rx, noise_std=None, fading_param=None):
-        super().__init__()
+        super(MIMOFlatChannel, self).__init__()
         self.nb_tx = nb_tx
         self.nb_rx = nb_rx
         self.noise_std = noise_std
