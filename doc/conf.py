@@ -11,7 +11,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import os
+import sys
 
 import sphinx
 
@@ -61,7 +62,7 @@ sys.path.insert(0, os.path.abspath('sphinxext'))
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
 		'sphinx.ext.todo', 'sphinx.ext.coverage',
-		'sphinx.ext.mathjax', 'sphinx.ext.autosummary', 'sphinx.ext.intersphinx', 'numpydoc']
+		'sphinx.ext.mathjax', 'sphinx.ext.autosummary', 'sphinx.ext.intersphinx', 'sphinx.ext.napoleon']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['templates']
@@ -77,7 +78,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'CommPy'
-copyright = u'2012 - 2016, CommPy'
+copyright = u'2012 - 2019, CommPy'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

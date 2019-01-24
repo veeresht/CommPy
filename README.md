@@ -31,6 +31,8 @@ Channel Coding
 
 Channel Models
 --------------
+- SISO Channel with Rayleigh or Rician fading.
+- MIMO Channel with Rayleigh or Rician fading.
 - Binary Erasure Channel (BEC)
 - Binary Symmetric Channel (BSC)
 - Binary AWGN Channel (BAWGNC)
@@ -61,6 +63,7 @@ Utilities
 - Decimal to bit-array, bit-array to decimal.
 - Hamming distance, Euclidean distance.
 - Upsample
+- Power of a discrete-time signal
 
 FAQs
 ----
