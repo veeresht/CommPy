@@ -52,8 +52,7 @@ import sphinx
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('/home/veeresht//Development/commpy-dev/commpy-dev-py27/commpy/commpy'))
-sys.path.insert(0, os.path.abspath('/home/bastien/Documents/These/CommPy'))
-# sys.path.insert(0, os.path.abspath('sphinxext'))
+sys.path.insert(0, os.path.abspath('sphinxext'))
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
