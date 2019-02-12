@@ -257,7 +257,7 @@ class Trellis:
             edge_colors = ["#9E1BE0", "#06D65D"]
 
         if state_order is None:
-            state_order = range(self.number_states)
+            state_order = list(range(self.number_states))
 
         font = "sans-serif"
         fig = plt.figure()
