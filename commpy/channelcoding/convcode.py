@@ -310,9 +310,6 @@ def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=Non
             inbits[0:number_message_bits] = message_bits
             number_outbits = int(number_inbits/rate)
 
-            
-        
-
     outbits = np.zeros(number_outbits, 'int')
     p_outbits = np.zeros(int(number_outbits*
             puncture_matrix[0:].sum()/np.size(puncture_matrix, 1)), 'int')
