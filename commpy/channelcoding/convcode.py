@@ -22,7 +22,7 @@ class Trellis:
         Number of memory elements per input of the convolutional encoder.
     g_matrix : 2D ndarray of ints (octal representation)
         Generator matrix G(D) of the convolutional encoder. Each element of
-        G(D) represents a polynomial. 
+        G(D) represents a polynomial.
     feedback : int, optional
         Feedback polynomial of the convolutional encoder. Default value is 00.
     code_type : {'default', 'rsc'}, optional
@@ -263,7 +263,7 @@ class Trellis:
         plt.savefig('trellis')
 
 
-def conv_encode(message_bits, trellis, termination = 'cont', puncture_matrix=None):
+def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=None):
     """
     Encode bits using a convolutional code.
     Parameters
@@ -293,7 +293,11 @@ def conv_encode(message_bits, trellis, termination = 'cont', puncture_matrix=Non
 
     number_message_bits = np.size(message_bits)
     
-    if termination == 'term':
+    if termination == 'cont':
+        inbits = message_bits
+        number_inbits = number_message_bits
+        number_outbits = int(number_inbits/rate)
+    else:
         # Initialize an array to contain the message bits plus the truncation zeros
         if code_type == 'rsc':
             inbits = message_bits
@@ -305,10 +309,7 @@ def conv_encode(message_bits, trellis, termination = 'cont', puncture_matrix=Non
             # Pad the input bits with M zeros (L-th terminated truncation)
             inbits[0:number_message_bits] = message_bits
             number_outbits = int(number_inbits/rate)
-    else:
-        inbits = message_bits
-        number_inbits = number_message_bits
-        number_outbits = int(number_inbits/rate)
+
             
         
 
