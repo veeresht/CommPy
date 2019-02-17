@@ -260,7 +260,8 @@ class Trellis:
         ax.set_xticks([])
         ax.set_yticks([])
         plt.legend([edge_patches[0], edge_patches[1]], ["1-input", "0-input"])
-        plt.savefig('trellis')
+        #plt.savefig('trellis')
+        plt.show()
 
 
 def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=None):
