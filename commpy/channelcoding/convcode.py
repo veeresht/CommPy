@@ -543,3 +543,49 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
             current_number_states = 1
 
     return decoded_bits[0:len(decoded_bits)-tb_depth-1]
+
+def puncturing(message, punct_vec):
+    '''
+    Applying of the punctured procedure.
+    Parameters
+    ----------
+    message: input message {0,1}
+    punct_vec: puncturing vector {0,1}
+    Returns
+    -------
+    punctured: output punctured vector {0,1}
+    '''
+    shift = 0
+    N = len(punct_vec)
+    punctured = []
+    for idx, item in enumerate(message):
+        if punct_vec[idx-shift*N] == 1:
+            punctured.append(item)
+        if idx%N == 0:
+            shift = shift + 1
+    return np.array(punctured)
+
+def depuncturing(punctured, punct_vec, shouldbe):
+    '''
+    Applying of the inserting zeros procedure.
+    Parameters
+    ----------
+    punctured: input punctured message {0,1}
+    punct_vec: puncturing vector {0,1}
+    shouldbe: length of the initial message (before puncturing)
+    Returns
+    -------
+    depunctured: output vector {0,1}
+    '''
+    shift = 0
+    shift2 = 0
+    N = len(punct_vec)
+    depunctured = np.zeros((shouldbe,))
+    for idx, item in enumerate(depunctured):
+        if punct_vec[idx - shift*N] == 1:
+            depunctured[idx] = float(punctured[idx-shift2])
+        else:
+            shift2 = shift2 + 1
+        if idx%N == 0:
+            shift = shift + 1;
+    return depunctured
