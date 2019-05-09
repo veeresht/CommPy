@@ -147,6 +147,19 @@ class TestSISOFlatChannel:
             chan.set_SNR_dB(0, .5, signal_power(mod))
             check_noise(mod, chan, .5)
 
+        chan = SISOFlatChannel(fading_param=(1, 0))
+        for mod in self.real_mods:
+            chan.noise_std = 0
+            check_noise(mod, chan, inf)
+            chan.set_SNR_lin(6, Es=signal_power(mod))
+            check_noise(mod, chan, 6)
+            chan.set_SNR_lin(6, .5, signal_power(mod))
+            check_noise(mod, chan, 3)
+            chan.set_SNR_dB(0, Es=signal_power(mod))
+            check_noise(mod, chan, 1)
+            chan.set_SNR_dB(0, .5, signal_power(mod))
+            check_noise(mod, chan, .5)
+
     def test_type_check(self):
         chan = SISOFlatChannel(0)
         with assert_raises(TypeError):
