@@ -89,7 +89,7 @@ class TestSISOFlatChannel:
             assert_allclose(chan.channel_gains.var(), 1 / 3, atol=0.2,
                             err_msg='Wrong channel variance with real channel')
 
-        # Test on all channel
+        # Test on complex channel
         for mod in self.all_mods:
             # Test value checking after construction
             with assert_raises(ValueError):
@@ -293,7 +293,7 @@ class TestMIMOFading(MIMOTestCase):
             assert_allclose(chan.channel_gains.mean(0), mean, atol=0.2,
                             err_msg='Wrong channel mean with real channel')
 
-        # Test on all channel
+        # Test on complex channel
         for mod in self.all_mods:
             # Test value checking after construction
             with assert_raises(ValueError):

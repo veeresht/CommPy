@@ -263,7 +263,7 @@ class MIMOFlatChannel(_FlatChannel):
 
     Attributes
     ----------
-    fading_param : tuple of 2 floats
+    fading_param : tuple of 3 2D ndarray
                    Parameters of the fading.
                    Raise ValueError when sets with value that would lead to a non-normalized channel.
 
