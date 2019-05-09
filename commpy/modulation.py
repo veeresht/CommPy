@@ -12,17 +12,24 @@ Modulation Demodulation (:mod:`commpy.modulation`)
 
    PSKModem             -- Phase Shift Keying (PSK) Modem.
    QAMModem             -- Quadrature Amplitude Modulation (QAM) Modem.
+   ofdm_tx              -- OFDM Transmit Signal Generation
+   ofdm_rx              -- OFDM Receive Signal Processing
    mimo_ml              -- MIMO Maximum Likelihood (ML) Detection.
+   kbest                -- MIMO K-best Schnorr-Euchner Detection.
 
 """
-from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
-                  hstack, repeat, tile, dot, sum, shape, concatenate, exp, \
-                  log, vectorize
 from itertools import product
-from commpy.utilities import bitarray2dec, dec2bitarray
-from numpy.fft import fft, ifft
 
-__all__ = ['PSKModem', 'QAMModem', 'mimo_ml']
+from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
+    hstack, repeat, tile, dot, sum, shape, concatenate, exp, \
+    log, vectorize, empty
+from numpy.fft import fft, ifft
+from numpy.linalg import qr
+
+from commpy.utilities import bitarray2dec, dec2bitarray
+
+__all__ = ['PSKModem', 'QAMModem', 'ofdm_tx', 'ofdm_rx', 'mimo_ml', 'kbest']
+
 
 class Modem:
 
@@ -193,3 +200,68 @@ def mimo_ml(y, h, constellation):
     x_r = x_ideal[:, min_idx]
 
     return x_r
+
+
+def kbest(y, h, constellation, K):
+    """ MIMO K-best Schnorr-Euchner Detection.
+
+    Reference: Zhan Guo and P. Nilsson, 'Algorithm and implementation of the K-best sphere decoding for MIMO detection',
+        IEEE Journal on Selected Areas in Communications, vol. 24, no. 3, pp. 491-503, Mar. 2006.
+
+    parameters
+    ----------
+    y : 1D ndarray of floats
+        Received complex symbols (shape: num_receive_antennas x 1)
+
+    h : 2D ndarray of floats
+        Channel Matrix (shape: num_receive_antennas x num_transmit_antennas)
+
+    constellation : 1D ndarray of floats
+        Constellation used to modulate the symbols
+
+    K : positive integer
+        Number of candidates kept at each step
+    """
+    # QR decomposition
+    q, r = qr(h)
+    yt = q.conj().T.dot(y)
+
+    # Initialization
+    m = len(constellation)
+    n = len(yt)
+    nb_can = 1
+
+    if isinstance(constellation[0], complex):
+        const_type = complex
+    else:
+        const_type = float
+    X = empty((n, K * m), dtype=const_type)  # Set of current candidates
+    d = tile(yt[:, None], (1, K * m))        # Corresponding distance vector
+    d_tot = zeros(K * m, dtype=float)        # Corresponding total distance
+    hyp = empty(K * m, dtype=const_type)     # Hypothesis vector
+
+    # Processing
+    for coor in range(n-1, -1, -1):
+        nb_hyp = nb_can * m
+
+        # Copy best candidates m times
+        X[:, :nb_hyp] = tile(X[:, :nb_can], (1, m))
+        d[:, :nb_hyp] = tile(d[:, :nb_can], (1, m))
+        d_tot[:nb_hyp] = tile(d_tot[:nb_can], (1, m))
+
+        # Make hypothesis
+        hyp[:nb_hyp] = repeat(constellation, nb_can)
+        X[coor, :nb_hyp] = hyp[:nb_hyp]
+        d[coor, :nb_hyp] -= r[coor, coor] * hyp[:nb_hyp]
+        d_tot[:nb_hyp] += abs(d[coor, :nb_hyp])**2
+
+        # Select best candidates
+        argsort = d_tot[:nb_hyp].argsort()
+        nb_can = min(nb_hyp, K)  # Update number of candidate
+
+        # Update accordingly
+        X[:, :nb_can] = X[:, argsort[:nb_can]]
+        d[:, :nb_can] = d[:, argsort[:nb_can]]
+        d[:coor, :nb_can] -= r[:coor, coor, None] * hyp[argsort[:nb_can]]
+        d_tot[:nb_can] = d_tot[argsort[:nb_can]]
+    return X[:, 0]

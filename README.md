@@ -52,6 +52,8 @@ Modulation/Demodulation
 - Phase Shift Keying (PSK)
 - Quadrature Amplitude Modulation (QAM)
 - OFDM Tx/Rx signal processing
+- MIMO Maximum Likelihood (ML) Detection.
+- MIMO K-best Schnorr-Euchner Detection.
 
 Sequences
 ---------
