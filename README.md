@@ -66,6 +66,7 @@ Utilities
 - Hamming distance, Euclidean distance.
 - Upsample
 - Power of a discrete-time signal
+- Estimate the BER performance of a link model with Monte Carlo simulation.
 
 FAQs
 ----

@@ -108,10 +108,11 @@ class SISOFlatChannel(_FlatChannel):
     ----------
     noise_std    : float, optional
                    Noise standard deviation.
-                   Default value is None and then the value must set later.
+                   *Default* value is None and then the value must set later.
 
     fading_param : tuple of 2 floats, optional
-                   Parameters of the fading (see attribute for details). Default value is (1,0) i.e. no fading.
+                   Parameters of the fading (see attribute for details).
+                   *Default* value is (1,0) i.e. no fading.
 
     Attributes
     ----------
@@ -255,11 +256,11 @@ class MIMOFlatChannel(_FlatChannel):
 
     noise_std    : float, optional
                    Noise standard deviation.
-                   Default value is None and then the value must set later.
+                   *Default* value is None and then the value must set later.
 
     fading_param : tuple of 3 floats, optional
                    Parameters of the fading. The complete tuple must be set each time.
-                   Default value is (zeros((nb_rx, nb_tx)), identity(nb_tx), identity(nb_rx)) i.e. Rayleigh fading.
+                   *Default* value is (zeros((nb_rx, nb_tx)), identity(nb_tx), identity(nb_rx)) i.e. Rayleigh fading.
 
     Attributes
     ----------

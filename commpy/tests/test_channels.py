@@ -277,7 +277,7 @@ class TestMIMOFading(MIMOTestCase):
             # Test with Rayleigh fading
             chan.fading_param = (zeros((nb_rx, nb_tx)), identity(nb_tx), identity(nb_rx))
             check_chan_gain(mod, chan)
-            assert_allclose(chan.channel_gains.mean(), 0, atol=1e-2,
+            assert_allclose(chan.channel_gains.mean(), 0, atol=2e-2,
                             err_msg='Wrong channel mean with real channel')
             assert_allclose(chan.channel_gains.var(), 1, atol=5e-2,
                             err_msg='Wrong channel variance with real channel')
