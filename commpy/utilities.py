@@ -176,7 +176,7 @@ def signal_power(signal):
     return P
 
 
-def link_performance(modem, channel, detector, SNRs, send_max, err_min, send_chunck=None, code_rate=1):
+def link_performance(modem, channel, detector, SNRs, send_max, err_min, send_chunk=None, code_rate=1):
     """
     Estimate the BER performance of a link model with Monte Carlo simulation.
 
@@ -201,13 +201,18 @@ def link_performance(modem, channel, detector, SNRs, send_max, err_min, send_chu
     err_min : int
               link_performance send bits until it reach err_min errors (see also send_max).
 
-    send_chunck : int
+    send_chunk : int
                   Number of bits to be send at each iteration.
                   *Default*: send_chunck = err_min
 
     code_rate : float in (0,1]
                 Rate of the used code.
                 *Default*: 1 i.e. no code.
+
+    Returns
+    -------
+    BERs : 1d ndarray
+           Estimated Bit Error Ratio corresponding to each SNRs
     """
 
     # Initialization
@@ -218,11 +223,11 @@ def link_performance(modem, channel, detector, SNRs, send_max, err_min, send_chu
         def detector(y, H, constellation):
             return y
 
-    # Set chunck size and round it to be a multiple of num_bits_symbol*nb_tx to avoid padding
-    if send_chunck is None:
-        send_chunck = err_min
+    # Set chunk size and round it to be a multiple of num_bits_symbol*nb_tx to avoid padding
+    if send_chunk is None:
+        send_chunk = err_min
     divider = modem.num_bits_symbol * channel.nb_tx
-    send_chunck = max(divider, send_chunck // divider * divider)
+    send_chunk = max(divider, send_chunk // divider * divider)
 
     # Computations
     for id_SNR in range(len(SNRs)):
@@ -231,7 +236,7 @@ def link_performance(modem, channel, detector, SNRs, send_max, err_min, send_chu
         bit_err = 0
         while bit_send < send_max and bit_err < err_min:
             # Propagate some bits
-            msg = np.random.choice((0, 1), send_chunck)
+            msg = np.random.choice((0, 1), send_chunk)
             symbs = modem.modulate(msg)
             channel_output = channel.propagate(symbs)
 
@@ -248,6 +253,6 @@ def link_performance(modem, channel, detector, SNRs, send_max, err_min, send_chu
             # Count errors
             received_msg = modem.demodulate(detected_msg, 'hard')
             bit_err += (msg != received_msg[:len(msg)]).sum()  # Remove MIMO padding
-            bit_send += send_chunck
+            bit_send += send_chunk
         BERs[id_SNR] = bit_err / bit_send
     return BERs

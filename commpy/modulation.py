@@ -1,4 +1,4 @@
-# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# Authors: Veeresh Taranalli <veeresht@gmail.com> & Bastien Trotobas <bastien.trotobas@gmail.com>
 # License: BSD 3-Clause
 
 """
