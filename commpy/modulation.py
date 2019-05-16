@@ -213,12 +213,12 @@ def kbest(y, h, constellation, K):
     Reference: Zhan Guo and P. Nilsson, 'Algorithm and implementation of the K-best sphere decoding for MIMO detection',
         IEEE Journal on Selected Areas in Communications, vol. 24, no. 3, pp. 491-503, Mar. 2006.
 
-    parameters
+    Parameters
     ----------
-    y : 1D ndarray of floats
-        Received complex symbols (shape: num_receive_antennas x 1)
+    y : 1D ndarray
+        Received complex symbols (length: num_receive_antennas)
 
-    h : 2D ndarray of floats
+    h : 2D ndarray
         Channel Matrix (shape: num_receive_antennas x num_transmit_antennas)
 
     constellation : 1D ndarray of floats
@@ -226,6 +226,11 @@ def kbest(y, h, constellation, K):
 
     K : positive integer
         Number of candidates kept at each step
+
+    Returns
+    -------
+    x : 1D ndarray of constellation points
+        Detected vector (length: num_receive_antennas)
     """
     # QR decomposition
     q, r = qr(h)
