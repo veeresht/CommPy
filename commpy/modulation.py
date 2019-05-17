@@ -31,7 +31,6 @@ __all__ = ['PSKModem', 'QAMModem', 'ofdm_tx', 'ofdm_rx', 'mimo_ml', 'kbest']
 
 
 class Modem:
-
     def modulate(self, input_bits):
         """ Modulate (map) an array of bits to constellation symbols.
 

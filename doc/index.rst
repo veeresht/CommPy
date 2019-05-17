@@ -45,6 +45,8 @@ Modulation/Demodulation
 - Phase Shift Keying (PSK)
 - Quadrature Amplitude Modulation (QAM)
 - OFDM Tx/Rx signal processing
+- MIMO Maximum Likelihood (ML) Detection.
+- MIMO K-best Schnorr-Euchner Detection.
 
 Sequences
 ~~~~~~~~~
@@ -58,7 +60,10 @@ Utilities
 - Upsample
 - Power of a discrete-time signal
 
-
+Links
+~~~~~
+- Estimate the BER performance of a link model with Monte Carlo simulation.
+- Link model object.
 
 Reference
 ---------
