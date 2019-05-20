@@ -65,6 +65,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
         link_model.channel.set_SNR_dB(SNRs[id_SNR], code_rate, link_model.Es)
         bit_send = 0
         bit_err = 0
+        receive_size = link_model.channel.nb_tx * link_model.num_bits_symbol
         while bit_send < send_max and bit_err < err_min:
             # Propagate some bits
             msg = np.random.choice((0, 1), send_chunk)
@@ -74,14 +75,14 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
             # Deals with MIMO channel
             if isinstance(link_model.channel, MIMOFlatChannel):
                 nb_symb_vector = len(channel_output)
-                received_msg = np.empty(nb_symb_vector * link_model.channel.nb_tx, dtype=channel_output.dtype)
+                received_msg = np.empty_like(msg, int)
                 for i in range(nb_symb_vector):
-                     received_msg[link_model.channel.nb_tx * i:link_model.channel.nb_tx * (i+1)] = \
+                     received_msg[receive_size * i:receive_size * (i+1)] = \
                          link_model.receive(channel_output[i], link_model.channel.channel_gains[i], link_model.constellation)
             else:
                 received_msg = channel_output
             # Count errors
-            bit_err += (msg != received_msg[:len(msg)]).sum()  # Remove MIMO padding
+            bit_err += (msg != received_msg).sum()  # Remove MIMO padding
             bit_send += send_chunk
         BERs[id_SNR] = bit_err / bit_send
     return BERs
@@ -98,13 +99,13 @@ class linkModel:
         channel : _FlatChannel object
 
         receive : function with prototype receive(y, H, constellation) that return a binary array.
-                    y : 1D ndarray of floats
+                    y : 1D ndarray
                         Received complex symbols (shape: num_receive_antennas x 1)
 
-                    h : 2D ndarray of floats
+                    h : 2D ndarray
                         Channel Matrix (shape: num_receive_antennas x num_transmit_antennas)
 
-                    constellation : 1D ndarray of floats
+                    constellation : 1D ndarray
 
         num_bits_symbols : int
 

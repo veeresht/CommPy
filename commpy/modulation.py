@@ -1,4 +1,4 @@
-# Authors: Veeresh Taranalli <veeresht@gmail.com> & Bastien Trotobas <bastien.trotobas@gmail.com>
+# Authors: Veeresh Taranalli <veeresht@gmail.com> & Bastien Trotobas <bastien.trotobas@gmail.com> & Youness Akourim <akourim97@gmail.com>
 # License: BSD 3-Clause
 
 """
@@ -15,19 +15,20 @@ Modulation Demodulation (:mod:`commpy.modulation`)
    ofdm_rx              -- OFDM Receive Signal Processing
    mimo_ml              -- MIMO Maximum Likelihood (ML) Detection.
    kbest                -- MIMO K-best Schnorr-Euchner Detection.
+   bit_lvl_repr         -- Bit level representation
 
 """
 from itertools import product
 
+import matplotlib.pyplot as plt
+from commpy.utilities import bitarray2dec, dec2bitarray
 from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
     hstack, repeat, tile, dot, sum, shape, concatenate, exp, \
-    log, vectorize, empty
+    log, vectorize, empty, eye, kron
 from numpy.fft import fft, ifft
 from numpy.linalg import qr
 
-from commpy.utilities import bitarray2dec, dec2bitarray
-
-__all__ = ['PSKModem', 'QAMModem', 'ofdm_tx', 'ofdm_rx', 'mimo_ml', 'kbest']
+__all__ = ['PSKModem', 'QAMModem', 'ofdm_tx', 'ofdm_rx', 'mimo_ml', 'kbest', 'bit_lvl_repr']
 
 
 class Modem:
@@ -98,6 +99,44 @@ class Modem:
             # throw an error
 
         return demod_bits
+
+    def plotCons(self):
+        """ Plot the constellation """
+        # init some arrays
+        beta = self.num_bits_symbol
+        numbit = '0' + str(beta) + 'b'
+        Bin = []
+        mot = []
+        const = []
+
+        # creation of w array
+        reel = [pow(2, i) for i in range(beta // 2 - 1, -1, -1)]
+        im = [1j * pow(2, i) for i in range(beta // 2 - 1, -1, -1)]
+        w = concatenate((reel, im), axis=None)
+
+        listBin = [format(i, numbit) for i in range(2 ** beta)]
+        for e in listBin:
+            for i in range(beta):
+                Bin.append(ord(e[i]) - 48)
+                if (ord(e[i]) - 48 == 0):
+                    mot.append(-1)
+                else:
+                    mot.append(1)
+            const.append(dot(w, mot))
+            mot = []
+        symb = self.modulate(Bin)
+
+        # plot the symbols
+        x = symb.real
+        y = symb.imag
+
+        plt.plot(x, y, '+',linewidth=4)
+        for i in range(len(x)):
+            plt.text(x[i], y[i] , listBin[i])
+
+        plt.title('Constellation')
+        plt.grid()
+        plt.show()
 
 
 class PSKModem(Modem):
@@ -225,27 +264,35 @@ def kbest(y, h, constellation, K):
 
     K : positive integer
         Number of candidates kept at each step
+
+    raises
+    ------
+    ValueError
+                If h has more columns than rows.
     """
+    nb_tx, nb_rx = h.shape
+    if nb_rx > nb_tx:
+        raise ValueError('h has more columns than rows')
+
     # QR decomposition
     q, r = qr(h)
     yt = q.conj().T.dot(y)
 
     # Initialization
     m = len(constellation)
-    n = len(yt)
     nb_can = 1
 
     if isinstance(constellation[0], complex):
         const_type = complex
     else:
         const_type = float
-    X = empty((n, K * m), dtype=const_type)  # Set of current candidates
+    X = empty((nb_rx, K * m), dtype=const_type)  # Set of current candidates
     d = tile(yt[:, None], (1, K * m))        # Corresponding distance vector
     d_tot = zeros(K * m, dtype=float)        # Corresponding total distance
     hyp = empty(K * m, dtype=const_type)     # Hypothesis vector
 
     # Processing
-    for coor in range(n-1, -1, -1):
+    for coor in range(nb_rx-1, -1, -1):
         nb_hyp = nb_can * m
 
         # Copy best candidates m times
@@ -269,3 +316,29 @@ def kbest(y, h, constellation, K):
         d[:coor, :nb_can] -= r[:coor, coor, None] * hyp[argsort[:nb_can]]
         d_tot[:nb_can] = d_tot[argsort[:nb_can]]
     return X[:, 0]
+
+
+def bit_lvl_repr(H, w):
+    """ Bit-level representation of matrix H with weights w.
+
+    parameters
+    ----------
+    H   :   2D ndarray (shape : nb_rx, nb_tx)
+            Channel Matrix.
+
+    w   :   1D ndarray of complex (length : beta)
+            Bit level representation weights. The length must be even.
+
+    return
+    ------
+    A : 2D nbarray (shape : nb_rx, nb_tx*beta)
+        Channel matrix adapted to the bit-level representation.
+    """
+    beta = len(w)
+    if beta%2 == 0:
+        m, n = H.shape
+        In = eye(n,n)
+        kr = kron(In,w)
+        return dot(H,kr)
+    else:
+       raise ValueError('Beta must be even.')
