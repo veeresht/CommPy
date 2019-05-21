@@ -416,8 +416,8 @@ class MIMOFlatChannel(_FlatChannel):
     def expo_corr_rayleigh_fading(self, t, r):
         """ Set the fading parameters to a complex correlated Rayleigh channel following the exponential model.
 
-        See: S. L. Loyka, « Channel capacity of MIMO architecture using the exponential correlation matrix », IEEE
-            Commun. Lett., vol. 5, nᵒ 9, p. 369‑371, sept. 2001.
+        See: S. L. Loyka, "Channel capacity if MIMO architecture using the exponential correlation matrix ", IEEE
+            Commun. Lett., vol.5, n. 9, p. 369-371, sept. 2001.
 
         Parameters
         ----------
@@ -470,8 +470,8 @@ class MIMOFlatChannel(_FlatChannel):
     def expo_corr_rician_fading(self, mean, k_factor, t, r):
         """ Set the fading parameters to a complex correlated rician channel following the exponential model.
 
-        See: S. L. Loyka, « Channel capacity of MIMO architecture using the exponential correlation matrix », IEEE
-            Commun. Lett., vol. 5, nᵒ 9, p. 369‑371, sept. 2001.
+        See: S. L. Loyka, "Channel capacity if MIMO architecture using the exponential correlation matrix ", IEEE
+            Commun. Lett., vol.5, n. 9, p. 369-371, sept. 2001.
 
         mean and correlation matricies will be scaled to fit the required k-factor.
 

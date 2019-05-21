@@ -15,6 +15,7 @@ Links (:mod:`commpy.links`)
 from __future__ import division  # Python 2 compatibility
 
 import numpy as np
+
 from commpy.channels import MIMOFlatChannel
 
 __all__ = ['link_performance', 'linkModel']
@@ -80,7 +81,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
                      received_msg[receive_size * i:receive_size * (i+1)] = \
                          link_model.receive(channel_output[i], link_model.channel.channel_gains[i], link_model.constellation)
             else:
-                received_msg = channel_output
+                received_msg = link_model.receive(channel_output, link_model.channel.channel_gains, link_model.constellation)
             # Count errors
             bit_err += (msg != received_msg).sum()  # Remove MIMO padding
             bit_send += send_chunk

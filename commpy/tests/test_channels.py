@@ -77,7 +77,7 @@ class TestSISOFlatChannel:
             # Test with Rayleigh fading
             chan.fading_param = (0, 1)
             check_chan_gain(mod, chan)
-            assert_allclose(absolute(chan.channel_gains.mean()), 0, atol=1e-2,
+            assert_allclose(absolute(chan.channel_gains.mean()), 0, atol=2e-2,
                             err_msg='Wrong channel mean with real channel')
             assert_allclose(chan.channel_gains.var(), 1, atol=0.2,
                             err_msg='Wrong channel variance with real channel')
@@ -85,7 +85,7 @@ class TestSISOFlatChannel:
             # Test with rician fading
             chan.fading_param = (sqrt(2 / 3), 1 / 3)
             check_chan_gain(mod, chan)
-            assert_allclose(chan.channel_gains.mean(), sqrt(2 / 3), atol=1e-2,
+            assert_allclose(chan.channel_gains.mean(), sqrt(2 / 3), atol=2e-2,
                             err_msg='Wrong channel mean with real channel')
             assert_allclose(chan.channel_gains.var(), 1 / 3, atol=0.2,
                             err_msg='Wrong channel variance with real channel')
@@ -105,7 +105,7 @@ class TestSISOFlatChannel:
             # Test with Rayleigh fading
             chan.fading_param = (0j, 1)
             check_chan_gain(mod, chan)
-            assert_allclose(absolute(chan.channel_gains.mean()), 0, atol=1e-2,
+            assert_allclose(absolute(chan.channel_gains.mean()), 0, atol=2e-2,
                             err_msg='Wrong channel mean with real channel')
             assert_allclose(chan.channel_gains.var(), 1, atol=0.2,
                             err_msg='Wrong channel variance with real channel')
@@ -113,7 +113,7 @@ class TestSISOFlatChannel:
             # Test with rician fading
             chan.fading_param = (0.5 + 0.5j, 0.5)
             check_chan_gain(mod, chan)
-            assert_allclose(absolute(chan.channel_gains.mean()), sqrt(0.5), atol=1e-2,
+            assert_allclose(absolute(chan.channel_gains.mean()), sqrt(0.5), atol=2e-2,
                             err_msg='Wrong channel mean with real channel')
             assert_allclose(chan.channel_gains.var(), 0.5, atol=0.2,
                             err_msg='Wrong channel variance with real channel')
