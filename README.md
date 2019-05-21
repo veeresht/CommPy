@@ -54,6 +54,7 @@ Modulation/Demodulation
 - OFDM Tx/Rx signal processing
 - MIMO Maximum Likelihood (ML) Detection.
 - MIMO K-best Schnorr-Euchner Detection.
+- Convert channel matrix to Bit-level representation.
 
 Sequences
 ---------
@@ -66,7 +67,11 @@ Utilities
 - Hamming distance, Euclidean distance.
 - Upsample
 - Power of a discrete-time signal
+
+Links
+-----
 - Estimate the BER performance of a link model with Monte Carlo simulation.
+- Link model object.
 
 FAQs
 ----
