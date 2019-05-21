@@ -3,7 +3,8 @@
 
 from __future__ import division, print_function  # Python 2 compatibility
 
-from numpy import ones, inf, sqrt, array, identity, zeros, dot, trace, einsum, absolute
+from numpy import ones, inf, sqrt, array, identity, zeros, dot, trace, einsum, absolute, exp, pi, fromiter, kron, \
+    zeros_like
 from numpy.random import seed, choice, randn
 from numpy.testing import run_module_suite, assert_raises, assert_equal, assert_allclose, \
     assert_array_equal, dec
@@ -274,6 +275,28 @@ class TestMIMOFading(MIMOTestCase):
             assert_allclose(P_unnoisy, P_msg * chan.nb_tx, rtol=0.2,
                             err_msg='Channel add or remove energy')
 
+        def expo_correlation(t, r):
+            # Construct the exponent matrix
+            expo_tx = fromiter((j - i for i in range(chan.nb_tx) for j in range(chan.nb_tx)), int, chan.nb_tx ** 2)
+            expo_rx = fromiter((j - i for i in range(chan.nb_rx) for j in range(chan.nb_rx)), int, chan.nb_rx ** 2)
+
+            # Reshape
+            expo_tx = expo_tx.reshape(chan.nb_tx, chan.nb_tx)
+            expo_rx = expo_rx.reshape(chan.nb_rx, chan.nb_rx)
+
+            return t ** expo_tx, r ** expo_rx
+
+        def check_correlation(chan, Rt, Rr):
+            nb_ant = chan.nb_tx * chan.nb_rx
+            Rdes = kron(Rt, Rr)
+            H = chan.channel_gains
+            Ract = zeros_like(Rdes)
+            for i in range(len(H)):
+                Ract += H[i].T.reshape(nb_ant, 1).dot(H[i].T.reshape(1, nb_ant).conj())
+            Ract /= len(H)
+            assert_allclose(Rdes, Ract, atol=0.05,
+                            err_msg='Wrong correlation matrix')
+
         # Test value checking in constructor construction
         with assert_raises(ValueError):
             MIMOFlatChannel(nb_tx, nb_tx, 0, (ones((nb_tx, nb_tx)), ones((nb_tx, nb_tx)), ones((nb_rx, nb_rx))))
@@ -290,21 +313,26 @@ class TestMIMOFading(MIMOTestCase):
             # Test with Rayleigh fading
             chan.fading_param = (zeros((nb_rx, nb_tx)), identity(nb_tx), identity(nb_rx))
             check_chan_gain(mod, chan)
-            assert_allclose(chan.channel_gains.mean(), 0, atol=2e-2,
-                            err_msg='Wrong channel mean with real channel')
-            assert_allclose(chan.channel_gains.var(), 1, atol=5e-2,
-                            err_msg='Wrong channel variance with real channel')
 
             # Test with rician fading
             mean = randn(nb_rx, nb_tx)
             mean *= sqrt(prod_nb * 0.75 / einsum('ij,ij->', absolute(mean), absolute(mean)))
-            Rs = self.random_SDP_matrix(nb_tx) * sqrt(prod_nb) * 0.5
+            Rt = self.random_SDP_matrix(nb_tx) * sqrt(prod_nb) * 0.5
             Rr = self.random_SDP_matrix(nb_rx) * sqrt(prod_nb) * 0.5
-            chan.fading_param = (mean, Rs, Rr)
+            chan.fading_param = (mean, Rt, Rr)
             check_chan_gain(mod, chan)
 
-            assert_allclose(chan.channel_gains.mean(0), mean, atol=0.2,
-                            err_msg='Wrong channel mean with real channel')
+            # Test helper functions
+            chan.uncorr_rayleigh_fading(float)
+            check_chan_gain(mod, chan)
+            assert_allclose(chan.k_factor, 0,
+                            err_msg='Wrong k-factor with uncorrelated Rayleigh fading')
+
+            mean = randn(nb_rx, nb_tx)
+            chan.uncorr_rician_fading(mean, 10)
+            check_chan_gain(mod, chan)
+            assert_allclose(chan.k_factor, 10,
+                            err_msg='Wrong k-factor with uncorrelated rician fading')
 
         # Test on complex channel
         for mod in self.all_mods:
@@ -323,15 +351,40 @@ class TestMIMOFading(MIMOTestCase):
             # Test with rician fading
             mean = randn(nb_rx, nb_tx) + 1j * randn(nb_rx, nb_tx)
             mean *= sqrt(prod_nb * 0.75 / einsum('ij,ij->', absolute(mean), absolute(mean)))
-            Rs = self.random_SDP_matrix(nb_tx) * sqrt(prod_nb) * 0.5
+            Rt = self.random_SDP_matrix(nb_tx) * sqrt(prod_nb) * 0.5
             Rr = self.random_SDP_matrix(nb_rx) * sqrt(prod_nb) * 0.5
-            chan.fading_param = (mean, Rs, Rr)
+            chan.fading_param = (mean, Rt, Rr)
             check_chan_gain(mod, chan)
 
             assert_allclose(chan.channel_gains.mean(0).real, mean.real, atol=0.1,
                             err_msg='Wrong channel mean with complex channel')
             assert_allclose(chan.channel_gains.mean(0).imag, mean.imag, atol=0.1,
                             err_msg='Wrong channel mean with complex channel')
+
+            # Test helper functions
+            chan.uncorr_rayleigh_fading(complex)
+            check_chan_gain(mod, chan)
+            assert_allclose(chan.k_factor, 0,
+                            err_msg='Wrong k-factor with uncorrelated Rayleigh fading')
+
+            mean = randn(nb_rx, nb_tx) + randn(nb_rx, nb_tx) * 1j
+            chan.uncorr_rician_fading(mean, 10)
+            check_chan_gain(mod, chan)
+            assert_allclose(chan.k_factor, 10,
+                            err_msg='Wrong k-factor with uncorrelated rician fading')
+
+            chan.expo_corr_rayleigh_fading(exp(-0.2j*pi), exp(-0.1j*pi))
+            check_chan_gain(mod, chan)
+            assert_allclose(chan.k_factor, 0,
+                            err_msg='Wrong k-factor with correlated Rayleigh fading')
+            Rt, Rr = expo_correlation(exp(-0.2j*pi), exp(-0.1j*pi))
+            check_correlation(chan, Rt, Rr)
+
+            mean = randn(nb_rx, nb_tx) + randn(nb_rx, nb_tx) * 1j
+            chan.expo_corr_rician_fading(mean, 10, exp(-0.1j*pi), exp(-0.2j*pi))
+            check_chan_gain(mod, chan)
+            assert_allclose(chan.k_factor, 10,
+                            err_msg='Wrong k-factor with correlated rician fading')
 
 
 @dec.slow
