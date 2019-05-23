@@ -1,4 +1,4 @@
-# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# Authors: Veeresh Taranalli <veeresht@gmail.com>  
 # License: BSD 3-Clause
 
 """ Algorithms for Convolutional Codes """
@@ -545,16 +545,19 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     return decoded_bits[0:len(decoded_bits)-tb_depth-1]
 
 def puncturing(message, punct_vec):
-    '''
+    """
     Applying of the punctured procedure.
     Parameters
     ----------
-    message: input message {0,1}
-    punct_vec: puncturing vector {0,1}
+    message : 1D ndarray
+        Input message {0,1} bit array.
+    punct_vec : 1D ndarray
+        Puncturing vector {0,1} bit array.
     Returns
     -------
-    punctured: output punctured vector {0,1}
-    '''
+    punctured : 1D ndarray
+        Output punctured vector {0,1} bit array.
+    """
     shift = 0
     N = len(punct_vec)
     punctured = []
@@ -566,17 +569,21 @@ def puncturing(message, punct_vec):
     return np.array(punctured)
 
 def depuncturing(punctured, punct_vec, shouldbe):
-    '''
+    """
     Applying of the inserting zeros procedure.
     Parameters
     ----------
-    punctured: input punctured message {0,1}
-    punct_vec: puncturing vector {0,1}
-    shouldbe: length of the initial message (before puncturing)
+    punctured : 1D ndarray
+        Input punctured message {0,1} bit array.
+    punct_vec : 1D ndarray
+        Puncturing vector {0,1} bit array.
+    shouldbe : int 
+        Length of the initial message (before puncturing).
     Returns
     -------
-    depunctured: output vector {0,1}
-    '''
+    depunctured : 1D ndarray
+        Output vector {0,1} bit array.
+    """
     shift = 0
     shift2 = 0
     N = len(punct_vec)
