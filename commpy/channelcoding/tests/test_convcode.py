@@ -71,6 +71,10 @@ class TestConvCode(object):
             coded_bits = conv_encode(msg, self.trellis_1)
             decoded_bits = viterbi_decode(coded_bits.astype(float), self.trellis_1, 15)
             assert_array_equal(decoded_bits[:-2], msg)
+            
+            coded_bits = conv_encode(msg, self.trellis_1, termination = 'cont')
+            decoded_bits = viterbi_decode(coded_bits.astype(float), self.trellis_1, 15)
+            assert_array_equal(decoded_bits, msg)
 
             coded_bits = conv_encode(msg, self.trellis_1)
             coded_syms = 2.0*coded_bits - 1
