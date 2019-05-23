@@ -23,10 +23,10 @@ from itertools import product
 import matplotlib.pyplot as plt
 from commpy.utilities import bitarray2dec, dec2bitarray
 from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
-    hstack, repeat, tile, dot, sum, shape, concatenate, exp, \
+    hstack, repeat, tile, dot, shape, concatenate, exp, \
     log, vectorize, empty, eye, kron
 from numpy.fft import fft, ifft
-from numpy.linalg import qr
+from numpy.linalg import qr, norm
 
 __all__ = ['PSKModem', 'QAMModem', 'ofdm_tx', 'ofdm_rx', 'mimo_ml', 'kbest', 'bit_lvl_repr']
 
@@ -118,7 +118,7 @@ class Modem:
         for e in listBin:
             for i in range(beta):
                 Bin.append(ord(e[i]) - 48)
-                if (ord(e[i]) - 48 == 0):
+                if ord(e[i]) - 48 == 0:
                     mot.append(-1)
                 else:
                     mot.append(1)
@@ -236,10 +236,12 @@ def mimo_ml(y, h, constellation):
         Constellation used to modulate the symbols
 
     """
+    _, n = h.shape
     m = len(constellation)
-    x_ideal = array([tile(constellation, m), repeat(constellation, m)])
-    y_vector = tile(y, m * m)
-    min_idx = argmin(sum(abs(y_vector - dot(h, x_ideal)), axis=0))
+    x_ideal = empty((n, pow(m, n)), complex)
+    for i in range(0, n):
+        x_ideal[i] = repeat(tile(constellation, pow(m, i)), pow(m, n - i - 1))
+    min_idx = argmin(norm(y[:, None] - dot(h, x_ideal), axis=0))
     x_r = x_ideal[:, min_idx]
 
     return x_r
@@ -340,10 +342,10 @@ def bit_lvl_repr(H, w):
         Channel matrix adapted to the bit-level representation.
     """
     beta = len(w)
-    if beta%2 == 0:
+    if beta % 2 == 0:
         m, n = H.shape
-        In = eye(n,n)
-        kr = kron(In,w)
-        return dot(H,kr)
+        In = eye(n , n)
+        kr = kron(In , w)
+        return dot(H , kr)
     else:
        raise ValueError('Beta must be even.')
