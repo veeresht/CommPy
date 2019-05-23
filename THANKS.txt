@@ -1,6 +1,6 @@
 Please add names as needed so that we can keep up with all the contributors.
 
-Veeresh Taranalli for initial creatioon and contribution of CommPy.
+Veeresh Taranalli for initial creation and contribution of CommPy.
 Bastien Trotobas for adding SISO and MIMO channel models with Rayleigh or rician fading, bugfixes, maintenance.
 Vladimir Fadeev for bugfixes, addition of convolutional code puncturing.
 Rey Tucker for python3 compatibility fixes.
