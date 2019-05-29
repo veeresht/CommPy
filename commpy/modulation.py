@@ -21,12 +21,13 @@ Modulation Demodulation (:mod:`commpy.modulation`)
 from itertools import product
 
 import matplotlib.pyplot as plt
-from commpy.utilities import bitarray2dec, dec2bitarray
 from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
     hstack, repeat, tile, dot, shape, concatenate, exp, \
     log, vectorize, empty, eye, kron
 from numpy.fft import fft, ifft
 from numpy.linalg import qr, norm
+
+from commpy.utilities import bitarray2dec, dec2bitarray
 
 __all__ = ['PSKModem', 'QAMModem', 'ofdm_tx', 'ofdm_rx', 'mimo_ml', 'kbest', 'bit_lvl_repr']
 
@@ -100,7 +101,7 @@ class Modem:
 
         return demod_bits
 
-    def plotCons(self):
+    def plot_constellation(self):
         """ Plot the constellation """
         # init some arrays
         beta = self.num_bits_symbol

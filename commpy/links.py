@@ -10,7 +10,7 @@ Links (:mod:`commpy.links`)
    :toctree: generated/
 
    link_performance     -- Estimate the BER performance of a link model with Monte Carlo simulation.
-   linkModel            -- Link model object.
+   LinkModel            -- Link model object.
 """
 from __future__ import division  # Python 2 compatibility
 
@@ -18,7 +18,7 @@ import numpy as np
 
 from commpy.channels import MIMOFlatChannel
 
-__all__ = ['link_performance', 'linkModel']
+__all__ = ['link_performance', 'LinkModel']
 
 
 def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_rate=1):
@@ -89,7 +89,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
     return BERs
 
 
-class linkModel:
+class LinkModel:
     """
         Construct a link model.
 

@@ -1,12 +1,13 @@
 # Authors: Youness Akourim <akourim97@gmail.com>
 # License: BSD 3-Clause
 
-from commpy.channels import MIMOFlatChannel
-from commpy.links import *
-from commpy.modulation import QAMModem, mimo_ml, bit_lvl_repr
 from numpy import zeros, identity, arange, concatenate, log2, array
 from numpy.random import seed
 from numpy.testing import run_module_suite, assert_allclose, dec
+
+from commpy.channels import MIMOFlatChannel
+from commpy.links import *
+from commpy.modulation import QAMModem, mimo_ml, bit_lvl_repr
 
 
 @dec.slow
@@ -35,13 +36,13 @@ def test_bit_lvl_repr():
         return qam.demodulate(mimo_ml(y, H, cons), 'hard')
 
     MymodelWithoutBLR = \
-        linkModel(qam.modulate, RayleighChannel, receiverWithoutBLR, qam.num_bits_symbol, qam.constellation, qam.Es)
+        LinkModel(qam.modulate, RayleighChannel, receiverWithoutBLR, qam.num_bits_symbol, qam.constellation, qam.Es)
     MymodelWithBLR = \
-        linkModel(qam.modulate, RayleighChannel, receiverWithBLR, qam.num_bits_symbol, qam.constellation, qam.Es)
+        LinkModel(qam.modulate, RayleighChannel, receiverWithBLR, qam.num_bits_symbol, qam.constellation, qam.Es)
 
     BERWithoutBLR = link_performance(MymodelWithoutBLR, SNR, 300e4, 300)
     BERWithBLR = link_performance(MymodelWithBLR, SNR, 300e4, 300)
-    assert_allclose(BERWithoutBLR, BERWithBLR, rtol=0.25,
+    assert_allclose(BERWithoutBLR, BERWithBLR, rtol=0.5,
                     err_msg='bit_lvl_repr changes the performance')
 
 

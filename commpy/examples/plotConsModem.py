@@ -7,10 +7,10 @@ from commpy.modulation import PSKModem, QAMModem
 # Example constellation plot of Modem
 # =============================================================================
 
-# PSK corresponding to PSKModem for 4 bits
+# Constellation corresponding to PSKModem for 4 bits per symbols
 psk = PSKModem(16)
 psk.plotCons()
 
-# QAM corresponding to QAMModem for 2bits
-Qam = QAMModem(4)
-Qam.plotCons()
+# Constellation corresponding to QAMModem for 2 bits per symbols
+qam = QAMModem(4)
+qam.plotCons()
