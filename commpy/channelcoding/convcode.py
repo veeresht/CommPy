@@ -122,8 +122,12 @@ class Trellis:
                         # Loop over M delay elements of the shift register
                         # to compute their contribution to the r-th output
                         for i in range(memory[l]):
-                            outbits[r] = (outbits[r] + \
+                            if l == 0:
+                                outbits[r] = (outbits[r] + \
                                 (shift_register[i+l]*generator_array[i+1])) % 2
+                            else:
+                                outbits[r] = (outbits[r] + \
+                                (shift_register[i+memory[l-1]+l-1]*generator_array[i+1])) % 2
 
                         output_generator_array[l] = generator_array[0]
                         if l == 0:
