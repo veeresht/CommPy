@@ -131,9 +131,9 @@ class Modem:
         x = symb.real
         y = symb.imag
 
-        plt.plot(x, y, '+',linewidth=4)
+        plt.plot(x, y, '+', linewidth=4)
         for i in range(len(x)):
-            plt.text(x[i], y[i] , listBin[i])
+            plt.text(x[i], y[i], listBin[i])
 
         plt.title('Constellation')
         plt.grid()
@@ -162,6 +162,7 @@ class PSKModem(Modem):
         self.symbol_mapping = arange(self.m)
         self.constellation = list(map(self._constellation_symbol,
                                       self.symbol_mapping))
+
 
 class QAMModem(Modem):
     """ Creates a Quadrature Amplitude Modulation (QAM) Modem object."""
@@ -295,12 +296,12 @@ def kbest(y, h, constellation, K):
     else:
         const_type = float
     X = empty((nb_rx, K * m), dtype=const_type)  # Set of current candidates
-    d = tile(yt[:, None], (1, K * m))        # Corresponding distance vector
-    d_tot = zeros(K * m, dtype=float)        # Corresponding total distance
-    hyp = empty(K * m, dtype=const_type)     # Hypothesis vector
+    d = tile(yt[:, None], (1, K * m))  # Corresponding distance vector
+    d_tot = zeros(K * m, dtype=float)  # Corresponding total distance
+    hyp = empty(K * m, dtype=const_type)  # Hypothesis vector
 
     # Processing
-    for coor in range(nb_rx-1, -1, -1):
+    for coor in range(nb_rx - 1, -1, -1):
         nb_hyp = nb_can * m
 
         # Copy best candidates m times
@@ -312,7 +313,7 @@ def kbest(y, h, constellation, K):
         hyp[:nb_hyp] = repeat(constellation, nb_can)
         X[coor, :nb_hyp] = hyp[:nb_hyp]
         d[coor, :nb_hyp] -= r[coor, coor] * hyp[:nb_hyp]
-        d_tot[:nb_hyp] += abs(d[coor, :nb_hyp])**2
+        d_tot[:nb_hyp] += abs(d[coor, :nb_hyp]) ** 2
 
         # Select best candidates
         argsort = d_tot[:nb_hyp].argsort()
@@ -345,8 +346,8 @@ def bit_lvl_repr(H, w):
     beta = len(w)
     if beta % 2 == 0:
         m, n = H.shape
-        In = eye(n , n)
-        kr = kron(In , w)
-        return dot(H , kr)
+        In = eye(n, n)
+        kr = kron(In, w)
+        return dot(H, kr)
     else:
-       raise ValueError('Beta must be even.')
+        raise ValueError('Beta must be even.')

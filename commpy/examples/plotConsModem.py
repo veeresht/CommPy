@@ -9,8 +9,8 @@ from commpy.modulation import PSKModem, QAMModem
 
 # Constellation corresponding to PSKModem for 4 bits per symbols
 psk = PSKModem(16)
-psk.plotCons()
+psk.plot_constellation()
 
 # Constellation corresponding to QAMModem for 2 bits per symbols
 qam = QAMModem(4)
-qam.plotCons()
+qam.plot_constellation()

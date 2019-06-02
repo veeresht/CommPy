@@ -21,7 +21,7 @@ def test_bit_lvl_repr():
 
     SNR = arange(10, 16, 5)
 
-    def receiverWithBLR(y, H, cons):
+    def receiver_with_blr(y, H, cons):
         beta = int(log2(len(cons)))
         # creation de w
         reel = [pow(2, i) for i in range(beta // 2 - 1, -1, -1)]
@@ -32,17 +32,17 @@ def test_bit_lvl_repr():
         mes[mes == -1] = 0
         return mes
 
-    def receiverWithoutBLR(y, H, cons):
+    def receiver_without_blr(y, H, cons):
         return qam.demodulate(mimo_ml(y, H, cons), 'hard')
 
-    MymodelWithoutBLR = \
-        LinkModel(qam.modulate, RayleighChannel, receiverWithoutBLR, qam.num_bits_symbol, qam.constellation, qam.Es)
-    MymodelWithBLR = \
-        LinkModel(qam.modulate, RayleighChannel, receiverWithBLR, qam.num_bits_symbol, qam.constellation, qam.Es)
+    my_model_without_blr = \
+        LinkModel(qam.modulate, RayleighChannel, receiver_without_blr, qam.num_bits_symbol, qam.constellation, qam.Es)
+    my_model_with_blr = \
+        LinkModel(qam.modulate, RayleighChannel, receiver_with_blr, qam.num_bits_symbol, qam.constellation, qam.Es)
 
-    BERWithoutBLR = link_performance(MymodelWithoutBLR, SNR, 300e4, 300)
-    BERWithBLR = link_performance(MymodelWithBLR, SNR, 300e4, 300)
-    assert_allclose(BERWithoutBLR, BERWithBLR, rtol=0.5,
+    ber_without_blr = link_performance(my_model_without_blr, SNR, 300e4, 300)
+    ber_with_blr = link_performance(my_model_with_blr, SNR, 300e4, 300)
+    assert_allclose(ber_without_blr, ber_with_blr, rtol=0.5,
                     err_msg='bit_lvl_repr changes the performance')
 
 
