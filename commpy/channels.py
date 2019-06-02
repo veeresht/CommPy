@@ -1,4 +1,3 @@
-
 # Authors: Veeresh Taranalli <veeresht@gmail.com> & Bastien Trotobas <bastien.trotobas@gmail.com>
 # License: BSD 3-Clause
 
@@ -20,7 +19,7 @@ Channel Models (:mod:`commpy.channels`)
 
 from __future__ import division, print_function  # Python 2 compatibility
 
-from numpy import complex, abs, sqrt, sum, zeros, identity, hstack, einsum, trace, kron, absolute
+from numpy import complex, abs, sqrt, sum, zeros, identity, hstack, einsum, trace, kron, absolute, fromiter
 from numpy.random import randn, random, standard_normal
 from scipy.linalg import sqrtm
 
@@ -71,7 +70,7 @@ class _FlatChannel(object):
                         Average symbol energy
         """
 
-        self.noise_std = sqrt((self.isComplex + 1) * self.nb_tx * Es / (code_rate * 10**(SNR_dB/10)))
+        self.noise_std = sqrt((self.isComplex + 1) * self.nb_tx * Es / (code_rate * 10 ** (SNR_dB / 10)))
 
     def set_SNR_lin(self, SNR_lin, code_rate=1, Es=1):
 
@@ -99,7 +98,6 @@ class _FlatChannel(object):
 
 
 class SISOFlatChannel(_FlatChannel):
-
     """
     Constructs a SISO channel with a flat fading.
     The channel coefficient are normalized i.e. the mean magnitude is 1.
@@ -108,10 +106,11 @@ class SISOFlatChannel(_FlatChannel):
     ----------
     noise_std    : float, optional
                    Noise standard deviation.
-                   Default value is None and then the value must set later.
+                   *Default* value is None and then the value must set later.
 
     fading_param : tuple of 2 floats, optional
-                   Parameters of the fading (see attribute for details). Default value is (1,0) i.e. no fading.
+                   Parameters of the fading (see attribute for details).
+                   *Default* value is (1,0) i.e. no fading.
 
     Attributes
     ----------
@@ -240,7 +239,6 @@ class SISOFlatChannel(_FlatChannel):
 
 
 class MIMOFlatChannel(_FlatChannel):
-
     """
     Constructs a MIMO channel with a flat fading based on the Kronecker model.
     The channel coefficient are normalized i.e. the mean magnitude is 1.
@@ -255,15 +253,15 @@ class MIMOFlatChannel(_FlatChannel):
 
     noise_std    : float, optional
                    Noise standard deviation.
-                   Default value is None and then the value must set later.
+                   *Default* value is None and then the value must set later.
 
     fading_param : tuple of 3 floats, optional
                    Parameters of the fading. The complete tuple must be set each time.
-                   Default value is (zeros((nb_rx, nb_tx)), identity(nb_tx), identity(nb_rx)) i.e. Rayleigh fading.
+                   *Default* value is (zeros((nb_rx, nb_tx)), identity(nb_tx), identity(nb_rx)) i.e. Rayleigh fading.
 
     Attributes
     ----------
-    fading_param : tuple of 2 floats
+    fading_param : tuple of 3 2D ndarray
                    Parameters of the fading.
                    Raise ValueError when sets with value that would lead to a non-normalized channel.
 
@@ -275,9 +273,7 @@ class MIMOFlatChannel(_FlatChannel):
 
                    Classical fadings:
 
-                        * (zeros((nb_rx, nb_tx)), identity(nb_tx), identity(nb_rx)): Rayleigh fading.
-
-                        * Others: rician fading.
+                        * (zeros((nb_rx, nb_tx)), identity(nb_tx), identity(nb_rx)): Uncorrelated Rayleigh fading.
 
     noise_std       : float
                        Noise standard deviation. None is the value has not been set yet.
@@ -407,6 +403,119 @@ class MIMOFlatChannel(_FlatChannel):
         LOS_gain = einsum('ij,ij->', absolute(self.fading_param[0]), absolute(self.fading_param[0]))
         return LOS_gain / NLOS_gain
 
+    def uncorr_rayleigh_fading(self, dtype):
+        """ Set the fading parameters to an uncorrelated Rayleigh channel.
+
+        Parameters
+        ----------
+        dtype : dtype
+                Type of the channel
+        """
+        self.fading_param = zeros((self.nb_rx, self.nb_tx), dtype), identity(self.nb_tx), identity(self.nb_rx)
+
+    def expo_corr_rayleigh_fading(self, t, r):
+        """ Set the fading parameters to a complex correlated Rayleigh channel following the exponential model.
+
+        See: S. L. Loyka, "Channel capacity if MIMO architecture using the exponential correlation matrix ", IEEE
+            Commun. Lett., vol.5, n. 9, p. 369-371, sept. 2001.
+
+        Parameters
+        ----------
+        t : complex with abs(t) = 1
+            Correlation coefficient for the transceiver.
+
+        r : complex with abs(r) = 1
+            Correlation coefficient for the receiver.
+
+        Raises
+        ------
+        ValueError
+                    If abs(t) != 1 or abs(r) != 1
+        """
+        # Check inputs
+        if abs(t) - 1 > 1e-4:
+            raise ValueError('abs(t) must be one.')
+        if abs(r) - 1 > 1e-4:
+            raise ValueError('abs(r) must be one.')
+
+        # Construct the exponent matrix
+        expo_tx = fromiter((j - i for i in range(self.nb_tx) for j in range(self.nb_tx)), int, self.nb_tx ** 2)
+        expo_rx = fromiter((j - i for i in range(self.nb_rx) for j in range(self.nb_rx)), int, self.nb_rx ** 2)
+
+        # Reshape
+        expo_tx = expo_tx.reshape(self.nb_tx, self.nb_tx)
+        expo_rx = expo_rx.reshape(self.nb_rx, self.nb_rx)
+
+        # Set fading
+        self.fading_param = zeros((self.nb_rx, self.nb_tx), complex), t ** expo_tx, r ** expo_rx
+
+    def uncorr_rician_fading(self, mean, k_factor):
+        """ Set the fading parameters to an uncorrelated rician channel.
+
+        mean will be scaled to fit the required k-factor.
+
+        Parameters
+        ----------
+        mean : ndarray (shape: nb_rx x nb_tx)
+               Mean of the channel gain.
+
+        k_factor : positive float
+                   Requested k-factor (the power ratio between LOS and NLOS).
+        """
+        nb_antennas = mean.size
+        NLOS_gain = nb_antennas / (k_factor + 1)
+        mean = mean * sqrt(k_factor * NLOS_gain / einsum('ij,ij->', absolute(mean), absolute(mean)))
+        self.fading_param = mean, identity(self.nb_tx) * NLOS_gain / nb_antennas, identity(self.nb_rx)
+
+    def expo_corr_rician_fading(self, mean, k_factor, t, r):
+        """ Set the fading parameters to a complex correlated rician channel following the exponential model.
+
+        See: S. L. Loyka, "Channel capacity if MIMO architecture using the exponential correlation matrix ", IEEE
+            Commun. Lett., vol.5, n. 9, p. 369-371, sept. 2001.
+
+        mean and correlation matricies will be scaled to fit the required k-factor.
+
+        Parameters
+        ----------
+        mean : ndarray (shape: nb_rx x nb_tx)
+               Mean of the channel gain.
+
+        k_factor : positive float
+                   Requested k-factor (the power ratio between LOS and NLOS).
+
+        t : complex with abs(t) = 1
+            Correlation coefficient for the transceiver.
+
+        r : complex with abs(r) = 1
+            Correlation coefficient for the receiver.
+
+        Raises
+        ------
+        ValueError
+                    If abs(t) != 1 or abs(r) != 1
+        """
+        # Check inputs
+        if abs(t) - 1 > 1e-4:
+            raise ValueError('abs(t) must be one.')
+        if abs(r) - 1 > 1e-4:
+            raise ValueError('abs(r) must be one.')
+
+        # Scaling
+        nb_antennas = mean.size
+        NLOS_gain = nb_antennas / (k_factor + 1)
+        mean = mean * sqrt(k_factor * NLOS_gain / einsum('ij,ij->', absolute(mean), absolute(mean)))
+
+        # Construct the exponent matrix
+        expo_tx = fromiter((j - i for i in range(self.nb_tx) for j in range(self.nb_tx)), int, self.nb_tx ** 2)
+        expo_rx = fromiter((j - i for i in range(self.nb_rx) for j in range(self.nb_rx)), int, self.nb_rx ** 2)
+
+        # Reshape
+        expo_tx = expo_tx.reshape(self.nb_tx, self.nb_tx)
+        expo_rx = expo_rx.reshape(self.nb_rx, self.nb_rx)
+
+        # Set fading
+        self.fading_param = mean, t ** expo_tx * NLOS_gain / nb_antennas, r ** expo_rx
+
 
 def bec(input_bits, p_e):
     """
@@ -475,14 +584,14 @@ def awgn(input_signal, snr_dB, rate=1.0):
         Output signal from the channel with the specified SNR.
     """
 
-    avg_energy = sum(abs(input_signal) * abs(input_signal))/len(input_signal)
-    snr_linear = 10**(snr_dB/10.0)
-    noise_variance = avg_energy/(2*rate*snr_linear)
+    avg_energy = sum(abs(input_signal) * abs(input_signal)) / len(input_signal)
+    snr_linear = 10 ** (snr_dB / 10.0)
+    noise_variance = avg_energy / (2 * rate * snr_linear)
 
     if isinstance(input_signal[0], complex):
         noise = (sqrt(noise_variance) * randn(len(input_signal))) + (sqrt(noise_variance) * randn(len(input_signal))*1j)
     else:
-        noise = sqrt(2*noise_variance) * randn(len(input_signal))
+        noise = sqrt(2 * noise_variance) * randn(len(input_signal))
 
     output_signal = input_signal + noise
 
