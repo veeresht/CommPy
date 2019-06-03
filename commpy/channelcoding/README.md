@@ -13,7 +13,7 @@ The fact how "further" a certain algorithm divides the code words among themselv
 
 ![](https://habrastorage.org/webt/n7/o4/bs/n7o4bsf7_htlv10gsatc-yojbrq.png)
 
-In the case of binary codes, the minimum distance between all existing code words is called ** Hamming distance ** and is usually denoted **dmin**:
+In the case of binary codes, the minimum distance between all existing code words is called **Hamming distance** and is usually denoted **dmin**:
 
 <img src="https://raw.githubusercontent.com/kirlf/CSP/master/FEC/assets/FECexamp2.png" alt="examp2" width="400"/>
 
@@ -32,7 +32,7 @@ Secondly, codes can be classified as **block** and **continuous**:
 
 ## Net bit rate
 Redundancy of the channel coding schemes influences (decreases) bit rate. Actually, it is the cost for the noiseless increasing.
-**Net bit** rate concept is usually used:
+[**Net bit rate**](https://en.wikipedia.org/wiki/Bit_rate#Information_rate) concept is usually used:
 
 <img src="https://raw.githubusercontent.com/kirlf/CSP/master/FEC/assets/nebitrate.png" alt="net" width="500"/>
 
