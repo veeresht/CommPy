@@ -406,6 +406,15 @@ class TestMIMOFading(MIMOTestCase):
             assert_allclose(chan.k_factor, 5,
                             err_msg='Wrong k-factor with correlated rician fading')
 
+            # Test specularH
+            with assert_raises(ValueError):
+                chan.specularH(0,-1,0,1)
+
+            mean = chan.specularH(0,0.1,0.5,1)
+            chan.expo_corr_rician_fading(mean, 5, exp(-0.1j*pi), exp(-0.2j*pi), 3, 2)
+            check_chan_gain(mod, chan)
+            assert_allclose(chan.k_factor, 5,
+                            err_msg='Wrong k-factor with correlated rician fading')
 
 
 @dec.slow

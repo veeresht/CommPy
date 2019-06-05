@@ -1,4 +1,4 @@
-# Authors: Veeresh Taranalli < veeresht @ gmail.com > & Bastien Trotobas < bastien.trotobas @ gmail.com >
+# Authors: Veeresh Taranalli <veeresht@gmail.com> & Bastien Trotobas <bastien.trotobas@gmail.com>
 # License: BSD 3-Clause
 
 """
@@ -19,7 +19,8 @@ Channel Models (:mod:`commpy.channels`)
 
 from __future__ import division, print_function  # Python 2 compatibility
 
-from numpy import complex, abs, sqrt, sum, zeros, identity, hstack, einsum, trace, kron, absolute, fromiter, array, exp
+from numpy import complex, abs, sqrt, sum, zeros, identity, hstack, einsum, trace, kron, absolute, fromiter, array, exp, \
+    pi, cos
 from numpy.random import randn, random, standard_normal
 from scipy.linalg import sqrtm
 
@@ -415,6 +416,47 @@ class MIMOFlatChannel(_FlatChannel):
 
         # updating of correlation matrices
         self.fading_param = self.fading_param[0], alpha * self.fading_param[1] * Et, self.fading_param[2] * Er
+
+
+    def specularH(self, thetar, dr, thetat, dt):
+
+        """
+        Calculate the specular components of H the channel gain as in [1].
+        ref: [1] Lee M. Garth, Peter J. Smith, Mansoor Shafi, "Exact Symbol Error Probabilities for SVD Transmission
+        of BPSK Data over Fading Channels", IEEE 2005.
+
+        Parameters
+        ----------
+        thetat : float
+                the angle of departure.
+
+        dt : postive float
+                the antenna spacing in wavelenghts of departure.
+
+        thetar : float
+                the angle of arrival.
+
+        dr : positie float
+                the antenna spacing in wavelenghts of arrival.
+
+        Returns
+        -------
+        H      : 2D ndarray of shape (nb_rx, nb_tx)
+                 the specular components of channel gains to be use as mean in Rician fading.
+
+        Raises
+        ------
+        ValueError
+                    If dt or dr are negative.
+
+        """
+        if dr < 0 or dt < 0 :
+            raise ValueError("the distance must be positive ")
+        H = zeros((self.nb_rx,self.nb_tx),dtype=complex)
+        for n in range(self.nb_rx):
+            for m in range(self.nb_tx):
+                H[n,m] = exp(1j*2*pi*(n*dr*cos(thetar)-m*dt*cos(thetat)))
+        return H
 
     @property
     def fading_param(self):
