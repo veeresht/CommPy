@@ -3,14 +3,13 @@
 
 from __future__ import division, print_function  # Python 2 compatibility
 
+from commpy.channels import SISOFlatChannel, MIMOFlatChannel
+from commpy.utilities import signal_power
 from numpy import ones, inf, sqrt, array, identity, zeros, dot, trace, einsum, absolute, exp, pi, fromiter, kron, \
     zeros_like
 from numpy.random import seed, choice, randn
 from numpy.testing import run_module_suite, assert_raises, assert_equal, assert_allclose, \
     assert_array_equal, dec
-
-from commpy.channels import SISOFlatChannel, MIMOFlatChannel
-from commpy.utilities import signal_power
 
 
 class TestSISOFlatChannel:
@@ -385,6 +384,28 @@ class TestMIMOFading(MIMOTestCase):
             check_chan_gain(mod, chan)
             assert_allclose(chan.k_factor, 10,
                             err_msg='Wrong k-factor with correlated rician fading')
+
+            # Test with beta > 0
+            chan.expo_corr_rayleigh_fading(exp(-0.2j*pi), exp(-0.1j*pi), 1, 0.5)
+            check_chan_gain(mod, chan)
+            assert_allclose(chan.k_factor, 0,
+                            err_msg='Wrong k-factor with correlated Rayleigh fading')
+            Rt, Rr = expo_correlation(exp(-0.2j*pi), exp(-0.1j*pi))
+            # ET ER, et version chapea de R
+            Er = array([[exp(abs(m - n)) for m in range(nb_rx)] for n in range(nb_rx)])
+            Et = array([[exp(abs(m - n)) for m in range(nb_tx)] for n in range(nb_tx)])
+
+            Rr = chan.fading_param[1] * Er
+            Rt = chan.fading_param[2] * Et
+
+            check_correlation(chan, Rt, Rr)
+
+            mean = randn(nb_rx, nb_tx) + randn(nb_rx, nb_tx) * 1j
+            chan.expo_corr_rician_fading(mean, 5, exp(-0.1j*pi), exp(-0.2j*pi), 3, 2)
+            check_chan_gain(mod, chan)
+            assert_allclose(chan.k_factor, 5,
+                            err_msg='Wrong k-factor with correlated rician fading')
+
 
 
 @dec.slow

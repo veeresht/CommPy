@@ -1,4 +1,4 @@
-# Authors: Veeresh Taranalli <veeresht@gmail.com> & Bastien Trotobas <bastien.trotobas@gmail.com>
+# Authors: Veeresh Taranalli < veeresht @ gmail.com > & Bastien Trotobas < bastien.trotobas @ gmail.com >
 # License: BSD 3-Clause
 
 """
@@ -19,7 +19,7 @@ Channel Models (:mod:`commpy.channels`)
 
 from __future__ import division, print_function  # Python 2 compatibility
 
-from numpy import complex, abs, sqrt, sum, zeros, identity, hstack, einsum, trace, kron, absolute, fromiter
+from numpy import complex, abs, sqrt, sum, zeros, identity, hstack, einsum, trace, kron, absolute, fromiter, array, exp
 from numpy.random import randn, random, standard_normal
 from scipy.linalg import sqrtm
 
@@ -381,6 +381,41 @@ class MIMOFlatChannel(_FlatChannel):
         self.unnoisy_output = einsum('ijk,ik->ij', self.channel_gains, msg)
         return self.unnoisy_output + self.noises
 
+    def _update_corr_KBSM(self, betat, betar):
+
+        """
+        Update the correlation parameters to follow the KBSM-BD-AA.
+
+        Parameters
+        ----------
+        betat : positive float
+                Constant for the transmitter.
+
+        betar : positive float
+                Constant for the receiver.
+
+        Raises
+        ------
+        ValueError
+                    If betat or betar are negative.
+        """
+
+        if betar < 0 or betat < 0:
+            raise ValueError("beta must be positif ")
+
+        # Creation or Er and Et
+        Er = array([[exp(abs(m - n)) for m in range(self.nb_rx)] for n in range(self.nb_rx)])
+        Et = array([[exp(abs(m - n)) for m in range(self.nb_tx)] for n in range(self.nb_tx)])
+
+        # Compute gain to the keep K-factor
+        NLOS_before = trace(self.fading_param[1]) * trace(self.fading_param[2])
+        NLOS_after = trace(self.fading_param[1] * Et) * trace(self.fading_param[2] * Er)
+
+        alpha = NLOS_before / NLOS_after
+
+        # updating of correlation matrices
+        self.fading_param = self.fading_param[0], alpha * self.fading_param[1] * Et, self.fading_param[2] * Er
+
     @property
     def fading_param(self):
         """ Parameters of the fading (see class attribute for details). """
@@ -413,11 +448,16 @@ class MIMOFlatChannel(_FlatChannel):
         """
         self.fading_param = zeros((self.nb_rx, self.nb_tx), dtype), identity(self.nb_tx), identity(self.nb_rx)
 
-    def expo_corr_rayleigh_fading(self, t, r):
-        """ Set the fading parameters to a complex correlated Rayleigh channel following the exponential model.
+    def expo_corr_rayleigh_fading(self, t, r, betat=0, betar=0):
+        """ Set the fading parameters to a complex correlated Rayleigh channel following the exponential model [1].
+        A KBSM-BD-AA can be used as in [2] to improve the model.
 
-        See: S. L. Loyka, "Channel capacity if MIMO architecture using the exponential correlation matrix ", IEEE
+        ref: [1] S. L. Loyka, "Channel capacity if MIMO architecture using the exponential correlation matrix ", IEEE
             Commun. Lett., vol.5, n. 9, p. 369-371, sept. 2001.
+
+            [2] S. Wu, C. Wang, E. M. Aggoune, et M. M. Alwakeel, "A novel Kronecker-based stochastic model for massive
+            MIMO channels", in 2015 IEEE/CIC International Conference on Communications in China (ICCC), 2015, p. 1‑6.
+
 
         Parameters
         ----------
@@ -427,10 +467,21 @@ class MIMOFlatChannel(_FlatChannel):
         r : complex with abs(r) = 1
             Correlation coefficient for the receiver.
 
+        betat : positive float
+                Constant for the transmitter.
+                *Default* = 0 i.e. classic model
+
+        betar : positive float
+                Constant for the receiver.
+                *Default* = 0 i.e. classic model
+
         Raises
         ------
         ValueError
                     If abs(t) != 1 or abs(r) != 1
+
+        ValueError
+                    If betat or betar are negative.
         """
         # Check inputs
         if abs(t) - 1 > 1e-4:
@@ -448,6 +499,9 @@ class MIMOFlatChannel(_FlatChannel):
 
         # Set fading
         self.fading_param = zeros((self.nb_rx, self.nb_tx), complex), t ** expo_tx, r ** expo_rx
+
+        # Update Rr and Rt
+        self._update_corr_KBSM(betat, betar)
 
     def uncorr_rician_fading(self, mean, k_factor):
         """ Set the fading parameters to an uncorrelated rician channel.
@@ -467,13 +521,19 @@ class MIMOFlatChannel(_FlatChannel):
         mean = mean * sqrt(k_factor * NLOS_gain / einsum('ij,ij->', absolute(mean), absolute(mean)))
         self.fading_param = mean, identity(self.nb_tx) * NLOS_gain / nb_antennas, identity(self.nb_rx)
 
-    def expo_corr_rician_fading(self, mean, k_factor, t, r):
-        """ Set the fading parameters to a complex correlated rician channel following the exponential model.
+    def expo_corr_rician_fading(self, mean, k_factor, t, r, betat=0, betar=0):
+        """ Set the fading parameters to a complex correlated rician channel following the exponential model [1].
+        A KBSM-BD-AA can be used as in [2] to improve the model.
 
-        See: S. L. Loyka, "Channel capacity if MIMO architecture using the exponential correlation matrix ", IEEE
+        ref: [1] S. L. Loyka, "Channel capacity if MIMO architecture using the exponential correlation matrix ", IEEE
             Commun. Lett., vol.5, n. 9, p. 369-371, sept. 2001.
 
-        mean and correlation matricies will be scaled to fit the required k-factor.
+            [2] S. Wu, C. Wang, E. M. Aggoune, et M. M. Alwakeel, "A novel Kronecker-based stochastic model for massive
+            MIMO channels", in 2015 IEEE/CIC International Conference on Communications in China (ICCC), 2015, p. 1‑6.
+
+
+        mean and correlation matricies will be scaled to fit the required k-factor. The k-factor is also preserved is
+        beta are provided.
 
         Parameters
         ----------
@@ -489,10 +549,21 @@ class MIMOFlatChannel(_FlatChannel):
         r : complex with abs(r) = 1
             Correlation coefficient for the receiver.
 
+        betat : positive float
+                Constant for the transmitter.
+                *Default* = 0 i.e. classic model
+
+        betar : positive float
+                Constant for the receiver.
+                *Default* = 0 i.e. classic model
+
         Raises
         ------
         ValueError
                     If abs(t) != 1 or abs(r) != 1
+
+        ValueError
+                    If betat or betar are negative.
         """
         # Check inputs
         if abs(t) - 1 > 1e-4:
@@ -515,6 +586,9 @@ class MIMOFlatChannel(_FlatChannel):
 
         # Set fading
         self.fading_param = mean, t ** expo_tx * NLOS_gain / nb_antennas, r ** expo_rx
+
+        # Update Rr and Rt
+        self._update_corr_KBSM(betat, betar)
 
 
 def bec(input_bits, p_e):
