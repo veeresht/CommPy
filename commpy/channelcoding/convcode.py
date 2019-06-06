@@ -316,7 +316,10 @@ def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=Non
             number_outbits = int(number_inbits/rate)
 
     outbits = np.zeros(number_outbits, 'int')
-    p_outbits = np.zeros(int(number_outbits*
+    if puncture_matrix is not None:
+        p_outbits = np.zeros(number_outbits)
+    else:
+        p_outbits = np.zeros(int(number_outbits*
             puncture_matrix[0:].sum()/np.size(puncture_matrix, 1)), 'int')
     next_state_table = trellis.next_state_table
     output_table = trellis.output_table
