@@ -402,26 +402,20 @@ class MIMOFlatChannel(_FlatChannel):
         """
 
         if betar < 0 or betat < 0:
-            raise ValueError("beta must be positif ")
+            raise ValueError("beta must be positif")
 
-        # Creation or Er and Et
-        Er = array([[exp(abs(m - n)) for m in range(self.nb_rx)] for n in range(self.nb_rx)])
-        Et = array([[exp(abs(m - n)) for m in range(self.nb_tx)] for n in range(self.nb_tx)])
+        # Create Er and Et
+        Er = array([[exp(-betar * abs(m - n)) for m in range(self.nb_rx)] for n in range(self.nb_rx)])
+        Et = array([[exp(-betat * abs(m - n)) for m in range(self.nb_tx)] for n in range(self.nb_tx)])
 
-        # Compute gain to the keep K-factor
-        NLOS_before = trace(self.fading_param[1]) * trace(self.fading_param[2])
-        NLOS_after = trace(self.fading_param[1] * Et) * trace(self.fading_param[2] * Er)
+        # Updating of correlation matrices
+        self.fading_param = self.fading_param[0], self.fading_param[1] * Et, self.fading_param[2] * Er
 
-        alpha = NLOS_before / NLOS_after
-
-        # updating of correlation matrices
-        self.fading_param = self.fading_param[0], alpha * self.fading_param[1] * Et, self.fading_param[2] * Er
-
-
-    def specularH(self, thetar, dr, thetat, dt):
+    def specular_compo(self, thetat, dt, thetar, dr):
 
         """
-        Calculate the specular components of H the channel gain as in [1].
+        Calculate the specular components of the channel gain as in [1].
+
         ref: [1] Lee M. Garth, Peter J. Smith, Mansoor Shafi, "Exact Symbol Error Probabilities for SVD Transmission
         of BPSK Data over Fading Channels", IEEE 2005.
 
@@ -450,12 +444,12 @@ class MIMOFlatChannel(_FlatChannel):
                     If dt or dr are negative.
 
         """
-        if dr < 0 or dt < 0 :
+        if dr < 0 or dt < 0:
             raise ValueError("the distance must be positive ")
-        H = zeros((self.nb_rx,self.nb_tx),dtype=complex)
+        H = zeros((self.nb_rx, self.nb_tx), dtype=complex)
         for n in range(self.nb_rx):
             for m in range(self.nb_tx):
-                H[n,m] = exp(1j*2*pi*(n*dr*cos(thetar)-m*dt*cos(thetat)))
+                H[n, m] = exp(1j * 2 * pi * (n * dr * cos(thetar) - m * dt * cos(thetat)))
         return H
 
     @property
@@ -497,8 +491,8 @@ class MIMOFlatChannel(_FlatChannel):
         ref: [1] S. L. Loyka, "Channel capacity if MIMO architecture using the exponential correlation matrix ", IEEE
             Commun. Lett., vol.5, n. 9, p. 369-371, sept. 2001.
 
-            [2] S. Wu, C. Wang, E. M. Aggoune, et M. M. Alwakeel, "A novel Kronecker-based stochastic model for massive
-            MIMO channels", in 2015 IEEE/CIC International Conference on Communications in China (ICCC), 2015, p. 1‑6.
+            [2] S. Wu, C. Wang, E. M. Aggoune, et M. M. Alwakeel,"A novel Kronecker-based stochastic model for massive
+            MIMO channels", in 2015 IEEE/CIC International Conference on Communications in China (ICCC), 2015, p. 1-6
 
 
         Parameters
@@ -570,8 +564,8 @@ class MIMOFlatChannel(_FlatChannel):
         ref: [1] S. L. Loyka, "Channel capacity if MIMO architecture using the exponential correlation matrix ", IEEE
             Commun. Lett., vol.5, n. 9, p. 369-371, sept. 2001.
 
-            [2] S. Wu, C. Wang, E. M. Aggoune, et M. M. Alwakeel, "A novel Kronecker-based stochastic model for massive
-            MIMO channels", in 2015 IEEE/CIC International Conference on Communications in China (ICCC), 2015, p. 1‑6.
+            [2] S. Wu, C. Wang, E. M. Aggoune, et M. M. Alwakeel,"A novel Kronecker-based stochastic model for massive
+            MIMO channels", in 2015 IEEE/CIC International Conference on Communications in China (ICCC), 2015, p. 1-6
 
 
         mean and correlation matricies will be scaled to fit the required k-factor. The k-factor is also preserved is
