@@ -55,6 +55,7 @@ Modulation/Demodulation
 - MIMO Maximum Likelihood (ML) Detection.
 - MIMO K-best Schnorr-Euchner Detection.
 - Convert channel matrix to Bit-level representation.
+- Computation of LogLikelihood ratio using max-log approximation.
 
 Sequences
 ---------
