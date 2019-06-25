@@ -3,13 +3,12 @@
 
 """ Algorithms for Convolutional Codes """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.collections import PatchCollection
 import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.collections import PatchCollection
 
 from commpy.utilities import dec2bitarray, bitarray2dec, hamming_dist, euclid_dist
-#from commpy.channelcoding.acstb import acs_traceback
 
 __all__ = ['Trellis', 'conv_encode', 'viterbi_decode']
 
@@ -20,9 +19,10 @@ class Trellis:
     ----------
     memory : 1D ndarray of ints
         Number of memory elements per input of the convolutional encoder.
-    g_matrix : 2D ndarray of ints (octal representation)
+    g_matrix : 2D ndarray of ints (decimal representation)
         Generator matrix G(D) of the convolutional encoder. Each element of
         G(D) represents a polynomial.
+        Each row is an input, each column an output.
     feedback : int, optional
         Feedback polynomial of the convolutional encoder. Default value is 00.
     code_type : {'default', 'rsc'}, optional
@@ -59,7 +59,7 @@ class Trellis:
     >>> from numpy import array
     >>> import commpy.channelcoding.convcode as cc
     >>> memory = array([2])
-    >>> g_matrix = array([[0o5, 0o7]]) # G(D) = [1+D^2, 1+D+D^2]
+    >>> g_matrix = array([[5, 7]]) # G(D) = [1+D^2, 1+D+D^2]
     >>> trellis = cc.Trellis(memory, g_matrix)
     >>> print trellis.k
     1
