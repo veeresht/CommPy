@@ -79,11 +79,13 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
                 received_msg = np.empty_like(msg, int)
                 for i in range(nb_symb_vector):
                      received_msg[receive_size * i:receive_size * (i+1)] = \
-                         link_model.receive(channel_output[i], link_model.channel.channel_gains[i], link_model.constellation)
+                         link_model.receive(channel_output[i], link_model.channel.channel_gains[i],
+                                            link_model.constellation, link_model.channel.noise_std**2)
             else:
-                received_msg = link_model.receive(channel_output, link_model.channel.channel_gains, link_model.constellation)
+                received_msg = link_model.receive(channel_output, link_model.channel.channel_gains,
+                                                  link_model.constellation, link_model.channel.noise_std**2)
             # Count errors
-            bit_err += (msg != received_msg).sum()  # Remove MIMO padding
+            bit_err += (msg != received_msg).sum()
             bit_send += send_chunk
         BERs[id_SNR] = bit_err / bit_send
     return BERs
@@ -99,7 +101,7 @@ class LinkModel:
 
         channel : _FlatChannel object
 
-        receive : function with prototype receive(y, H, constellation) that return a binary array.
+        receive : function with prototype receive(y, H, constellation, noise_var) that return a binary array.
                     y : 1D ndarray
                         Received complex symbols (shape: num_receive_antennas x 1)
 
@@ -107,6 +109,9 @@ class LinkModel:
                         Channel Matrix (shape: num_receive_antennas x num_transmit_antennas)
 
                     constellation : 1D ndarray
+
+                    noise_var : positive float
+                                Noise variance
 
         num_bits_symbols : int
 

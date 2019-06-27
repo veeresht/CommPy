@@ -249,7 +249,7 @@ def mimo_ml(y, h, constellation):
     return x_r
 
 
-def kbest(y, h, constellation, K, output_type='hard', noise_var=0, decode=None):
+def kbest(y, h, constellation, K, noise_var=0, output_type='hard', decode=None):
     """ MIMO K-best Schnorr-Euchner Detection.
 
     Reference: Zhan Guo and P. Nilsson, 'Algorithm and implementation of the K-best sphere decoding for MIMO detection',
@@ -269,14 +269,14 @@ def kbest(y, h, constellation, K, output_type='hard', noise_var=0, decode=None):
     K : positive integer
         Number of candidates kept at each step
 
+    noise_var : positive float
+        Noise variance.
+        *Default* value is 0.
+
     output_type : str
         'hard': hard output i.e. output is a binary word
         'soft': soft output i.e. output is a vector of Log-Likelihood Ratios.
         *Default* value is 'hard'
-
-    noise_var : positive float
-        Noise variance.
-        *Default* value is 0.
 
     decode : function with prototype binary_word = decode(point)
         Function that provide the binary word corresponding to a symbol vector.
