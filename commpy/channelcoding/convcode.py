@@ -3,6 +3,8 @@
 
 """ Algorithms for Convolutional Codes """
 
+from warnings import warn
+
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,6 +17,11 @@ __all__ = ['Trellis', 'conv_encode', 'viterbi_decode']
 class Trellis:
     """
     Class defining a Trellis corresponding to a k/n - rate convolutional code.
+
+    This follow the classical representation. See [1] for instance.
+
+    Input and output are represented as little endian e.g. output = decimal(output[0], output[1] ...).
+
     Parameters
     ----------
     memory : 1D ndarray of ints
@@ -22,9 +29,14 @@ class Trellis:
     g_matrix : 2D ndarray of ints (decimal representation)
         Generator matrix G(D) of the convolutional encoder. Each element of
         G(D) represents a polynomial.
-        Each row is an input, each column an output.
-    feedback : int, optional
-        Feedback polynomial of the convolutional encoder. Default value is 00.
+        Coef [i,j] is the influence of input i on output j.
+    feedback : 2D ndarray of ints (decimal representation), optional
+        Feedback matrix F(D) of the convolutional encoder. Each element of
+        F(D) represents a polynomial.
+        Coef [i,j] is the feedback influence of input i on input j.
+        *Default* implies no feedback.
+
+        The backwards compatibility version is triggered if feedback is an int.
     code_type : {'default', 'rsc'}, optional
         Use 'rsc' to generate a recursive systematic convolutional code.
         If 'rsc' is specified, then the first 'k x k' sub-matrix of
@@ -81,14 +93,14 @@ class Trellis:
      [3 0]
      [1 2]
      [2 1]]
+    References
+    ----------
+    [1]  S. Benedetto, R. Garello, et G. Montorsi, "A search for good convolutional codes to be used in the
+    construction of turbo codes", IEEE Transactions on Communications, vol. 46, nᵒ 9, p. 1101‑1105, sept. 1998.
     """
-    def __init__(self, memory, g_matrix, feedback = 0, code_type = 'default'):
+    def __init__(self, memory, g_matrix, feedback = None, code_type = 'default'):
 
         [self.k, self.n] = g_matrix.shape
-
-        if code_type == 'rsc':
-            for i in range(self.k):
-                g_matrix[i][i] = feedback
         self.code_type = code_type
         
         self.total_memory = memory.sum()
@@ -99,61 +111,118 @@ class Trellis:
         self.output_table = np.zeros([self.number_states,
                                       self.number_inputs], 'int')
 
-        # Compute the entries in the next state table and the output table
-        for current_state in range(self.number_states):
+        if isinstance(feedback, int):
+            warn('Treillis wiil will only accept feedback as a matricx in the future. '
+                 'Using the backwards compatibility version that may contain bugs for k > 1.', DeprecationWarning)
 
-            for current_input in range(self.number_inputs):
-                outbits = np.zeros(self.n, 'int')
+            if code_type == 'rsc':
+                for i in range(self.k):
+                    g_matrix[i][i] = feedback
 
-                # Compute the values in the output_table
-                for r in range(self.n):
+            # Compute the entries in the next state table and the output table
+            for current_state in range(self.number_states):
 
-                    output_generator_array = np.zeros(self.k, 'int')
-                    shift_register = dec2bitarray(current_state,
-                                                  self.total_memory)
+                for current_input in range(self.number_inputs):
+                    outbits = np.zeros(self.n, 'int')
 
-                    for l in range(self.k):
+                    # Compute the values in the output_table
+                    for r in range(self.n):
 
-                        # Convert the number representing a polynomial into a
-                        # bit array
-                        generator_array = dec2bitarray(g_matrix[l][r],
-                                                       memory[l]+1)
+                        output_generator_array = np.zeros(self.k, 'int')
+                        shift_register = dec2bitarray(current_state,
+                                                      self.total_memory)
 
-                        # Loop over M delay elements of the shift register
-                        # to compute their contribution to the r-th output
-                        for i in range(memory[l]):
-                            outbits[r] = (outbits[r] + \
-                                (shift_register[i+l]*generator_array[i+1])) % 2
+                        for l in range(self.k):
 
-                        output_generator_array[l] = generator_array[0]
-                        if l == 0:
-                            feedback_array = (dec2bitarray(feedback, memory[l]) * shift_register[0:memory[l]]).sum()
-                            shift_register[1:memory[l]] = \
-                                    shift_register[0:memory[l]-1]
-                            shift_register[0] = (dec2bitarray(current_input,
-                                    self.k)[0] + feedback_array) % 2
-                        else:
-                            feedback_array = (dec2bitarray(feedback, memory[l]) *
-                                    shift_register[l+memory[l-1]-1:l+memory[l-1]+memory[l]-1]).sum()
-                            shift_register[l+memory[l-1]:l+memory[l-1]+memory[l]-1] = \
-                                    shift_register[l+memory[l-1]-1:l+memory[l-1]+memory[l]-2]
-                            shift_register[l+memory[l-1]-1] = \
+                            # Convert the number representing a polynomial into a
+                            # bit array
+                            generator_array = dec2bitarray(g_matrix[l][r],
+                                                           memory[l] + 1)
+
+                            # Loop over M delay elements of the shift register
+                            # to compute their contribution to the r-th output
+                            for i in range(memory[l]):
+                                outbits[r] = (outbits[r] + \
+                                              (shift_register[i + l] * generator_array[i + 1])) % 2
+
+                            output_generator_array[l] = generator_array[0]
+                            if l == 0:
+                                feedback_array = (dec2bitarray(feedback, memory[l]) * shift_register[0:memory[l]]).sum()
+                                shift_register[1:memory[l]] = \
+                                    shift_register[0:memory[l] - 1]
+                                shift_register[0] = (dec2bitarray(current_input,
+                                                                  self.k)[0] + feedback_array) % 2
+                            else:
+                                feedback_array = (dec2bitarray(feedback, memory[l]) *
+                                                  shift_register[
+                                                  l + memory[l - 1] - 1:l + memory[l - 1] + memory[l] - 1]).sum()
+                                shift_register[l + memory[l - 1]:l + memory[l - 1] + memory[l] - 1] = \
+                                    shift_register[l + memory[l - 1] - 1:l + memory[l - 1] + memory[l] - 2]
+                                shift_register[l + memory[l - 1] - 1] = \
                                     (dec2bitarray(current_input, self.k)[l] + feedback_array) % 2
 
-                    # Compute the contribution of the current_input to output
-                    outbits[r] = (outbits[r] + \
-                        (np.sum(dec2bitarray(current_input, self.k) * \
-                        output_generator_array + feedback_array) % 2)) % 2
+                        # Compute the contribution of the current_input to output
+                        outbits[r] = (outbits[r] + \
+                                      (np.sum(dec2bitarray(current_input, self.k) * \
+                                              output_generator_array + feedback_array) % 2)) % 2
 
-                # Update the ouput_table using the computed output value
-                self.output_table[current_state][current_input] = \
-                    bitarray2dec(outbits)
+                    # Update the ouput_table using the computed output value
+                    self.output_table[current_state][current_input] = \
+                        bitarray2dec(outbits)
 
-                # Update the next_state_table using the new state of
-                # the shift register
-                self.next_state_table[current_state][current_input] = \
-                    bitarray2dec(shift_register)
+                    # Update the next_state_table using the new state of
+                    # the shift register
+                    self.next_state_table[current_state][current_input] = \
+                        bitarray2dec(shift_register)
 
+        else:
+            if feedback is None:
+                feedback = np.identity(self.k, int)
+
+            # feedback_array[i] holds the i-th bit corresponding to each feedback polynomial.
+            feedback_array = np.empty((self.total_memory + self.k, self.k, self.k), np.int8)
+            for i in range(self.k):
+                for j in range(self.k):
+                    feedback_array[:, i, j] = dec2bitarray(feedback[i, j], self.total_memory + self.k)[::-1]
+
+            # g_matrix_array[i] holds the i-th bit corresponding to each g_matrix polynomial.
+            g_matrix_array = np.empty((self.total_memory + self.k, self.k, self.n), np.int8)
+            for i in range(self.k):
+                for j in range(self.n):
+                    g_matrix_array[:, i, j] = dec2bitarray(g_matrix[i, j], self.total_memory + self.k)[::-1]
+
+            # shift_regs holds on each column the state of a shift register.
+            # The first row is the input of each shift reg.
+            shift_regs = np.empty((self.total_memory + self.k, self.k), np.int8)
+
+            # Compute the entries in the next state table and the output table
+            for current_state in range(self.number_states):
+                for current_input in range(self.number_inputs):
+                    current_state_array = dec2bitarray(current_state, self.total_memory)
+
+                    # Set the first row as the input.
+                    shift_regs[0] = dec2bitarray(current_input, self.k)
+
+                    # Set the other rows based on the current_state
+                    idx = 0
+                    for idx_mem, mem in enumerate(memory):
+                        shift_regs[1:mem+1, idx_mem] = current_state_array[idx:idx + mem]
+                        idx += mem
+
+                    # Compute the output table
+                    outputs_array = np.einsum('ik,ikl->l', shift_regs, g_matrix_array) % 2
+                    self.output_table[current_state, current_input] = bitarray2dec(outputs_array)
+
+                    # Update the first line based on the feedback polynomial
+                    np.einsum('ik,ilk->l', shift_regs, feedback_array, out=shift_regs[0])
+                    shift_regs %= 2
+
+                    # Update current state array and compute next state table
+                    idx = 0
+                    for idx_mem, mem in enumerate(memory):
+                        current_state_array[idx:idx + mem] = shift_regs[:mem, idx_mem]
+                        idx += mem
+                    self.next_state_table[current_state, current_input] = bitarray2dec(current_state_array)
 
     def _generate_grid(self, trellis_length):
         """ Private method """
