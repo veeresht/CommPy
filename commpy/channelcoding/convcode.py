@@ -3,13 +3,18 @@
 
 """ Algorithms for Convolutional Codes """
 
+from __future__ import division
+
+import math
 from warnings import warn
 
+import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
-from commpy.utilities import dec2bitarray, bitarray2dec, hamming_dist, euclid_dist
 from matplotlib.collections import PatchCollection
+
+from commpy.utilities import dec2bitarray, bitarray2dec, hamming_dist, euclid_dist
 
 __all__ = ['Trellis', 'conv_encode', 'viterbi_decode']
 
@@ -257,11 +262,11 @@ class Trellis:
                     dx = grid_subset[0, state_count_2+self.number_states] - grid_subset[0,state_count_1] - 2*state_radius
                     dy = grid_subset[1, state_count_2+self.number_states] - grid_subset[1,state_count_1]
                     if np.count_nonzero(self.next_state_table[state_order[state_count_1],:] == state_order[state_count_2]):
-                        found_index = np.where(self.next_state_table[state_order[state_count_1],:] ==
+                        found_index = np.where(self.next_state_table[state_order[state_count_1]] ==
                                                 state_order[state_count_2])
                         edge_patch = mpatches.FancyArrow(grid_subset[0,state_count_1]+state_radius,
                                 grid_subset[1,state_count_1], dx, dy, width=0.005,
-                                length_includes_head = True, color = edge_colors[found_index[0][0]])
+                                length_includes_head = True, color = edge_colors[found_index[0][0]-1])
                         edge_patches.append(edge_patch)
                         input_count = input_count + 1
 
@@ -280,7 +285,7 @@ class Trellis:
 
 
     def visualize(self, trellis_length = 2, state_order = None,
-                  state_radius = 0.04, edge_colors = None):
+                  state_radius = 0.04, edge_colors = None, save_path = None):
         """ Plot the trellis diagram.
         Parameters
         ----------
@@ -294,13 +299,15 @@ class Trellis:
         state_radius : float, optional
             Radius of each state (circle) in the plot.
             Default value is 0.04
-        edge_colors = list of hex color codes, optional
+        edge_colors : list of hex color codes, optional
             A list of length equal to the number_inputs,
             containing color codes that represent the edge corresponding
             to the input.
+        save_path : str or None
+            If not None, save the figure to the file specified by its path.
         """
         if edge_colors is None:
-            edge_colors = ["#9E1BE0", "#06D65D"]
+            edge_colors = [mcolors.hsv_to_rgb((i/self.number_inputs, 1, 1)) for i in range(self.number_inputs)]
 
         if state_order is None:
             state_order = list(range(self.number_states))
@@ -327,9 +334,10 @@ class Trellis:
         ax.add_collection(collection)
         ax.set_xticks([])
         ax.set_yticks([])
-        plt.legend([edge_patches[0], edge_patches[1]], ["1-input", "0-input"])
-        #plt.savefig('trellis')
+        plt.legend(edge_patches, [str(i) + "-input" for i in range(self.number_inputs)])
         plt.show()
+        if save_path is not None:
+            plt.savefig(save_path)
 
 
 def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=None):
@@ -371,7 +379,7 @@ def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=Non
         if code_type == 'rsc':
             inbits = message_bits
             number_inbits = number_message_bits
-            number_outbits = int((number_inbits + total_memory)/rate)
+            number_outbits = int((number_inbits + k * total_memory)/rate)
         else:
             number_inbits = number_message_bits + total_memory + total_memory % k
             inbits = np.zeros(number_inbits, 'int')
@@ -409,19 +417,17 @@ def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=Non
             current_state = next_state_table[current_state][current_input]
             j += 1
 
-    if puncture_matrix is not None:
-        j = 0
-        for i in range(number_outbits):
-            if puncture_matrix[0][i % np.size(puncture_matrix, 1)] == 1:
-                p_outbits[j] = outbits[i]
-                j = j + 1
+    j = 0
+    for i in range(number_outbits):
+        if puncture_matrix[0][i % np.size(puncture_matrix, 1)] == 1:
+            p_outbits[j] = outbits[i]
+            j = j + 1
 
     return p_outbits
 
 
 def _where_c(inarray, rows, cols, search_value, index_array):
 
-    #cdef int i, j,
     number_found = 0
     for i in range(rows):
         for j in range(cols):
@@ -438,10 +444,6 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
                    decoded_bits, tb_count, t, count,
                    tb_depth, current_number_states):
 
-    #cdef int state_num, i, j, number_previous_states, previous_state, \
-    #        previous_input, i_codeword, number_found, min_idx, \
-    #        current_state, dec_symbol
-
     k = trellis.k
     n = trellis.n
     number_states = trellis.number_states
@@ -452,9 +454,7 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
     next_state_table = trellis.next_state_table
     output_table = trellis.output_table
     pmetrics = np.empty(number_inputs)
-    i_codeword_array = np.empty(n, 'int')
     index_array = np.empty([number_states, 2], 'int')
-    decoded_bitarray = np.empty(k, 'int')
 
     # Loop over all the current states (Time instant: t)
     for state_num in range(current_number_states):
@@ -471,20 +471,16 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
 
             # Using the output table, find the ideal codeword
             i_codeword = output_table[previous_state, previous_input]
-            #dec2bitarray_c(i_codeword, n, i_codeword_array)
             i_codeword_array = dec2bitarray(i_codeword, n)
 
             # Compute Branch Metrics
             if decoding_type == 'hard':
-                #branch_metric = hamming_dist_c(r_codeword.astype(int), i_codeword_array.astype(int), n)
                 branch_metric = hamming_dist(r_codeword.astype(int), i_codeword_array.astype(int))
             elif decoding_type == 'soft':
                 pass
             elif decoding_type == 'unquantized':
                 i_codeword_array = 2*i_codeword_array - 1
                 branch_metric = euclid_dist(r_codeword, i_codeword_array)
-            else:
-                pass
 
             # ADD operation: Add the branch metric to the
             # accumulated path metric and store it in the temporary array
@@ -512,8 +508,7 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
             dec_symbol = decoded_symbols[current_state, j]
             previous_state = paths[current_state, j]
             decoded_bitarray = dec2bitarray(dec_symbol, k)
-            decoded_bits[(t-tb_depth-1)+(j+1)*k+count:(t-tb_depth-1)+(j+2)*k+count] =  \
-                    decoded_bitarray
+            decoded_bits[t - tb_depth + 1 + (j - 1) * k + count:t - tb_depth + 1 + j * k + count] = decoded_bitarray
             current_state = previous_state
 
         paths[:,0:tb_depth-1] = paths[:,1:]
@@ -523,26 +518,29 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
 
 def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     """
-    Decodes a stream of convolutionally encoded bits using the Viterbi Algorithm
+    Decodes a stream of convolutionally encoded bits using the Viterbi Algorithm.
     Parameters
     ----------
     coded_bits : 1D ndarray
         Stream of convolutionally encoded bits which are to be decoded.
-    generator_matrix : 2D ndarray of ints
-        Generator matrix G(D) of the convolutional code using which the
-        input bits are to be decoded.
-    M : 1D ndarray of ints
-        Number of memory elements per input of the convolutional encoder.
-    tb_length : int
-        Traceback depth (Typically set to 5*(M+1)).
-    decoding_type : str {'hard', 'unquantized'}
+    treillis : treillis object
+        Treillis representing the convolutional code.
+    tb_depth : int
+        Traceback depth.
+        *Default* is 5 times the number of memories in the code.
+    decoding_type : str {'hard', 'soft', 'unquantized'}
         The type of decoding to be used.
         'hard' option is used for hard inputs (bits) to the decoder, e.g., BSC channel.
+        'soft' option is used for soft inputs (LLRs) to the decoder.
         'unquantized' option is used for soft inputs (real numbers) to the decoder, e.g., BAWGN channel.
     Returns
     -------
     decoded_bits : 1D ndarray
         Decoded bit stream.
+    Raises
+    ------
+    ValueError
+                If decoding_type is something else than 'hard', 'soft' or 'unquantized'.
     References
     ----------
     .. [1] Todd K. Moon. Error Correction Coding: Mathematical Methods and
@@ -552,38 +550,31 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     # k = Rows in G(D), n = columns in G(D)
     k = trellis.k
     n = trellis.n
-    rate = float(k)/n
+    rate = k/n
     total_memory = trellis.total_memory
-    number_states = trellis.number_states
-    number_inputs = trellis.number_inputs
 
     if tb_depth is None:
         tb_depth = 5*total_memory
 
-    next_state_table = trellis.next_state_table
-    output_table = trellis.output_table
-
     # Number of message bits after decoding
     L = int(len(coded_bits)*rate)
 
-    path_metrics = np.empty([number_states, 2])
-    path_metrics[:, :] = 1000000
+    path_metrics = np.full((trellis.number_states, 2), np.inf)
     path_metrics[0][0] = 0
-    paths = np.empty([number_states, tb_depth], 'int')
-    paths[:, :] = 1000000
+    paths = np.full((trellis.number_states, tb_depth), np.iinfo(int).max, 'int')
     paths[0][0] = 0
 
-    decoded_symbols = np.zeros([number_states, tb_depth], 'int')
-    decoded_bits = np.zeros(L+tb_depth+k, 'int')
+    decoded_symbols = np.zeros([trellis.number_states, tb_depth], 'int')
+    decoded_bits = np.empty(math.ceil(L / k) * k + tb_depth, 'int')
     r_codeword = np.zeros(n, 'int')
 
     tb_count = 1
     count = 0
-    current_number_states = number_states
+    current_number_states = trellis.number_states
 
-    for t in range(1, int((L+total_memory+total_memory%k)/k) + 1):
+    for t in range(1, int((L+total_memory)/k)):
         # Get the received codeword corresponding to t
-        if t <= L:
+        if t <= L // k:
             r_codeword = coded_bits[(t-1)*n:t*n]
         else:
             if decoding_type == 'hard':
@@ -591,10 +582,9 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
             elif decoding_type == 'soft':
                 pass
             elif decoding_type == 'unquantized':
-                r_codeword[:] = 0
-                r_codeword = 2*r_codeword - 1
+                r_codeword[:] = -1
             else:
-                pass
+                raise ValueError('The available decoding types are "hard", "soft" and "unquantized')
 
         _acs_traceback(r_codeword, trellis, decoding_type, path_metrics, paths,
                 decoded_symbols, decoded_bits, tb_count, t, count, tb_depth,
@@ -609,11 +599,7 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
         # Path metrics (at t-1) = Path metrics (at t)
         path_metrics[:, 0] = path_metrics[:, 1]
 
-        # Force all the paths back to '0' state at the end of decoding
-        if t == (L+total_memory+total_memory%k)/k:
-            current_number_states = 1
-
-    return decoded_bits[0:len(decoded_bits)-tb_depth-1]
+    return decoded_bits[:L]
 
 def puncturing(message, punct_vec):
     """

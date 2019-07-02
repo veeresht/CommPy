@@ -3,7 +3,7 @@
 
 from numpy import array
 from numpy.random import randint
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, dec
 
 from commpy.channelcoding.convcode import Trellis, conv_encode, viterbi_decode
 
@@ -100,6 +100,7 @@ class TestConvCode(object):
     def test_viterbi_decode(self):
         pass
 
+    @dec.slow
     def test_conv_encode_viterbi_decode(self):
         niters = 10
         blocklength = 1000
@@ -108,10 +109,10 @@ class TestConvCode(object):
             msg = randint(0, 2, blocklength)
 
             # Previous tests
-            for i in range(2):
+            for i in range(4):
                 coded_bits = conv_encode(msg, self.trellis[i])
                 decoded_bits = viterbi_decode(coded_bits.astype(float), self.trellis[i], 15)
-                assert_array_equal(decoded_bits[:-2], msg)
+                assert_array_equal(decoded_bits[:len(msg)], msg)
 
                 coded_bits = conv_encode(msg, self.trellis[i], termination='cont')
                 decoded_bits = viterbi_decode(coded_bits.astype(float), self.trellis[i], 15)
@@ -120,4 +121,4 @@ class TestConvCode(object):
                 coded_bits = conv_encode(msg, self.trellis[i])
                 coded_syms = 2.0 * coded_bits - 1
                 decoded_bits = viterbi_decode(coded_syms, self.trellis[i], 15, 'unquantized')
-                assert_array_equal(decoded_bits[:-2], msg)
+                assert_array_equal(decoded_bits[:len(msg)], msg)
