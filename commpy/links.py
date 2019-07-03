@@ -1,4 +1,4 @@
-# Authors: Youness Akourim <akourim97@gmail.com> & Bastien Trotobas <bastien.trotobas@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
 """

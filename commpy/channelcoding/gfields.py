@@ -1,13 +1,12 @@
-
-
-# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
 """ Galois Fields """
 
 from fractions import gcd
+
 from numpy import array, zeros, arange, convolve, ndarray, concatenate
-from itertools import *
+
 from commpy.utilities import dec2bitarray, bitarray2dec
 
 __all__ = ['GF', 'polydivide', 'polymultiply', 'poly_to_string']

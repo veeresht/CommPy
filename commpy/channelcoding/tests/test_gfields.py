@@ -1,9 +1,9 @@
-
-# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3 clause
 
-from numpy import array, ones_like, arange
-from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_, assert_equal
+from numpy import array, arange
+from numpy.testing import assert_array_equal, assert_
+
 from commpy.channelcoding.gfields import GF
 
 

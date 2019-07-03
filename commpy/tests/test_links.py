@@ -1,4 +1,4 @@
-# Authors: Bastien Trotobas <bastien.trotobas@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
 from __future__ import division  # Python 2 compatibility

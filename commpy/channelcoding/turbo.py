@@ -1,13 +1,14 @@
-
-
-# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
 """ Turbo Codes """
 
-from numpy import array, append, zeros, exp, pi, log, empty
-from commpy.channelcoding import Trellis, conv_encode
-from commpy.utilities import dec2bitarray, bitarray2dec
+from numpy import array, zeros, exp, log, empty
+
+from commpy.channelcoding import conv_encode
+from commpy.utilities import dec2bitarray
+
+
 #from commpy.channelcoding.map_c import backward_recursion, forward_recursion_decoding
 
 def turbo_encode(msg_bits, trellis1, trellis2, interleaver):

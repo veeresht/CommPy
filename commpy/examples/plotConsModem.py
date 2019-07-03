@@ -1,4 +1,4 @@
-# Authors: Youness Akourim <akourim97@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
 from commpy.modulation import PSKModem, QAMModem

@@ -1,5 +1,4 @@
-
-# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
 """
@@ -16,7 +15,7 @@ Sequences (:mod:`commpy.sequences`)
 """
 __all__ = ['pnsequence', 'zcsequence']
 
-from numpy import array, empty, zeros, roll, exp, pi, arange
+from numpy import array, zeros, roll, exp, pi, arange
 
 def pnsequence(pn_order, pn_seed, pn_mask, seq_length):
     """
