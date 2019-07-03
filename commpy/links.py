@@ -14,6 +14,8 @@ Links (:mod:`commpy.links`)
 """
 from __future__ import division  # Python 2 compatibility
 
+import math
+
 import numpy as np
 
 from commpy.channels import MIMOFlatChannel
@@ -61,14 +63,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
     divider = link_model.num_bits_symbol * link_model.channel.nb_tx
     send_chunk = max(divider, send_chunk // divider * divider)
 
-    # Evaluate the size of each reception
-    msg = np.random.choice((0, 1), link_model.channel.nb_tx)
-    link_model.channel.noise_std = 0
-    symbs = link_model.modulate(msg)
-    channel_output = link_model.channel.propagate(symbs)
-    received_msg = link_model.receive(channel_output[0], link_model.channel.channel_gains[0],
-                                      link_model.constellation, link_model.channel.noise_std ** 2)
-    receive_size = len(received_msg)
+    receive_size = link_model.channel.nb_tx * link_model.num_bits_symbol
 
     # Computations
     for id_SNR in range(len(SNRs)):
@@ -84,7 +79,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
             # Deals with MIMO channel
             if isinstance(link_model.channel, MIMOFlatChannel):
                 nb_symb_vector = len(channel_output)
-                received_msg = np.empty_like(msg, int)
+                received_msg = np.empty(int(math.ceil(len(msg) / link_model.rate)), int)
                 for i in range(nb_symb_vector):
                     received_msg[receive_size * i:receive_size * (i + 1)] = \
                         link_model.receive(channel_output[i], link_model.channel.channel_gains[i],
@@ -93,7 +88,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
                 received_msg = link_model.receive(channel_output, link_model.channel.channel_gains,
                                                   link_model.constellation, link_model.channel.noise_std ** 2)
             # Count errors
-            bit_err += (msg != received_msg).sum()
+            bit_err += (msg != link_model.decoder(received_msg)).sum()
             bit_send += send_chunk
         BERs[id_SNR] = bit_err / bit_send
     return BERs
@@ -129,6 +124,9 @@ class LinkModel:
              Average energy per symbols.
              *Default* Es=1.
 
+        decoder : function with prototype decoder(binary array) that return a binary array.
+                  *Default* is no process.
+
         Attributes
         ----------
         modulate : function with same prototype as Modem.modulate
@@ -153,10 +151,16 @@ class LinkModel:
              *Default* Es=1.
         """
 
-    def __init__(self, modulate, channel, receive, num_bits_symbol, constellation, Es=1):
+    def __init__(self, modulate, channel, receive, num_bits_symbol, constellation, Es=1, decoder=None, rate=1):
         self.modulate = modulate
         self.channel = channel
         self.receive = receive
         self.num_bits_symbol = num_bits_symbol
         self.constellation = constellation
         self.Es = Es
+        self.rate = rate
+
+        if decoder is None:
+            self.decoder = lambda msg: msg
+        else:
+            self.decoder = decoder
