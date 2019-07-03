@@ -61,12 +61,20 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
     divider = link_model.num_bits_symbol * link_model.channel.nb_tx
     send_chunk = max(divider, send_chunk // divider * divider)
 
+    # Evaluate the size of each reception
+    msg = np.random.choice((0, 1), link_model.channel.nb_tx)
+    link_model.channel.noise_std = 0
+    symbs = link_model.modulate(msg)
+    channel_output = link_model.channel.propagate(symbs)
+    received_msg = link_model.receive(channel_output[0], link_model.channel.channel_gains[0],
+                                      link_model.constellation, link_model.channel.noise_std ** 2)
+    receive_size = len(received_msg)
+
     # Computations
     for id_SNR in range(len(SNRs)):
         link_model.channel.set_SNR_dB(SNRs[id_SNR], code_rate, link_model.Es)
         bit_send = 0
         bit_err = 0
-        receive_size = link_model.channel.nb_tx * link_model.num_bits_symbol
         while bit_send < send_max and bit_err < err_min:
             # Propagate some bits
             msg = np.random.choice((0, 1), send_chunk)
@@ -78,12 +86,12 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
                 nb_symb_vector = len(channel_output)
                 received_msg = np.empty_like(msg, int)
                 for i in range(nb_symb_vector):
-                     received_msg[receive_size * i:receive_size * (i+1)] = \
-                         link_model.receive(channel_output[i], link_model.channel.channel_gains[i],
-                                            link_model.constellation, link_model.channel.noise_std**2)
+                    received_msg[receive_size * i:receive_size * (i + 1)] = \
+                        link_model.receive(channel_output[i], link_model.channel.channel_gains[i],
+                                           link_model.constellation, link_model.channel.noise_std ** 2)
             else:
                 received_msg = link_model.receive(channel_output, link_model.channel.channel_gains,
-                                                  link_model.constellation, link_model.channel.noise_std**2)
+                                                  link_model.constellation, link_model.channel.noise_std ** 2)
             # Count errors
             bit_err += (msg != received_msg).sum()
             bit_send += send_chunk
@@ -144,6 +152,7 @@ class LinkModel:
              Average energy per symbols.
              *Default* Es=1.
         """
+
     def __init__(self, modulate, channel, receive, num_bits_symbol, constellation, Es=1):
         self.modulate = modulate
         self.channel = channel

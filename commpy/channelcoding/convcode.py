@@ -99,8 +99,8 @@ class Trellis:
      [2 1]]
     References
     ----------
-    [1]  S. Benedetto, R. Garello, et G. Montorsi, "A search for good convolutional codes to be used in the
-    construction of turbo codes", IEEE Transactions on Communications, vol. 46, nᵒ 9, p. 1101‑1105, sept. 1998.
+    [1] S. Benedetto, R. Garello et G. Montorsi, "A search for good convolutional codes to be used in the
+    construction of turbo codes", IEEE Transactions on Communications, vol. 46, n. 9, p. 1101-1005, spet. 1998
     """
     def __init__(self, memory, g_matrix, feedback = None, code_type = 'default'):
 
@@ -389,7 +389,7 @@ def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=Non
 
     outbits = np.zeros(number_outbits, 'int')
     if puncture_matrix is not None:
-        p_outbits = np.zeros(number_outbits)
+        p_outbits = np.zeros(number_outbits, 'int')
     else:
         p_outbits = np.zeros(int(number_outbits*
             puncture_matrix[0:].sum()/np.size(puncture_matrix, 1)), 'int')
@@ -477,7 +477,9 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
             if decoding_type == 'hard':
                 branch_metric = hamming_dist(r_codeword.astype(int), i_codeword_array.astype(int))
             elif decoding_type == 'soft':
-                pass
+                neg_LL_0 = np.log(np.exp(r_codeword) + 1)  # negative log-likelihood to have received a 0
+                neg_LL_1 = neg_LL_0 - r_codeword  # negative log-likelihood to have received a 1
+                branch_metric = np.where(i_codeword_array, neg_LL_1, neg_LL_0).sum()
             elif decoding_type == 'unquantized':
                 i_codeword_array = 2*i_codeword_array - 1
                 branch_metric = euclid_dist(r_codeword, i_codeword_array)
@@ -531,7 +533,7 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     decoding_type : str {'hard', 'soft', 'unquantized'}
         The type of decoding to be used.
         'hard' option is used for hard inputs (bits) to the decoder, e.g., BSC channel.
-        'soft' option is used for soft inputs (LLRs) to the decoder.
+        'soft' option is used for soft inputs (LLRs) to the decoder. LLRs are clipped in [-500, 500].
         'unquantized' option is used for soft inputs (real numbers) to the decoder, e.g., BAWGN channel.
     Returns
     -------
@@ -561,26 +563,29 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
 
     path_metrics = np.full((trellis.number_states, 2), np.inf)
     path_metrics[0][0] = 0
-    paths = np.full((trellis.number_states, tb_depth), np.iinfo(int).max, 'int')
+    paths = np.empty((trellis.number_states, tb_depth), 'int')
     paths[0][0] = 0
 
     decoded_symbols = np.zeros([trellis.number_states, tb_depth], 'int')
-    decoded_bits = np.empty(math.ceil(L / k) * k + tb_depth, 'int')
+    decoded_bits = np.empty(int(math.ceil((L + tb_depth) / k) * k), 'int')
     r_codeword = np.zeros(n, 'int')
 
     tb_count = 1
     count = 0
     current_number_states = trellis.number_states
 
+    coded_bits = coded_bits.clip(-500, 500)
+
     for t in range(1, int((L+total_memory)/k)):
         # Get the received codeword corresponding to t
         if t <= L // k:
             r_codeword = coded_bits[(t-1)*n:t*n]
+        # Pad with '0'
         else:
             if decoding_type == 'hard':
                 r_codeword[:] = 0
             elif decoding_type == 'soft':
-                pass
+                r_codeword[:] = np.iinfo(int).min
             elif decoding_type == 'unquantized':
                 r_codeword[:] = -1
             else:

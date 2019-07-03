@@ -1,9 +1,9 @@
 # Authors: Veeresh Taranalli <veeresht@gmail.com>
 # License: BSD 3-Clause
 
-from numpy import array
-from numpy.random import randint
-from numpy.testing import assert_array_equal, dec
+from numpy import array, inf
+from numpy.random import randint, randn
+from numpy.testing import assert_array_equal, dec, assert_array_less
 
 from commpy.channelcoding.convcode import Trellis, conv_encode, viterbi_decode
 
@@ -122,3 +122,13 @@ class TestConvCode(object):
                 coded_syms = 2.0 * coded_bits - 1
                 decoded_bits = viterbi_decode(coded_syms, self.trellis[i], 15, 'unquantized')
                 assert_array_equal(decoded_bits[:len(msg)], msg)
+
+                coded_bits = conv_encode(msg, self.trellis[i])
+                coded_syms = 10.0 * coded_bits - 5 + randn(len(coded_bits)) * 2
+                decoded_bits = viterbi_decode(coded_syms, self.trellis[i], 15, 'soft')
+                assert_array_less((decoded_bits[:len(msg)] - msg).sum(), 0.03 * blocklength)
+
+                coded_bits = conv_encode(msg, self.trellis[i])
+                coded_syms = (2.0 * coded_bits - 1) * inf
+                decoded_bits = viterbi_decode(coded_syms, self.trellis[i], 15, 'soft')
+                assert_array_less((decoded_bits[:len(msg)] - msg).sum(), 0.03 * blocklength)

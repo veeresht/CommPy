@@ -23,7 +23,7 @@ def test_bit_lvl_repr():
 
     SNR = arange(10, 16, 5)
 
-    def receiver_with_blr(y, H, cons):
+    def receiver_with_blr(y, H, cons, noise_var):
         # Create w
         beta = int(log2(len(cons)))
         reel = [pow(2, i) for i in range(beta // 2 - 1, -1, -1)]
@@ -36,7 +36,7 @@ def test_bit_lvl_repr():
         mes[mes == -1] = 0
         return mes
 
-    def receiver_without_blr(y, H, cons):
+    def receiver_without_blr(y, H, cons, noise_var):
         return qam.demodulate(mimo_ml(y, H, cons), 'hard')
 
     my_model_without_blr = \

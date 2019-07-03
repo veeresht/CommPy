@@ -249,7 +249,7 @@ def mimo_ml(y, h, constellation):
     return x_r
 
 
-def kbest(y, h, constellation, K, noise_var=0, output_type='hard', decode=None):
+def kbest(y, h, constellation, K, noise_var=0, output_type='hard', demode=None):
     """ MIMO K-best Schnorr-Euchner Detection.
 
     Reference: Zhan Guo and P. Nilsson, 'Algorithm and implementation of the K-best sphere decoding for MIMO detection',
@@ -278,7 +278,7 @@ def kbest(y, h, constellation, K, noise_var=0, output_type='hard', decode=None):
         'soft': soft output i.e. output is a vector of Log-Likelihood Ratios.
         *Default* value is 'hard'
 
-    decode : function with prototype binary_word = decode(point)
+    demode : function with prototype binary_word = demode(point)
         Function that provide the binary word corresponding to a symbol vector.
 
     Returns
@@ -341,7 +341,7 @@ def kbest(y, h, constellation, K, noise_var=0, output_type='hard', decode=None):
     if output_type == 'hard':
         return X[:, 0]
     elif output_type == 'soft':
-        return max_log_approx(y, h, noise_var, X, decode)
+        return max_log_approx(y, h, noise_var, X, demode)
     else:
         raise ValueError('output_type must be "hard" or "soft"')
 
@@ -372,8 +372,8 @@ def bit_lvl_repr(H, w):
         raise ValueError('Beta must be even.')
 
 
-def max_log_approx(y, h, noise_var, pts_list, decode):
-    """ Max-log approximation
+def max_log_approx(y, h, noise_var, pts_list, demode):
+    """ Max-log demode
 
     parameters
     ----------
@@ -390,7 +390,7 @@ def max_log_approx(y, h, noise_var, pts_list, decode):
         Set of points to compute max log approximation (points are column-wise).
         (shape: num_receive_antennas x num_points)
 
-    decode : function with prototype binary_word = decode(point)
+    demode : function with prototype binary_word = demode(point)
         Function that provide the binary word corresponding to a symbol vector.
 
     return
@@ -400,7 +400,7 @@ def max_log_approx(y, h, noise_var, pts_list, decode):
     """
     # Decode all pts
     nb_pts = pts_list.shape[1]
-    bits = decode(pts_list.reshape(-1, order='F')).reshape(nb_pts, -1)  # Set of binary words (one word by row)
+    bits = demode(pts_list.reshape(-1, order='F')).reshape(nb_pts, -1)  # Set of binary words (one word by row)
 
     # Prepare LLR computation
     nb_bits = bits.shape[1]
