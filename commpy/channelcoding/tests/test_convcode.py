@@ -1,11 +1,10 @@
 # Authors: CommPy contributors
 # License: BSD 3-Clause
 
+from commpy.channelcoding.convcode import Trellis, conv_encode, viterbi_decode
 from numpy import array, inf
 from numpy.random import randint, randn
 from numpy.testing import assert_array_equal, dec, assert_array_less
-
-from commpy.channelcoding.convcode import Trellis, conv_encode, viterbi_decode
 
 
 class TestConvCode(object):
@@ -15,6 +14,8 @@ class TestConvCode(object):
         cls.trellis = []
         cls.desired_next_state_table = []
         cls.desired_output_table = []
+        cls.desired_encode_msg = []
+        cls.mes = array((0, 0, 1, 0))
 
         ### 1/2 - rate codes  ###
 
@@ -30,6 +31,7 @@ class TestConvCode(object):
                                                [3, 0],
                                                [1, 2],
                                                [2, 1]]))
+        cls.desired_encode_msg.append(array([0., 0., 0., 0., 1., 1., 0., 1.]))
 
         # Convolutional Code 2: G(D) = [1 1+D+D^2/1+D]
         memory = array([2])
@@ -44,6 +46,7 @@ class TestConvCode(object):
                                                [0, 3],
                                                [1, 2],
                                                [1, 2]]))
+        cls.desired_encode_msg.append(array([0., 0., 0., 0., 1., 1., 0., 1.]))
 
         ### 2/3 - rate codes  ###
 
@@ -67,6 +70,7 @@ class TestConvCode(object):
                                                [1, 0, 7, 6],
                                                [4, 5, 2, 3],
                                                [7, 6, 1, 0]]))
+        cls.desired_encode_msg.append(array([0., 0., 0., 1., 1., 0.]))
 
         # Convolutional Code 2: G(D) = [[1, 0, 0], [0, 1, 1+D]]; F(D) = [[D, D], [1+D, 1]]
         memory = array([1, 1])
@@ -81,6 +85,7 @@ class TestConvCode(object):
                                                [1, 2, 5, 6],
                                                [0, 3, 4, 7],
                                                [1, 2, 5, 6]]))
+        cls.desired_encode_msg.append(array([0., 0., 0., 1., 0., 0.]))
 
     @classmethod
     def teardown_class(cls):
@@ -95,7 +100,8 @@ class TestConvCode(object):
             assert_array_equal(self.trellis[i].output_table, self.desired_output_table[i])
 
     def test_conv_encode(self):
-        pass
+        for i in range(len(self.trellis)):
+            assert_array_equal(conv_encode(self.mes, self.trellis[i],'cont'), self.desired_encode_msg[i])
 
     def test_viterbi_decode(self):
         pass
@@ -132,3 +138,10 @@ class TestConvCode(object):
                 coded_syms = (2.0 * coded_bits - 1) * inf
                 decoded_bits = viterbi_decode(coded_syms, self.trellis[i], 15, 'soft')
                 assert_array_less((decoded_bits[:len(msg)] - msg).sum(), 0.03 * blocklength)
+
+                coded = conv_encode(msg, self.trellis[i], termination='cont')
+                coded_bits = coded.astype(float)
+                coded_bits[coded_bits == 1.0] = inf
+                coded_bits[coded_bits == 0.0] = -inf
+                decoded_bits = viterbi_decode(coded_bits, self.trellis[i], 15,'soft')
+                assert_array_equal(decoded_bits, msg)

@@ -22,13 +22,12 @@ Modulation Demodulation (:mod:`commpy.modulation`)
 from itertools import product
 
 import matplotlib.pyplot as plt
+from commpy.utilities import bitarray2dec, dec2bitarray
 from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
     hstack, repeat, tile, dot, shape, concatenate, exp, \
     log, vectorize, empty, eye, kron, inf
 from numpy.fft import fft, ifft
 from numpy.linalg import qr, norm
-
-from commpy.utilities import bitarray2dec, dec2bitarray
 
 __all__ = ['PSKModem', 'QAMModem', 'ofdm_tx', 'ofdm_rx', 'mimo_ml', 'kbest', 'bit_lvl_repr', 'max_log_approx']
 
@@ -395,7 +394,7 @@ def max_log_approx(y, h, noise_var, pts_list, demode):
 
     return
     ------
-    LLR : 1D nbarray of floats
+    LLR : 1D ndarray of floats
         Log-Likelihood Ratio for each bit (same length as the return of decode)
     """
     # Decode all pts
