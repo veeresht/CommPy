@@ -42,7 +42,8 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
               link_performance send bits until it reach err_min errors (see also send_max).
 
     send_chunk : int
-                  Number of bits to be send at each iteration.
+                  Number of bits to be send at each iteration. This is also the frame length of the decoder if available
+                  so it should be large enough regarding the code type.
                   *Default*: send_chunck = err_min
 
     code_rate : float in (0,1]

@@ -22,12 +22,13 @@ Modulation Demodulation (:mod:`commpy.modulation`)
 from itertools import product
 
 import matplotlib.pyplot as plt
-from commpy.utilities import bitarray2dec, dec2bitarray
 from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
     hstack, repeat, tile, dot, shape, concatenate, exp, \
     log, vectorize, empty, eye, kron, inf
 from numpy.fft import fft, ifft
 from numpy.linalg import qr, norm
+
+from commpy.utilities import bitarray2dec, dec2bitarray
 
 __all__ = ['PSKModem', 'QAMModem', 'ofdm_tx', 'ofdm_rx', 'mimo_ml', 'kbest', 'bit_lvl_repr', 'max_log_approx']
 
@@ -340,7 +341,7 @@ def kbest(y, h, constellation, K, noise_var=0, output_type='hard', demode=None):
     if output_type == 'hard':
         return X[:, 0]
     elif output_type == 'soft':
-        return max_log_approx(y, h, noise_var, X, demode)
+        return max_log_approx(y, h, noise_var, X[:, :nb_can], demode)
     else:
         raise ValueError('output_type must be "hard" or "soft"')
 
