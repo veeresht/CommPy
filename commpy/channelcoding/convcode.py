@@ -10,6 +10,7 @@ from warnings import warn
 
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
+import matplotlib.path as mpath
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import PatchCollection
@@ -116,7 +117,7 @@ class Trellis:
                                       self.number_inputs], 'int')
 
         if isinstance(feedback, int):
-            warn('Treillis wiil will only accept feedback as a matricx in the future. '
+            warn('Trellis  will only accept feedback as a matrix in the future. '
                  'Using the backwards compatibility version that may contain bugs for k > 1.', DeprecationWarning)
 
             if code_type == 'rsc':
@@ -305,6 +306,7 @@ class Trellis:
             to the input.
         save_path : str or None
             If not None, save the figure to the file specified by its path.
+            *Default* is no saving.
         """
         if edge_colors is None:
             edge_colors = [mcolors.hsv_to_rgb((i/self.number_inputs, 1, 1)) for i in range(self.number_inputs)]
@@ -335,6 +337,111 @@ class Trellis:
         ax.set_xticks([])
         ax.set_yticks([])
         plt.legend(edge_patches, [str(i) + "-input" for i in range(self.number_inputs)])
+        plt.show()
+        if save_path is not None:
+            plt.savefig(save_path)
+
+    def visualize_fsm(self, state_order=None, state_radius=0.04, edge_colors=None, save_path=None):
+        """ Plot the FSM corresponding to the the trellis
+
+        This method is not intended to display large FSMs and its use is advisable only for simple trellises.
+
+        Parameters
+        ----------
+        state_order : list of ints, optional
+            Specifies the order in the which the states of the trellis are to be displayed starting from the top in the
+            plot.
+            *Default* order is [0,...,number_states-1]
+        state_radius : float, optional
+            Radius of each state (circle) in the plot.
+            *Default* value is 0.04
+        edge_colors : list of hex color codes, optional
+            A list of length equal to the number_inputs, containing color codes that represent the edge corresponding to
+            the input.
+        save_path : str or None
+            If not None, save the figure to the file specified by its path.
+            *Default* is no saving.
+        """
+        # Default arguments
+        if edge_colors is None:
+            edge_colors = [mcolors.hsv_to_rgb((i/self.number_inputs, 1, 1)) for i in range(self.number_inputs)]
+
+        if state_order is None:
+            state_order = list(range(self.number_states))
+
+        # Init the figure
+        ax = plt.axes((0, 0, 1, 1))
+
+        # Plot states
+        radius = state_radius * self.number_states
+        angles = 2 * np.pi / self.number_states * np.arange(self.number_states)
+        positions = [(radius * math.cos(angle), radius * math.sin(angle)) for angle in angles]
+
+        state_patches = []
+        arrows = []
+        for idx, state in enumerate(state_order):
+            state_patches.append(mpatches.Circle(positions[idx], state_radius, color="#003399", ec="#cccccc"))
+            plt.text(positions[idx][0], positions[idx][1], str(state), ha='center', va='center', size=20)
+
+            # Plot transition
+            for input in range(self.number_inputs):
+                next_state = self.next_state_table[state, input]
+                next_idx = (state_order == next_state).nonzero()[0][0]
+                output = self.output_table[state, input]
+
+                # Transition arrow
+                if next_state == state:
+                    # Positions
+                    arrow_start_x = positions[idx][0] + state_radius * math.cos(angles[idx] + math.pi / 6)
+                    arrow_start_y = positions[idx][1] + state_radius * math.sin(angles[idx] + math.pi / 6)
+                    arrow_end_x = positions[idx][0] + state_radius * math.cos(angles[idx] - math.pi / 6)
+                    arrow_end_y = positions[idx][1] + state_radius * math.sin(angles[idx] - math.pi / 6)
+                    arrow_mid_x = positions[idx][0] + state_radius * 2 * math.cos(angles[idx])
+                    arrow_mid_y = positions[idx][1] + state_radius * 2 * math.sin(angles[idx])
+
+                    # Add text
+                    plt.text(arrow_mid_x, arrow_mid_y, '({})'.format(output),
+                             ha='center', va='center', backgroundcolor=edge_colors[input])
+
+                else:
+                    # Positions
+                    dx = positions[next_idx][0] - positions[idx][0]
+                    dy = positions[next_idx][1] - positions[idx][1]
+                    relative_angle = math.atan(dy / dx) + np.where(dx > 0, 0, math.pi)
+
+                    arrow_start_x = positions[idx][0] + state_radius * math.cos(relative_angle + math.pi * 0.05)
+                    arrow_start_y = positions[idx][1] + state_radius * math.sin(relative_angle + math.pi * 0.05)
+                    arrow_end_x = positions[next_idx][0] - state_radius * math.cos(relative_angle - math.pi * 0.05)
+                    arrow_end_y = positions[next_idx][1] - state_radius * math.sin(relative_angle - math.pi * 0.05)
+                    arrow_mid_x = (arrow_start_x + arrow_end_x) / 2 + \
+                                   radius * 0.25 * math.cos((angles[idx] + angles[next_idx]) / 2) * np.sign(dx)
+                    arrow_mid_y = (arrow_start_y + arrow_end_y) / 2 + \
+                                   radius * 0.25 * math.sin((angles[idx] + angles[next_idx]) / 2) * np.sign(dx)
+                    text_x = arrow_mid_x + 0.01 * math.cos((angles[idx] + angles[next_idx]) / 2)
+                    text_y = arrow_mid_y + 0.01 * math.sin((angles[idx] + angles[next_idx]) / 2)
+
+                    # Add text
+                    plt.text(text_x, text_y, '({})'.format(output),
+                             ha='center', va='center', backgroundcolor=edge_colors[input])
+
+                # Path creation
+                codes = (mpath.Path.MOVETO, mpath.Path.CURVE3, mpath.Path.CURVE3)
+                verts = ((arrow_start_x, arrow_start_y),
+                         (arrow_mid_x, arrow_mid_y),
+                         (arrow_end_x, arrow_end_y))
+                path = mpath.Path(verts, codes)
+
+                # Plot arrow
+                arrow = mpatches.FancyArrowPatch(path=path, mutation_scale=20, color=edge_colors[input])
+                ax.add_artist(arrow)
+                arrows.append(arrow)
+
+        # Format and plot
+        ax.set_xlim(radius * -2, radius * 2)
+        ax.set_ylim(radius * -2, radius * 2)
+        ax.add_collection(PatchCollection(state_patches, True))
+        plt.legend(arrows, [str(i) + "-input" for i in range(self.number_inputs)], loc='lower right')
+        plt.text(0, 1.5 * radius, 'Finite State Machine (output on transition)', ha='center', size=18)
         plt.show()
         if save_path is not None:
             plt.savefig(save_path)
@@ -574,7 +681,8 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     count = 0
     current_number_states = trellis.number_states
 
-    coded_bits = coded_bits.clip(-500, 500)
+    if decoding_type == 'soft':
+        coded_bits = coded_bits.clip(-500, 500)
 
     for t in range(1, int((L+total_memory)/k)):
         # Get the received codeword corresponding to t
