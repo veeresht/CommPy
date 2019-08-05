@@ -39,9 +39,67 @@ Redundancy of the channel coding schemes influences (decreases) bit rate. Actual
 To change the code rate (k/n) of the block code dimensions of the Generator matrix can be changed:
 ![blockcoderate](https://raw.githubusercontent.com/kirlf/CSP/master/FEC/assets/coderateblock.png)
 
-To change the coderate of the continuous code, e.g. [convolutional code](https://github.com/kirlf/CSP/blob/master/FEC/Convolutional%20codes%20intro.md), **puncturing** procedure is frequently used:
+To change the coderate of the continuous code, e.g. convolutional code, **puncturing** procedure is frequently used:
 
 ![punct](https://raw.githubusercontent.com/kirlf/CSP/master/FEC/assets/punct.png)
+
+## Example
+
+Let us consider implematation of the **convolutional codes** as an example.
+
+Main modeling routines:
+- generate random message
+- encode
+- modulate it
+- add a noise (e.g. AWGN)
+- demodulate
+- decode
+- check the error correction
+
+```python
+import numpy as np
+import commpy.channelcoding.convcode as cc
+import commpy.modulation as modulation
+
+N = 100000 #number of symbols per the frame
+message_bits = np.random.randint(0, 2, N) # message
+
+M = 4 # modulation order (QPSK)
+k = np.log2(M) #number of bit per modulation symbol
+modem = modulation.PSKModem(M) # M-PSK modem initialization 
+```
+
+The [following](https://en.wikipedia.org/wiki/File:Conv_code_177_133.png) convolutional code will be used:
+
+![](https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Conv_code_177_133.png/800px-Conv_code_177_133.png)
+
+*Shift-register for the (7, [171, 133]) convolutional code polynomial.*
+
+Convolutional encoder parameters:
+
+```python
+rate = 1/2 # code rate
+L = 7 # constraint length
+m = np.array([L-1]) # number of delay elements
+generator_matrix = np.array([[0o171, 0o133]]) # generator branches
+trellis = cc.Trellis(M, generator_matrix) # Trellis structure
+```
+
+Viterbi decoder parameters:
+
+```python
+tb_depth = 5*(m.sum() + 1) # traceback depth
+```
+
+Simulation loop:
+
+```python
+EbNo = 5 # energy per bit to noise power spectral density ratio (in dB)
+snrdB = EbNo + 10*np.log10(k*rate) # Signal-to-Noise ratio (in dB)
+noiseVar = 10**(-snrdB/10) # noise variance (power)
+
+
+```
 
 ### Reference
 
