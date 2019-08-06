@@ -7,11 +7,11 @@ The main idea of the channel codes can be formulated as following thesises:
 - **redundant bits** are added for *error detection* and *error correction*;
 - some special algorithms (<u>coding schemes</u>) are used for this.
 
-![](https://raw.githubusercontent.com/kirlf/CSP/master/FEC/assets/FECmainidea1.png)
+<img src="https://raw.githubusercontent.com/kirlf/CSP/master/FEC/assets/FECmainidea1.png" width="800" />
 
 The fact how "further" a certain algorithm divides the code words among themselves, and determines how strongly it protects the signal from noise [1, p.23].
 
-![](https://habrastorage.org/webt/n7/o4/bs/n7o4bsf7_htlv10gsatc-yojbrq.png)
+<img src="https://habrastorage.org/webt/n7/o4/bs/n7o4bsf7_htlv10gsatc-yojbrq.png" width="800" />
 
 In the case of binary codes, the minimum distance between all existing code words is called **Hamming distance** and is usually denoted **dmin**:
 
@@ -56,10 +56,17 @@ Main modeling routines:
 - decode
 - check the error correction
 
+<img src="https://habrastorage.org/webt/v3/v5/w2/v3v5w2gbwk34nzk_2qt25baoebq.png" width="500"/>
+
 ```python
 import numpy as np
 import commpy.channelcoding.convcode as cc
 import commpy.modulation as modulation
+
+def BER_calc(a, b):
+    num_ber = np.sum(np.abs(a - b))
+    ber = np.mean(np.abs(a - b))
+    return int(num_ber), ber
 
 N = 100000 #number of symbols per the frame
 message_bits = np.random.randint(0, 2, N) # message
@@ -91,6 +98,12 @@ Viterbi decoder parameters:
 tb_depth = 5*(m.sum() + 1) # traceback depth
 ```
 
+Two oppitions of the Viterbi decoder will be tested:
+- *hard* (hard decision)
+- *unquatized* (soft decision)
+
+Additionally, uncoded case will be considered. 
+
 Simulation loop:
 
 ```python
@@ -98,7 +111,63 @@ EbNo = 5 # energy per bit to noise power spectral density ratio (in dB)
 snrdB = EbNo + 10*np.log10(k*rate) # Signal-to-Noise ratio (in dB)
 noiseVar = 10**(-snrdB/10) # noise variance (power)
 
+N_c = 10 # number of trials
 
+BER_soft = np.empty((N_c,))
+BER_hard = np.empty((N_c,))
+BER_uncoded = np.empty((N_c,))
+
+for cntr in range(N_c):
+    
+    message_bits = np.random.randint(0, 2, N) # message
+    coded_bits = cc.conv_encode(message_bits, trellis) # encoding
+    
+    modulated = modem.modulate(coded_bits) # modulation
+    modulated_uncoded = modem.modulate(message_bits) # modulation (uncoded case)
+
+    Es = np.mean(np.abs(modulated)**2) # symbol energy
+    No = Es/((10**(EbNo/10))*np.log2(M)) # noise spectrum density
+
+    noisy = modulated + np.sqrt(No/2)*\
+        (np.random.randn(modulated.shape[0])+\
+         1j*np.random.randn(modulated.shape[0])) # AWGN
+    
+    noisy_uncoded = modulated_uncoded + np.sqrt(No/2)*\
+        (np.random.randn(modulated_uncoded.shape[0])+\
+         1j*np.random.randn(modulated_uncoded.shape[0])) # AWGN (uncoded case)
+
+    demodulated_soft = modem.demodulate(noisy, demod_type='soft', noise_var=noiseVar) # demodulation (soft output)
+    demodulated_hard = modem.demodulate(noisy, demod_type='hard') # demodulation (hard output)
+    demodulated_uncoded = modem.demodulate(noisy_uncoded, demod_type='hard') # demodulation (uncoded case)
+
+    decoded_soft = cc.viterbi_decode(demodulated_soft, trellis, tb_depth, decoding_type='unquantized') # decoding (soft decision)
+    decoded_hard = cc.viterbi_decode(demodulated_hard, trellis, tb_depth, decoding_type='hard') # decoding (hard decision)
+
+
+    NumErr, BER_soft[cntr] = BER_calc(message_bits, decoded_soft[:-(L-1)]) # bit-error ratio (soft decision)
+    NumErr, BER_hard[cntr] = BER_calc(message_bits, decoded_hard[:-(L-1)]) # bit-error ratio (hard decision)
+    NumErr, BER_uncoded[cntr] = BER_calc(message_bits, demodulated_uncoded) # bit-error ratio (uncoded case)
+
+mean_BER_soft = np.mean(BER_soft) # averaged bit-error ratio (soft decision)
+mean_BER_hard = np.mean(BER_hard) # averaged bit-error ratio (hard decision)
+mean_BER_uncoded = np.mean(BER_uncoded) # averaged bit-error ratio (uncoded case)
+
+print("Soft decision:\n"+str(mean_BER_soft)+"\n")
+print("Hard decision:\n"+str(mean_BER_hard)+"\n")
+print("Uncoded message:\n"+str(mean_BER_uncoded)+"\n")
+```
+
+Outputs:
+
+```python
+>>> Soft decision:
+>>> 0.0
+>>>
+>>> Hard decision:
+>>> 3.0000000000000004e-05
+>>>
+>>> Uncoded message:
+>>> 0.008782
 ```
 
 ### Reference
