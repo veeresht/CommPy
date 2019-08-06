@@ -17,7 +17,7 @@ Objectives
 
 Available Features
 ------------------
-Channel Coding
+[Channel Coding](https://github.com/kirlf/CommPy/blob/master/commpy/channelcoding/README.md)
 --------------
 - Encoder for Convolutional Codes (Polynomial, Recursive Systematic). Supports all rates and puncture matrices.
 - Viterbi Decoder for Convolutional Codes (Hard Decision Output).
