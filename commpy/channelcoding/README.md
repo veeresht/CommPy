@@ -45,18 +45,11 @@ To change the coderate of the continuous code, e.g. convolutional code, **punctu
 
 ## Example
 
-Let us consider implematation of the **convolutional codes** as an example.
-
-Main modeling routines:
-- generate random message
-- encode
-- modulate it
-- add a noise (e.g. AWGN)
-- demodulate
-- decode
-- check the error correction
+Let us consider implematation of the **convolutional codes** as an example:
 
 <img src="https://habrastorage.org/webt/v3/v5/w2/v3v5w2gbwk34nzk_2qt25baoebq.png" width="500"/>
+
+*Main modeling routines: random message genaration, channel encoding, baseband modulation, additive noise (e.g. AWGN), baseband demodulation, channel decoding, BER calculation.*
 
 ```python
 import numpy as np
