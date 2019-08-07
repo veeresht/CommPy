@@ -92,8 +92,8 @@ tb_depth = 5*(m.sum() + 1) # traceback depth
 ```
 
 Two oppitions of the Viterbi decoder will be tested:
-- *hard* (hard decision)
-- *unquatized* (soft decision)
+- *hard* (hard inputs)
+- *unquatized* (soft inputs)
 
 Additionally, uncoded case will be considered. 
 
