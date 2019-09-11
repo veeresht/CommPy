@@ -101,16 +101,19 @@ Requirements/Dependencies
 Installation
 ------------
 
-- To use the released version on PyPi, use pip or conda to install as follows::
+- To use the released version on PyPi, use pip to install as follows::
 ```
 $ pip install scikit-commpy
-$ conda install -c https://conda.binstar.org/veeresht scikit-commpy
 ```
 - To work with the development branch, clone from github and install as follows::
 ```
 $ git clone https://github.com/veeresht/CommPy.git
 $ cd CommPy
 $ python setup.py install
+```
+- conda version is curently outdated but v0.3 is still available using::
+```
+$ conda install -c https://conda.binstar.org/veeresht scikit-commpy
 ```
 
 Citing CommPy
