@@ -3,7 +3,7 @@
 
 """ Interleavers and De-interleavers """
 
-from numpy import array, arange, zeros
+from numpy import arange, zeros
 from numpy.random import mtrand
 
 __all__ = ['RandInterlv']
@@ -24,7 +24,7 @@ class _Interleaver:
             Interleaved output data.
 
         """
-        out_array = array(map(lambda x: in_array[x], self.p_array))
+        out_array = in_array[self.p_array]
         return out_array
 
     def deinterlv(self, in_array):
@@ -45,6 +45,7 @@ class _Interleaver:
         for index, element in enumerate(self.p_array):
             out_array[element] = in_array[index]
         return out_array
+
 
 class RandInterlv(_Interleaver):
     """ Random Interleaver.
@@ -74,9 +75,3 @@ class RandInterlv(_Interleaver):
     def __init__(self, length, seed):
         rand_gen = mtrand.RandomState(seed)
         self.p_array = rand_gen.permutation(arange(length))
-
-
-#class SRandInterlv(_Interleaver):
-
-
-#class QPPInterlv(_Interleaver):
