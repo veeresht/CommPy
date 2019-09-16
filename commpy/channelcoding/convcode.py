@@ -693,7 +693,7 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
             if decoding_type == 'hard':
                 r_codeword[:] = 0
             elif decoding_type == 'soft':
-                r_codeword[:] = np.iinfo(int).min
+                r_codeword[:] = 0
             elif decoding_type == 'unquantized':
                 r_codeword[:] = -1
             else:

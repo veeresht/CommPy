@@ -1,10 +1,11 @@
 # Authors: CommPy contributors
 # License: BSD 3-Clause
 
-from commpy.channelcoding.convcode import Trellis, conv_encode, viterbi_decode
 from numpy import array, inf
-from numpy.random import randint, randn
-from numpy.testing import assert_array_equal, dec, assert_array_less
+from numpy.random import randint, randn, seed
+from numpy.testing import assert_array_equal, dec, run_module_suite
+
+from commpy.channelcoding.convcode import Trellis, conv_encode, viterbi_decode
 
 
 class TestConvCode(object):
@@ -104,18 +105,18 @@ class TestConvCode(object):
             assert_array_equal(conv_encode(self.mes, self.trellis[i],'cont'), self.desired_encode_msg[i])
 
     def test_viterbi_decode(self):
-        pass
+        pass  # Tested below
 
     @dec.slow
     def test_conv_encode_viterbi_decode(self):
         niters = 10
         blocklength = 1000
 
-        for i in range(niters):
+        for n in range(niters):
             msg = randint(0, 2, blocklength)
 
             # Previous tests
-            for i in range(4):
+            for i in range(len(self.trellis)):
                 coded_bits = conv_encode(msg, self.trellis[i])
                 decoded_bits = viterbi_decode(coded_bits.astype(float), self.trellis[i], 15)
                 assert_array_equal(decoded_bits[:len(msg)], msg)
@@ -132,16 +133,27 @@ class TestConvCode(object):
                 coded_bits = conv_encode(msg, self.trellis[i])
                 coded_syms = 10.0 * coded_bits - 5 + randn(len(coded_bits)) * 2
                 decoded_bits = viterbi_decode(coded_syms, self.trellis[i], 15, 'soft')
-                assert_array_less((decoded_bits[:len(msg)] - msg).sum(), 0.03 * blocklength)
+                assert_array_equal(decoded_bits[:len(msg)], msg)
+
+                coded_bits = conv_encode(msg, self.trellis[i], termination='cont')
+                coded_syms = 10.0 * coded_bits - 5 + randn(len(coded_bits)) * 2
+                decoded_bits = viterbi_decode(coded_syms, self.trellis[i], 15, 'soft')
+                assert_array_equal(decoded_bits, msg)
 
                 coded_bits = conv_encode(msg, self.trellis[i])
                 coded_syms = (2.0 * coded_bits - 1) * inf
                 decoded_bits = viterbi_decode(coded_syms, self.trellis[i], 15, 'soft')
-                assert_array_less((decoded_bits[:len(msg)] - msg).sum(), 0.03 * blocklength)
+                assert_array_equal(decoded_bits[:len(msg)], msg)
 
                 coded = conv_encode(msg, self.trellis[i], termination='cont')
                 coded_bits = coded.astype(float)
                 coded_bits[coded_bits == 1.0] = inf
                 coded_bits[coded_bits == 0.0] = -inf
-                decoded_bits = viterbi_decode(coded_bits, self.trellis[i], 15,'soft')
+                decoded_bits = viterbi_decode(coded_bits, self.trellis[i], 15, 'soft')
                 assert_array_equal(decoded_bits, msg)
+
+
+if __name__ == "__main__":
+    seed(17121996)
+    run_module_suite()
+

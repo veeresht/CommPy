@@ -71,6 +71,10 @@ def test_max_log_approx():
                     err_msg='Wrong LLRs without noise')
 
 
+def test_kbest():
+    pass  # Tested in test_links
+
+
 if __name__ == "__main__":
     seed(17121996)
     run_module_suite()
