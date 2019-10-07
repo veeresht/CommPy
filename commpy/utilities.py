@@ -15,13 +15,13 @@ Utilities (:mod:`commpy.utilities`)
    euclid_dist          -- Squared Euclidean distance.
    upsample             -- Upsample by an integral factor (zero insertion).
    signal_power         -- Compute the power of a discrete time signal.
-
-
 """
+from __future__ import division  # Python 2 compatibility
+
 import numpy as np
 
-__all__ = ['dec2bitarray', 'bitarray2dec', 'hamming_dist', 'euclid_dist', 'upsample', 'signal_power']
-
+__all__ = ['dec2bitarray', 'bitarray2dec', 'hamming_dist', 'euclid_dist', 'upsample',
+           'signal_power']
 
 def dec2bitarray(in_number, bit_width):
     """
@@ -165,7 +165,7 @@ def signal_power(signal):
 
     @np.vectorize
     def square_abs(s):
-        return abs(s)**2
+        return abs(s) ** 2
 
     P = np.mean(square_abs(signal))
     return P
