@@ -29,7 +29,7 @@ Available Features
 - Random Interleavers and De-interleavers.
 - Belief Propagation (BP) Decoder for LDPC Codes.
 
-Channel Models
+[Channel Models](https://github.com/veeresht/CommPy/blob/master/commpy/channels.py)
 --------------
 - SISO Channel with Rayleigh or Rician fading.
 - MIMO Channel with Rayleigh or Rician fading.
@@ -37,17 +37,17 @@ Channel Models
 - Binary Symmetric Channel (BSC)
 - Binary AWGN Channel (BAWGNC)
 
-Filters
+[Filters](https://github.com/veeresht/CommPy/blob/master/commpy/filters.py)
 -------
 - Rectangular
 - Raised Cosine (RC), Root Raised Cosine (RRC)
 - Gaussian
 
-Impairments
+[Impairments](https://github.com/veeresht/CommPy/blob/master/commpy/impairments.py)
 -----------
 - Carrier Frequency Offset (CFO)
 
-Modulation/Demodulation
+[Modulation/Demodulation](https://github.com/veeresht/CommPy/blob/master/commpy/modulation.py)
 -----------------------
 - Phase Shift Keying (PSK)
 - Quadrature Amplitude Modulation (QAM)
@@ -56,19 +56,19 @@ Modulation/Demodulation
 - MIMO K-best Schnorr-Euchner Detection.
 - Convert channel matrix to Bit-level representation.
 
-Sequences
+[Sequences](https://github.com/veeresht/CommPy/blob/master/commpy/sequences.py)
 ---------
 - PN Sequence
 - Zadoff-Chu (ZC) Sequence
 
-Utilities
+[Utilities](https://github.com/veeresht/CommPy/blob/master/commpy/utilities.py)
 ---------
 - Decimal to bit-array, bit-array to decimal.
 - Hamming distance, Euclidean distance.
 - Upsample
 - Power of a discrete-time signal
 
-Links
+[Links](https://github.com/veeresht/CommPy/blob/master/commpy/links.py)
 -----
 - Estimate the BER performance of a link model with Monte Carlo simulation.
 - Link model object.
