@@ -7,7 +7,7 @@ The main idea of the channel codes can be formulated as following thesises:
 - **redundant bits** are added for *error detection* and *error correction*;
 - some special algorithms (<u>coding schemes</u>) are used for this.
 
-<img src="https://raw.githubusercontent.com/kirlf/CSP/master/FEC/assets/FECmainidea1.png" width="800" />
+<img src="https://raw.githubusercontent.com/veeresht/CommPy/master/commpy/channelcoding/doc/assets/FECmainidea1.png" width="800" />
 
 The fact how "further" a certain algorithm divides the code words among themselves, and determines how strongly it protects the signal from noise [1, p.23].
 
@@ -15,7 +15,7 @@ The fact how "further" a certain algorithm divides the code words among themselv
 
 In the case of binary codes, the minimum distance between all existing code words is called **Hamming distance** and is usually denoted **dmin**:
 
-<img src="https://raw.githubusercontent.com/kirlf/CSP/master/FEC/assets/FECexamp2.png" alt="examp2" width="400"/>
+<img src="https://raw.githubusercontent.com/veeresht/CommPy/master/commpy/channelcoding/doc/assets/FECexamp2.png" alt="examp2" width="400"/>
 
 
 ## Classification
@@ -28,20 +28,20 @@ First, the channel codes:
 
 Secondly, codes can be classified as **block** and **continuous**:
 
-![](https://raw.githubusercontent.com/kirlf/CSP/master/FEC/assets/BlockCont.png)
+![](https://raw.githubusercontent.com/veeresht/CommPy/master/commpy/channelcoding/doc/assets/BlockCont.png)
 
 ## Net bit rate
 Redundancy of the channel coding schemes influences (decreases) bit rate. Actually, it is the cost for the noiseless increasing.
 [**Net bit rate**](https://en.wikipedia.org/wiki/Bit_rate#Information_rate) concept is usually used:
 
-<img src="https://raw.githubusercontent.com/kirlf/CSP/master/FEC/assets/nebitrate.png" alt="net" width="500"/>
+<img src="https://raw.githubusercontent.com/veeresht/CommPy/master/commpy/channelcoding/doc/assets/nebitrate.png" alt="net" width="500"/>
 
 To change the code rate (k/n) of the block code dimensions of the Generator matrix can be changed:
-![blockcoderate](https://raw.githubusercontent.com/kirlf/CSP/master/FEC/assets/coderateblock.png)
+![blockcoderate](https://raw.githubusercontent.com/veeresht/CommPy/master/commpy/channelcoding/doc/assets/coderateblock.png)
 
 To change the coderate of the continuous code, e.g. convolutional code, **puncturing** procedure is frequently used:
 
-![punct](https://raw.githubusercontent.com/kirlf/CSP/master/FEC/assets/punct.png)
+![punct](https://raw.githubusercontent.com/veeresht/CommPy/master/commpy/channelcoding/doc/assets/punct.png)
 
 ## Example
 
