@@ -1,17 +1,22 @@
 # Authors: CommPy contributors
 # License: BSD 3-Clause
 
-""" LDPC Codes """
 import numpy as np
 
-__all__ = ['get_ldpc_code_params, ldpc_bp_decode']
+__all__ = ['get_ldpc_code_params', 'ldpc_bp_decode']
 
-MAX_POS_LLR = 38.0
-MIN_NEG_LLR = -38.0
 
 def get_ldpc_code_params(ldpc_design_filename):
     """
     Extract parameters from LDPC code design file.
+
+    The file is structured as followed (examples are available in designs/ldpc/):
+        n_vnode n_cnode
+        max_vnode_deg max_cnode_deg
+        List of the degree of each vnode
+        List of the degree of each cnode
+        For each vnode (line by line, separated by '\t'): index of the connected cnodes
+        For each cnode (line by line, separated by '\t'): index of the connected vnodes
 
     Parameters
     ----------
@@ -21,7 +26,19 @@ def get_ldpc_code_params(ldpc_design_filename):
     Returns
     -------
     ldpc_code_params : dictionary
-        Parameters of the LDPC code.
+        Parameters of the LDPC code:
+            n_vnodes (int) - number of variable nodes.
+            n_cnodes (int) - number of check nodes.
+            max_vnode_deg (int) - maximal degree of a variable node.
+            max_cnode_deg (int) - maximal degree of a check node.
+            vnode_adj_list (1D-ndarray of ints) - flatten array so that
+                vnode_adj_list.reshape((n_vnodes, max_vnode_deg)) gives for each variable node the adjacent check nodes.
+            cnode_adj_list (1D-ndarray of ints) - flatten array so that
+                cnode_adj_list.reshape((n_cnodes, max_cnode_deg)) gives for each check node the adjacent variable nodes.
+            vnode_cnode_map (1D-ndarray of ints) - flatten array providing the mapping between vnode and cnode indexes.
+            cnode_vnode_map (1D-ndarray of ints) - flatten array providing the mapping between vnode and cnode indexes.
+            vnode_deg_list (1D-ndarray of ints) - degree of each variable node.
+            cnode_deg_list (1D-ndarray of ints) - degree of each check node.
     """
 
     ldpc_design_file = open(ldpc_design_filename)
@@ -46,17 +63,14 @@ def get_ldpc_code_params(ldpc_design_filename):
 
     cnode_vnode_map = -np.ones([n_cnodes, max_cnode_deg], int)
     vnode_cnode_map = -np.ones([n_vnodes, max_vnode_deg], int)
-    cnode_list = np.arange(n_cnodes)
-    vnode_list = np.arange(n_vnodes)
 
     for cnode in range(n_cnodes):
         for i, vnode in enumerate(cnode_adj_list[cnode, 0:cnode_deg_list[cnode]]):
-            cnode_vnode_map[cnode, i] = cnode_list[np.where(vnode_adj_list[vnode, :] == cnode)]
+            cnode_vnode_map[cnode, i] = np.where(vnode_adj_list[vnode, :] == cnode)[0]
 
     for vnode in range(n_vnodes):
         for i, cnode in enumerate(vnode_adj_list[vnode, 0:vnode_deg_list[vnode]]):
-            vnode_cnode_map[vnode, i] = vnode_list[np.where(cnode_adj_list[cnode, :] == vnode)]
-
+            vnode_cnode_map[vnode, i] = np.where(cnode_adj_list[cnode, :] == vnode)[0]
 
     cnode_adj_list_1d = cnode_adj_list.flatten().astype(np.int32)
     vnode_adj_list_1d = vnode_adj_list.flatten().astype(np.int32)
@@ -82,17 +96,6 @@ def get_ldpc_code_params(ldpc_design_filename):
 
     return ldpc_code_params
 
-def _limit_llr(in_llr):
-
-    out_llr = in_llr
-
-    if in_llr > MAX_POS_LLR:
-        out_llr = MAX_POS_LLR
-
-    if in_llr < MIN_NEG_LLR:
-        out_llr = MIN_NEG_LLR
-
-    return out_llr
 
 def sum_product_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
                        vnode_msgs, cnode_vnode_map, max_cnode_deg, max_vnode_deg):
@@ -114,8 +117,7 @@ def min_sum_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
     start_idx = cnode_idx*max_cnode_deg
     offset = cnode_deg_list[cnode_idx]
     vnode_list = cnode_adj_list[start_idx:start_idx+offset]
-    vnode_list_msgs = vnode_msgs[vnode_list*max_vnode_deg +
-                                      cnode_vnode_map[start_idx:start_idx+offset]]
+    vnode_list_msgs = vnode_msgs[vnode_list*max_vnode_deg + cnode_vnode_map[start_idx:start_idx+offset]]
     vnode_list_msgs = np.ma.array(vnode_list_msgs, mask=False)
 
     # Compute messages on outgoing edges using the incoming messages
@@ -123,7 +125,7 @@ def min_sum_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
         vnode_list_msgs.mask[i-start_idx] = True
         cnode_msgs[i] = np.prod(np.sign(vnode_list_msgs))*np.min(np.abs(vnode_list_msgs))
         vnode_list_msgs.mask[i-start_idx] = False
-        #print cnode_msgs[i]
+
 
 def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
     """
@@ -135,12 +137,24 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
         Received codeword LLR values from the channel.
 
     ldpc_code_params : dictionary
-        Parameters of the LDPC code.
+        Parameters of the LDPC code as provided by `get_ldpc_code_params`:
+            n_vnodes (int) - number of variable nodes.
+            n_cnodes (int) - number of check nodes.
+            max_vnode_deg (int) - maximal degree of a variable node.
+            max_cnode_deg (int) - maximal degree of a check node.
+            vnode_adj_list (1D-ndarray of ints) - flatten array so that
+                vnode_adj_list.reshape((n_vnodes, max_vnode_deg)) gives for each variable node the adjacent check nodes.
+            cnode_adj_list (1D-ndarray of ints) - flatten array so that
+                cnode_adj_list.reshape((n_cnodes, max_cnode_deg)) gives for each check node the adjacent variable nodes.
+            vnode_cnode_map (1D-ndarray of ints) - flatten array providing the mapping between vnode and cnode indexes.
+            cnode_vnode_map (1D-ndarray of ints) - flatten array providing the mapping between vnode and cnode indexes.
+            vnode_deg_list (1D-ndarray of ints) - degree of each variable node.
+            cnode_deg_list (1D-ndarray of ints) - degree of each check node.
 
     decoder_algorithm: string
         Specify the decoder algorithm type.
-        SPA for Sum-Product Algorithm
-        MSA for Min-Sum Algorithm
+        'SPA' for Sum-Product Algorithm
+        'MSA' for Min-Sum Algorithm
 
     n_iters : int
         Max. number of iterations of decoding to be done.
@@ -171,14 +185,12 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
     cnode_msgs = np.zeros(n_cnodes*max_cnode_deg)
     vnode_msgs = np.zeros(n_vnodes*max_vnode_deg)
 
-    _limit_llr_v = np.vectorize(_limit_llr)
-
     if decoder_algorithm == 'SPA':
         check_node_update = sum_product_update
     elif decoder_algorithm == 'MSA':
         check_node_update = min_sum_update
     else:
-        raise NameError('Please input a valid decoder_algorithm string.')
+        raise NameError('Please input a valid decoder_algorithm string (meanning "SPA" or "MSA").')
 
     # Initialize vnode messages with the LLR values received
     for vnode_idx in range(n_vnodes):
@@ -207,9 +219,8 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
             cnode_list_msgs = cnode_msgs[cnode_list*max_cnode_deg + vnode_cnode_map[start_idx:start_idx+offset]]
             msg_sum = np.sum(cnode_list_msgs)
 
-            # Compute messages on outgoing edges using the incoming message sum
-            vnode_msgs[start_idx:start_idx+offset] = _limit_llr_v(llr_vec[vnode_idx] + msg_sum -
-                                                                  cnode_list_msgs)
+            # Compute messages on outgoing edges using the incoming message sum (LLRs are clipped in [-38, 38])
+            np.clip(llr_vec[vnode_idx] + msg_sum - cnode_list_msgs, -38, 38, vnode_msgs[start_idx:start_idx+offset])
 
             # Update output LLRs and decoded word
             out_llrs[vnode_idx] = llr_vec[vnode_idx] + msg_sum
@@ -218,7 +229,7 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
             else:
                 dec_word[vnode_idx] = 1
 
-        # Compute if early termination using parity check matrix
+        # Compute early termination using parity check matrix
         for cnode_idx in range(n_cnodes):
             p_sum = 0
             for i in range(cnode_deg_list[cnode_idx]):

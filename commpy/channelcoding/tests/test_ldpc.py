@@ -19,7 +19,6 @@ class TestLDPCCode(object):
     def setup_class(cls):
         dir = os.path.dirname(__file__)
         ldpc_design_file_1 = os.path.join(dir, '../designs/ldpc/gallager/96.33.964.txt')
-        #ldpc_design_file_1 = "../designs/ldpc/gallager/96.33.964.txt"
         cls.ldpc_code_params = get_ldpc_code_params(ldpc_design_file_1)
 
     @classmethod
@@ -28,7 +27,6 @@ class TestLDPCCode(object):
 
     def test_ldpc_bp_decode(self):
         N = 96
-        k = 48
         rate = 0.5
         Es = 1.0
         snr_list = array([2.0, 2.5])
@@ -50,8 +48,7 @@ class TestLDPCCode(object):
                 rx_word = 1-(2*tx_codeword) + awgn_array
                 rx_llrs = 2.0*rx_word/(noise_std**2)
 
-                [dec_word, out_llrs] = ldpc_bp_decode(rx_llrs, self.ldpc_code_params, 'SPA',
-                                                      ldpcbp_iters)
+                [dec_word, out_llrs] = ldpc_bp_decode(rx_llrs, self.ldpc_code_params, 'SPA', ldpcbp_iters)
 
                 num_bit_errors = hamming_dist(tx_codeword, dec_word)
                 if num_bit_errors > 0:
