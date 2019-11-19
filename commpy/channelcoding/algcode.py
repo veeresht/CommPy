@@ -1,12 +1,9 @@
-
-
-# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
-from fractions import gcd
 from numpy import array, arange, concatenate, convolve
 
-from commpy.channelcoding.gfields import GF, polymultiply, poly_to_string
+from commpy.channelcoding.gfields import GF, poly_to_string
 from commpy.utilities import dec2bitarray, bitarray2dec
 
 __all__ = ['cyclic_code_genpoly']

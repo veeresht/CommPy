@@ -1,4 +1,4 @@
-# Authors: Youness Akourim <akourim97@gmail.com> & Bastien Trotobas <bastien.trotobas@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
 """
@@ -13,6 +13,8 @@ Links (:mod:`commpy.links`)
    LinkModel            -- Link model object.
 """
 from __future__ import division  # Python 2 compatibility
+
+import math
 
 import numpy as np
 
@@ -40,7 +42,8 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
               link_performance send bits until it reach err_min errors (see also send_max).
 
     send_chunk : int
-                  Number of bits to be send at each iteration.
+                  Number of bits to be send at each iteration. This is also the frame length of the decoder if available
+                  so it should be large enough regarding the code type.
                   *Default*: send_chunck = err_min
 
     code_rate : float in (0,1]
@@ -61,12 +64,13 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
     divider = link_model.num_bits_symbol * link_model.channel.nb_tx
     send_chunk = max(divider, send_chunk // divider * divider)
 
+    receive_size = link_model.channel.nb_tx * link_model.num_bits_symbol
+
     # Computations
     for id_SNR in range(len(SNRs)):
         link_model.channel.set_SNR_dB(SNRs[id_SNR], code_rate, link_model.Es)
         bit_send = 0
         bit_err = 0
-        receive_size = link_model.channel.nb_tx * link_model.num_bits_symbol
         while bit_send < send_max and bit_err < err_min:
             # Propagate some bits
             msg = np.random.choice((0, 1), send_chunk)
@@ -76,14 +80,16 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
             # Deals with MIMO channel
             if isinstance(link_model.channel, MIMOFlatChannel):
                 nb_symb_vector = len(channel_output)
-                received_msg = np.empty_like(msg, int)
+                received_msg = np.empty(int(math.ceil(len(msg) / link_model.rate)), int)
                 for i in range(nb_symb_vector):
-                     received_msg[receive_size * i:receive_size * (i+1)] = \
-                         link_model.receive(channel_output[i], link_model.channel.channel_gains[i], link_model.constellation)
+                    received_msg[receive_size * i:receive_size * (i + 1)] = \
+                        link_model.receive(channel_output[i], link_model.channel.channel_gains[i],
+                                           link_model.constellation, link_model.channel.noise_std ** 2)
             else:
-                received_msg = link_model.receive(channel_output, link_model.channel.channel_gains, link_model.constellation)
+                received_msg = link_model.receive(channel_output, link_model.channel.channel_gains,
+                                                  link_model.constellation, link_model.channel.noise_std ** 2)
             # Count errors
-            bit_err += (msg != received_msg).sum()  # Remove MIMO padding
+            bit_err += (msg != link_model.decoder(received_msg)).sum()
             bit_send += send_chunk
         BERs[id_SNR] = bit_err / bit_send
     return BERs
@@ -99,7 +105,7 @@ class LinkModel:
 
         channel : _FlatChannel object
 
-        receive : function with prototype receive(y, H, constellation) that return a binary array.
+        receive : function with prototype receive(y, H, constellation, noise_var) that return a binary array.
                     y : 1D ndarray
                         Received complex symbols (shape: num_receive_antennas x 1)
 
@@ -108,6 +114,9 @@ class LinkModel:
 
                     constellation : 1D ndarray
 
+                    noise_var : positive float
+                                Noise variance
+
         num_bits_symbols : int
 
         constellation : array of float or complex
@@ -115,6 +124,9 @@ class LinkModel:
         Es : float
              Average energy per symbols.
              *Default* Es=1.
+
+        decoder : function with prototype decoder(binary array) that return a binary array.
+                  *Default* is no process.
 
         Attributes
         ----------
@@ -139,10 +151,17 @@ class LinkModel:
              Average energy per symbols.
              *Default* Es=1.
         """
-    def __init__(self, modulate, channel, receive, num_bits_symbol, constellation, Es=1):
+
+    def __init__(self, modulate, channel, receive, num_bits_symbol, constellation, Es=1, decoder=None, rate=1):
         self.modulate = modulate
         self.channel = channel
         self.receive = receive
         self.num_bits_symbol = num_bits_symbol
         self.constellation = constellation
         self.Es = Es
+        self.rate = rate
+
+        if decoder is None:
+            self.decoder = lambda msg: msg
+        else:
+            self.decoder = decoder

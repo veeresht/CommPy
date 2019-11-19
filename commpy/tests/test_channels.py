@@ -1,10 +1,12 @@
-# Authors: Bastien Trotobas <bastien.trotobas@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
 from __future__ import division, print_function  # Python 2 compatibility
 
+from math import cos
+
 from numpy import ones, inf, sqrt, array, identity, zeros, dot, trace, einsum, absolute, exp, pi, fromiter, kron, \
-    zeros_like
+    zeros_like, empty
 from numpy.random import seed, choice, randn
 from numpy.testing import run_module_suite, assert_raises, assert_equal, assert_allclose, \
     assert_array_equal, dec
@@ -373,18 +375,52 @@ class TestMIMOFading(MIMOTestCase):
             assert_allclose(chan.k_factor, 10,
                             err_msg='Wrong k-factor with uncorrelated rician fading')
 
-            chan.expo_corr_rayleigh_fading(exp(-0.2j*pi), exp(-0.1j*pi))
+            chan.expo_corr_rayleigh_fading(exp(-0.2j * pi), exp(-0.1j * pi))
             check_chan_gain(mod, chan)
             assert_allclose(chan.k_factor, 0,
                             err_msg='Wrong k-factor with correlated Rayleigh fading')
-            Rt, Rr = expo_correlation(exp(-0.2j*pi), exp(-0.1j*pi))
+            Rt, Rr = expo_correlation(exp(-0.2j * pi), exp(-0.1j * pi))
             check_correlation(chan, Rt, Rr)
 
             mean = randn(nb_rx, nb_tx) + randn(nb_rx, nb_tx) * 1j
-            chan.expo_corr_rician_fading(mean, 10, exp(-0.1j*pi), exp(-0.2j*pi))
+            chan.expo_corr_rician_fading(mean, 10, exp(-0.1j * pi), exp(-0.2j * pi))
             check_chan_gain(mod, chan)
             assert_allclose(chan.k_factor, 10,
                             err_msg='Wrong k-factor with correlated rician fading')
+
+            # Test with beta > 0
+            chan.expo_corr_rayleigh_fading(exp(-0.2j * pi), exp(-0.1j * pi), 1, 0.5)
+            check_chan_gain(mod, chan)
+            assert_allclose(chan.k_factor, 0,
+                            err_msg='Wrong k-factor with correlated Rayleigh fading')
+
+            mean = randn(nb_rx, nb_tx) + randn(nb_rx, nb_tx) * 1j
+            chan.expo_corr_rician_fading(mean, 5, exp(-0.1j * pi), exp(-0.2j * pi), 3, 2)
+            check_chan_gain(mod, chan)
+            assert_allclose(chan.k_factor, 5,
+                            err_msg='Wrong k-factor with correlated rician fading')
+
+
+class TestMIMOSpectular(MIMOTestCase):
+    def __init__(self):
+        super(TestMIMOSpectular, self).__init__()
+
+    def do(self, nb_tx, nb_rx):
+        chan = MIMOFlatChannel(nb_tx, nb_rx, 0)
+
+        # Text raising of ValueError
+        with assert_raises(ValueError):
+            chan.specular_compo(0, -1, 0, 1)
+        with assert_raises(ValueError):
+            chan.specular_compo(0, 1, 0, -1)
+
+        # Test the result
+        desired = empty((nb_rx, nb_tx), dtype=complex)
+        for n in range(nb_rx):
+            for m in range(nb_tx):
+                desired[n, m] = exp(1j * 2 * pi * (n * 1 * cos(0.5) - m * 0.1 * cos(2)))
+        assert_allclose(chan.specular_compo(2, 0.1, 0.5, 1), desired, rtol=0.02,
+                        err_msg='Wrong specular component')
 
 
 @dec.slow

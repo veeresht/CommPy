@@ -1,5 +1,4 @@
-
-# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
 """ Interleavers and De-interleavers """
@@ -8,7 +7,6 @@ from numpy import arange, zeros
 from numpy.random import mtrand
 
 __all__ = ['RandInterlv']
-
 
 class _Interleaver:
 

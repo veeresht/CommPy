@@ -1,6 +1,4 @@
-
-
-# Authors: Veeresh Taranalli <veeresht@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
 """ LDPC Codes """

@@ -1,30 +1,47 @@
-# Authors: Veeresh Taranalli <veeresht@gmail.com>  
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
 """ Algorithms for Convolutional Codes """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.collections import PatchCollection
+from __future__ import division
+
+import math
+from warnings import warn
+
+import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
+import matplotlib.path as mpath
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.collections import PatchCollection
 
 from commpy.utilities import dec2bitarray, bitarray2dec, hamming_dist, euclid_dist
-#from commpy.channelcoding.acstb import acs_traceback
 
 __all__ = ['Trellis', 'conv_encode', 'viterbi_decode']
 
 class Trellis:
     """
     Class defining a Trellis corresponding to a k/n - rate convolutional code.
+
+    This follow the classical representation. See [1] for instance.
+
+    Input and output are represented as little endian e.g. output = decimal(output[0], output[1] ...).
+
     Parameters
     ----------
     memory : 1D ndarray of ints
         Number of memory elements per input of the convolutional encoder.
-    g_matrix : 2D ndarray of ints (octal representation)
+    g_matrix : 2D ndarray of ints (decimal representation)
         Generator matrix G(D) of the convolutional encoder. Each element of
         G(D) represents a polynomial.
-    feedback : int, optional
-        Feedback polynomial of the convolutional encoder. Default value is 00.
+        Coef [i,j] is the influence of input i on output j.
+    feedback : 2D ndarray of ints (decimal representation), optional
+        Feedback matrix F(D) of the convolutional encoder. Each element of
+        F(D) represents a polynomial.
+        Coef [i,j] is the feedback influence of input i on input j.
+        *Default* implies no feedback.
+
+        The backwards compatibility version is triggered if feedback is an int.
     code_type : {'default', 'rsc'}, optional
         Use 'rsc' to generate a recursive systematic convolutional code.
         If 'rsc' is specified, then the first 'k x k' sub-matrix of
@@ -59,7 +76,7 @@ class Trellis:
     >>> from numpy import array
     >>> import commpy.channelcoding.convcode as cc
     >>> memory = array([2])
-    >>> g_matrix = array([[0o5, 0o7]]) # G(D) = [1+D^2, 1+D+D^2]
+    >>> g_matrix = array([[5, 7]]) # G(D) = [1+D^2, 1+D+D^2]
     >>> trellis = cc.Trellis(memory, g_matrix)
     >>> print trellis.k
     1
@@ -81,14 +98,14 @@ class Trellis:
      [3 0]
      [1 2]
      [2 1]]
+    References
+    ----------
+    [1] S. Benedetto, R. Garello et G. Montorsi, "A search for good convolutional codes to be used in the
+    construction of turbo codes", IEEE Transactions on Communications, vol. 46, n. 9, p. 1101-1005, spet. 1998
     """
-    def __init__(self, memory, g_matrix, feedback = 0, code_type = 'default'):
+    def __init__(self, memory, g_matrix, feedback = None, code_type = 'default'):
 
         [self.k, self.n] = g_matrix.shape
-
-        if code_type == 'rsc':
-            for i in range(self.k):
-                g_matrix[i][i] = feedback
         self.code_type = code_type
         
         self.total_memory = memory.sum()
@@ -99,61 +116,118 @@ class Trellis:
         self.output_table = np.zeros([self.number_states,
                                       self.number_inputs], 'int')
 
-        # Compute the entries in the next state table and the output table
-        for current_state in range(self.number_states):
+        if isinstance(feedback, int):
+            warn('Trellis  will only accept feedback as a matrix in the future. '
+                 'Using the backwards compatibility version that may contain bugs for k > 1.', DeprecationWarning)
 
-            for current_input in range(self.number_inputs):
-                outbits = np.zeros(self.n, 'int')
+            if code_type == 'rsc':
+                for i in range(self.k):
+                    g_matrix[i][i] = feedback
 
-                # Compute the values in the output_table
-                for r in range(self.n):
+            # Compute the entries in the next state table and the output table
+            for current_state in range(self.number_states):
 
-                    output_generator_array = np.zeros(self.k, 'int')
-                    shift_register = dec2bitarray(current_state,
-                                                  self.total_memory)
+                for current_input in range(self.number_inputs):
+                    outbits = np.zeros(self.n, 'int')
 
-                    for l in range(self.k):
+                    # Compute the values in the output_table
+                    for r in range(self.n):
 
-                        # Convert the number representing a polynomial into a
-                        # bit array
-                        generator_array = dec2bitarray(g_matrix[l][r],
-                                                       memory[l]+1)
+                        output_generator_array = np.zeros(self.k, 'int')
+                        shift_register = dec2bitarray(current_state,
+                                                      self.total_memory)
 
-                        # Loop over M delay elements of the shift register
-                        # to compute their contribution to the r-th output
-                        for i in range(memory[l]):
-                            outbits[r] = (outbits[r] + \
-                                (shift_register[i+l]*generator_array[i+1])) % 2
+                        for l in range(self.k):
 
-                        output_generator_array[l] = generator_array[0]
-                        if l == 0:
-                            feedback_array = (dec2bitarray(feedback, memory[l]) * shift_register[0:memory[l]]).sum()
-                            shift_register[1:memory[l]] = \
-                                    shift_register[0:memory[l]-1]
-                            shift_register[0] = (dec2bitarray(current_input,
-                                    self.k)[0] + feedback_array) % 2
-                        else:
-                            feedback_array = (dec2bitarray(feedback, memory[l]) *
-                                    shift_register[l+memory[l-1]-1:l+memory[l-1]+memory[l]-1]).sum()
-                            shift_register[l+memory[l-1]:l+memory[l-1]+memory[l]-1] = \
-                                    shift_register[l+memory[l-1]-1:l+memory[l-1]+memory[l]-2]
-                            shift_register[l+memory[l-1]-1] = \
+                            # Convert the number representing a polynomial into a
+                            # bit array
+                            generator_array = dec2bitarray(g_matrix[l][r],
+                                                           memory[l] + 1)
+
+                            # Loop over M delay elements of the shift register
+                            # to compute their contribution to the r-th output
+                            for i in range(memory[l]):
+                                outbits[r] = (outbits[r] + \
+                                              (shift_register[i + l] * generator_array[i + 1])) % 2
+
+                            output_generator_array[l] = generator_array[0]
+                            if l == 0:
+                                feedback_array = (dec2bitarray(feedback, memory[l]) * shift_register[0:memory[l]]).sum()
+                                shift_register[1:memory[l]] = \
+                                    shift_register[0:memory[l] - 1]
+                                shift_register[0] = (dec2bitarray(current_input,
+                                                                  self.k)[0] + feedback_array) % 2
+                            else:
+                                feedback_array = (dec2bitarray(feedback, memory[l]) *
+                                                  shift_register[
+                                                  l + memory[l - 1] - 1:l + memory[l - 1] + memory[l] - 1]).sum()
+                                shift_register[l + memory[l - 1]:l + memory[l - 1] + memory[l] - 1] = \
+                                    shift_register[l + memory[l - 1] - 1:l + memory[l - 1] + memory[l] - 2]
+                                shift_register[l + memory[l - 1] - 1] = \
                                     (dec2bitarray(current_input, self.k)[l] + feedback_array) % 2
 
-                    # Compute the contribution of the current_input to output
-                    outbits[r] = (outbits[r] + \
-                        (np.sum(dec2bitarray(current_input, self.k) * \
-                        output_generator_array + feedback_array) % 2)) % 2
+                        # Compute the contribution of the current_input to output
+                        outbits[r] = (outbits[r] + \
+                                      (np.sum(dec2bitarray(current_input, self.k) * \
+                                              output_generator_array + feedback_array) % 2)) % 2
 
-                # Update the ouput_table using the computed output value
-                self.output_table[current_state][current_input] = \
-                    bitarray2dec(outbits)
+                    # Update the ouput_table using the computed output value
+                    self.output_table[current_state][current_input] = \
+                        bitarray2dec(outbits)
 
-                # Update the next_state_table using the new state of
-                # the shift register
-                self.next_state_table[current_state][current_input] = \
-                    bitarray2dec(shift_register)
+                    # Update the next_state_table using the new state of
+                    # the shift register
+                    self.next_state_table[current_state][current_input] = \
+                        bitarray2dec(shift_register)
 
+        else:
+            if feedback is None:
+                feedback = np.identity(self.k, int)
+
+            # feedback_array[i] holds the i-th bit corresponding to each feedback polynomial.
+            feedback_array = np.empty((self.total_memory + self.k, self.k, self.k), np.int8)
+            for i in range(self.k):
+                for j in range(self.k):
+                    feedback_array[:, i, j] = dec2bitarray(feedback[i, j], self.total_memory + self.k)[::-1]
+
+            # g_matrix_array[i] holds the i-th bit corresponding to each g_matrix polynomial.
+            g_matrix_array = np.empty((self.total_memory + self.k, self.k, self.n), np.int8)
+            for i in range(self.k):
+                for j in range(self.n):
+                    g_matrix_array[:, i, j] = dec2bitarray(g_matrix[i, j], self.total_memory + self.k)[::-1]
+
+            # shift_regs holds on each column the state of a shift register.
+            # The first row is the input of each shift reg.
+            shift_regs = np.empty((self.total_memory + self.k, self.k), np.int8)
+
+            # Compute the entries in the next state table and the output table
+            for current_state in range(self.number_states):
+                for current_input in range(self.number_inputs):
+                    current_state_array = dec2bitarray(current_state, self.total_memory)
+
+                    # Set the first row as the input.
+                    shift_regs[0] = dec2bitarray(current_input, self.k)
+
+                    # Set the other rows based on the current_state
+                    idx = 0
+                    for idx_mem, mem in enumerate(memory):
+                        shift_regs[1:mem+1, idx_mem] = current_state_array[idx:idx + mem]
+                        idx += mem
+
+                    # Compute the output table
+                    outputs_array = np.einsum('ik,ikl->l', shift_regs, g_matrix_array) % 2
+                    self.output_table[current_state, current_input] = bitarray2dec(outputs_array)
+
+                    # Update the first line based on the feedback polynomial
+                    np.einsum('ik,ilk->l', shift_regs, feedback_array, out=shift_regs[0])
+                    shift_regs %= 2
+
+                    # Update current state array and compute next state table
+                    idx = 0
+                    for idx_mem, mem in enumerate(memory):
+                        current_state_array[idx:idx + mem] = shift_regs[:mem, idx_mem]
+                        idx += mem
+                    self.next_state_table[current_state, current_input] = bitarray2dec(current_state_array)
 
     def _generate_grid(self, trellis_length):
         """ Private method """
@@ -189,11 +263,11 @@ class Trellis:
                     dx = grid_subset[0, state_count_2+self.number_states] - grid_subset[0,state_count_1] - 2*state_radius
                     dy = grid_subset[1, state_count_2+self.number_states] - grid_subset[1,state_count_1]
                     if np.count_nonzero(self.next_state_table[state_order[state_count_1],:] == state_order[state_count_2]):
-                        found_index = np.where(self.next_state_table[state_order[state_count_1],:] ==
+                        found_index = np.where(self.next_state_table[state_order[state_count_1]] ==
                                                 state_order[state_count_2])
                         edge_patch = mpatches.FancyArrow(grid_subset[0,state_count_1]+state_radius,
                                 grid_subset[1,state_count_1], dx, dy, width=0.005,
-                                length_includes_head = True, color = edge_colors[found_index[0][0]])
+                                length_includes_head = True, color = edge_colors[found_index[0][0]-1])
                         edge_patches.append(edge_patch)
                         input_count = input_count + 1
 
@@ -212,7 +286,7 @@ class Trellis:
 
 
     def visualize(self, trellis_length = 2, state_order = None,
-                  state_radius = 0.04, edge_colors = None):
+                  state_radius = 0.04, edge_colors = None, save_path = None):
         """ Plot the trellis diagram.
         Parameters
         ----------
@@ -226,13 +300,16 @@ class Trellis:
         state_radius : float, optional
             Radius of each state (circle) in the plot.
             Default value is 0.04
-        edge_colors = list of hex color codes, optional
+        edge_colors : list of hex color codes, optional
             A list of length equal to the number_inputs,
             containing color codes that represent the edge corresponding
             to the input.
+        save_path : str or None
+            If not None, save the figure to the file specified by its path.
+            *Default* is no saving.
         """
         if edge_colors is None:
-            edge_colors = ["#9E1BE0", "#06D65D"]
+            edge_colors = [mcolors.hsv_to_rgb((i/self.number_inputs, 1, 1)) for i in range(self.number_inputs)]
 
         if state_order is None:
             state_order = list(range(self.number_states))
@@ -259,9 +336,115 @@ class Trellis:
         ax.add_collection(collection)
         ax.set_xticks([])
         ax.set_yticks([])
-        plt.legend([edge_patches[0], edge_patches[1]], ["1-input", "0-input"])
-        #plt.savefig('trellis')
+        plt.legend(edge_patches, [str(i) + "-input" for i in range(self.number_inputs)])
         plt.show()
+        if save_path is not None:
+            plt.savefig(save_path)
+
+    def visualize_fsm(self, state_order=None, state_radius=0.04, edge_colors=None, save_path=None):
+        """ Plot the FSM corresponding to the the trellis
+
+        This method is not intended to display large FSMs and its use is advisable only for simple trellises.
+
+        Parameters
+        ----------
+        state_order : list of ints, optional
+            Specifies the order in the which the states of the trellis are to be displayed starting from the top in the
+            plot.
+            *Default* order is [0,...,number_states-1]
+        state_radius : float, optional
+            Radius of each state (circle) in the plot.
+            *Default* value is 0.04
+        edge_colors : list of hex color codes, optional
+            A list of length equal to the number_inputs, containing color codes that represent the edge corresponding to
+            the input.
+        save_path : str or None
+            If not None, save the figure to the file specified by its path.
+            *Default* is no saving.
+        """
+        # Default arguments
+        if edge_colors is None:
+            edge_colors = [mcolors.hsv_to_rgb((i/self.number_inputs, 1, 1)) for i in range(self.number_inputs)]
+
+        if state_order is None:
+            state_order = list(range(self.number_states))
+
+        # Init the figure
+        ax = plt.axes((0, 0, 1, 1))
+
+        # Plot states
+        radius = state_radius * self.number_states
+        angles = 2 * np.pi / self.number_states * np.arange(self.number_states)
+        positions = [(radius * math.cos(angle), radius * math.sin(angle)) for angle in angles]
+
+        state_patches = []
+        arrows = []
+        for idx, state in enumerate(state_order):
+            state_patches.append(mpatches.Circle(positions[idx], state_radius, color="#003399", ec="#cccccc"))
+            plt.text(positions[idx][0], positions[idx][1], str(state), ha='center', va='center', size=20)
+
+            # Plot transition
+            for input in range(self.number_inputs):
+                next_state = self.next_state_table[state, input]
+                next_idx = (state_order == next_state).nonzero()[0][0]
+                output = self.output_table[state, input]
+
+                # Transition arrow
+                if next_state == state:
+                    # Positions
+                    arrow_start_x = positions[idx][0] + state_radius * math.cos(angles[idx] + math.pi / 6)
+                    arrow_start_y = positions[idx][1] + state_radius * math.sin(angles[idx] + math.pi / 6)
+                    arrow_end_x = positions[idx][0] + state_radius * math.cos(angles[idx] - math.pi / 6)
+                    arrow_end_y = positions[idx][1] + state_radius * math.sin(angles[idx] - math.pi / 6)
+                    arrow_mid_x = positions[idx][0] + state_radius * 2 * math.cos(angles[idx])
+                    arrow_mid_y = positions[idx][1] + state_radius * 2 * math.sin(angles[idx])
+
+                    # Add text
+                    plt.text(arrow_mid_x, arrow_mid_y, '({})'.format(output),
+                             ha='center', va='center', backgroundcolor=edge_colors[input])
+
+                else:
+                    # Positions
+                    dx = positions[next_idx][0] - positions[idx][0]
+                    dy = positions[next_idx][1] - positions[idx][1]
+                    relative_angle = math.atan(dy / dx) + np.where(dx > 0, 0, math.pi)
+
+                    arrow_start_x = positions[idx][0] + state_radius * math.cos(relative_angle + math.pi * 0.05)
+                    arrow_start_y = positions[idx][1] + state_radius * math.sin(relative_angle + math.pi * 0.05)
+                    arrow_end_x = positions[next_idx][0] - state_radius * math.cos(relative_angle - math.pi * 0.05)
+                    arrow_end_y = positions[next_idx][1] - state_radius * math.sin(relative_angle - math.pi * 0.05)
+                    arrow_mid_x = (arrow_start_x + arrow_end_x) / 2 + \
+                                   radius * 0.25 * math.cos((angles[idx] + angles[next_idx]) / 2) * np.sign(dx)
+                    arrow_mid_y = (arrow_start_y + arrow_end_y) / 2 + \
+                                   radius * 0.25 * math.sin((angles[idx] + angles[next_idx]) / 2) * np.sign(dx)
+                    text_x = arrow_mid_x + 0.01 * math.cos((angles[idx] + angles[next_idx]) / 2)
+                    text_y = arrow_mid_y + 0.01 * math.sin((angles[idx] + angles[next_idx]) / 2)
+
+                    # Add text
+                    plt.text(text_x, text_y, '({})'.format(output),
+                             ha='center', va='center', backgroundcolor=edge_colors[input])
+
+                # Path creation
+                codes = (mpath.Path.MOVETO, mpath.Path.CURVE3, mpath.Path.CURVE3)
+                verts = ((arrow_start_x, arrow_start_y),
+                         (arrow_mid_x, arrow_mid_y),
+                         (arrow_end_x, arrow_end_y))
+                path = mpath.Path(verts, codes)
+
+                # Plot arrow
+                arrow = mpatches.FancyArrowPatch(path=path, mutation_scale=20, color=edge_colors[input])
+                ax.add_artist(arrow)
+                arrows.append(arrow)
+
+        # Format and plot
+        ax.set_xlim(radius * -2, radius * 2)
+        ax.set_ylim(radius * -2, radius * 2)
+        ax.add_collection(PatchCollection(state_patches, True))
+        plt.legend(arrows, [str(i) + "-input" for i in range(self.number_inputs)], loc='lower right')
+        plt.text(0, 1.5 * radius, 'Finite State Machine (output on transition)', ha='center', size=18)
+        plt.show()
+        if save_path is not None:
+            plt.savefig(save_path)
 
 
 def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=None):
@@ -303,7 +486,7 @@ def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=Non
         if code_type == 'rsc':
             inbits = message_bits
             number_inbits = number_message_bits
-            number_outbits = int((number_inbits + total_memory)/rate)
+            number_outbits = int((number_inbits + k * total_memory)/rate)
         else:
             number_inbits = number_message_bits + total_memory + total_memory % k
             inbits = np.zeros(number_inbits, 'int')
@@ -312,7 +495,10 @@ def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=Non
             number_outbits = int(number_inbits/rate)
 
     outbits = np.zeros(number_outbits, 'int')
-    p_outbits = np.zeros(int(number_outbits*
+    if puncture_matrix is not None:
+        p_outbits = np.zeros(number_outbits, 'int')
+    else:
+        p_outbits = np.zeros(int(number_outbits*
             puncture_matrix[0:].sum()/np.size(puncture_matrix, 1)), 'int')
     next_state_table = trellis.next_state_table
     output_table = trellis.output_table
@@ -338,19 +524,17 @@ def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=Non
             current_state = next_state_table[current_state][current_input]
             j += 1
 
-    if puncture_matrix is not None:
-        j = 0
-        for i in range(number_outbits):
-            if puncture_matrix[0][i % np.size(puncture_matrix, 1)] == 1:
-                p_outbits[j] = outbits[i]
-                j = j + 1
+    j = 0
+    for i in range(number_outbits):
+        if puncture_matrix[0][i % np.size(puncture_matrix, 1)] == 1:
+            p_outbits[j] = outbits[i]
+            j = j + 1
 
     return p_outbits
 
 
 def _where_c(inarray, rows, cols, search_value, index_array):
 
-    #cdef int i, j,
     number_found = 0
     for i in range(rows):
         for j in range(cols):
@@ -367,10 +551,6 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
                    decoded_bits, tb_count, t, count,
                    tb_depth, current_number_states):
 
-    #cdef int state_num, i, j, number_previous_states, previous_state, \
-    #        previous_input, i_codeword, number_found, min_idx, \
-    #        current_state, dec_symbol
-
     k = trellis.k
     n = trellis.n
     number_states = trellis.number_states
@@ -381,9 +561,7 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
     next_state_table = trellis.next_state_table
     output_table = trellis.output_table
     pmetrics = np.empty(number_inputs)
-    i_codeword_array = np.empty(n, 'int')
     index_array = np.empty([number_states, 2], 'int')
-    decoded_bitarray = np.empty(k, 'int')
 
     # Loop over all the current states (Time instant: t)
     for state_num in range(current_number_states):
@@ -400,20 +578,18 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
 
             # Using the output table, find the ideal codeword
             i_codeword = output_table[previous_state, previous_input]
-            #dec2bitarray_c(i_codeword, n, i_codeword_array)
             i_codeword_array = dec2bitarray(i_codeword, n)
 
             # Compute Branch Metrics
             if decoding_type == 'hard':
-                #branch_metric = hamming_dist_c(r_codeword.astype(int), i_codeword_array.astype(int), n)
                 branch_metric = hamming_dist(r_codeword.astype(int), i_codeword_array.astype(int))
             elif decoding_type == 'soft':
-                pass
+                neg_LL_0 = np.log(np.exp(r_codeword) + 1)  # negative log-likelihood to have received a 0
+                neg_LL_1 = neg_LL_0 - r_codeword  # negative log-likelihood to have received a 1
+                branch_metric = np.where(i_codeword_array, neg_LL_1, neg_LL_0).sum()
             elif decoding_type == 'unquantized':
                 i_codeword_array = 2*i_codeword_array - 1
                 branch_metric = euclid_dist(r_codeword, i_codeword_array)
-            else:
-                pass
 
             # ADD operation: Add the branch metric to the
             # accumulated path metric and store it in the temporary array
@@ -441,8 +617,7 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
             dec_symbol = decoded_symbols[current_state, j]
             previous_state = paths[current_state, j]
             decoded_bitarray = dec2bitarray(dec_symbol, k)
-            decoded_bits[(t-tb_depth-1)+(j+1)*k+count:(t-tb_depth-1)+(j+2)*k+count] =  \
-                    decoded_bitarray
+            decoded_bits[t - tb_depth + 1 + (j - 1) * k + count:t - tb_depth + 1 + j * k + count] = decoded_bitarray
             current_state = previous_state
 
         paths[:,0:tb_depth-1] = paths[:,1:]
@@ -452,26 +627,29 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
 
 def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     """
-    Decodes a stream of convolutionally encoded bits using the Viterbi Algorithm
+    Decodes a stream of convolutionally encoded bits using the Viterbi Algorithm.
     Parameters
     ----------
     coded_bits : 1D ndarray
         Stream of convolutionally encoded bits which are to be decoded.
-    generator_matrix : 2D ndarray of ints
-        Generator matrix G(D) of the convolutional code using which the
-        input bits are to be decoded.
-    M : 1D ndarray of ints
-        Number of memory elements per input of the convolutional encoder.
-    tb_length : int
-        Traceback depth (Typically set to 5*(M+1)).
-    decoding_type : str {'hard', 'unquantized'}
+    treillis : treillis object
+        Treillis representing the convolutional code.
+    tb_depth : int
+        Traceback depth.
+        *Default* is 5 times the number of memories in the code.
+    decoding_type : str {'hard', 'soft', 'unquantized'}
         The type of decoding to be used.
         'hard' option is used for hard inputs (bits) to the decoder, e.g., BSC channel.
+        'soft' option is used for soft inputs (LLRs) to the decoder. LLRs are clipped in [-500, 500].
         'unquantized' option is used for soft inputs (real numbers) to the decoder, e.g., BAWGN channel.
     Returns
     -------
     decoded_bits : 1D ndarray
         Decoded bit stream.
+    Raises
+    ------
+    ValueError
+                If decoding_type is something else than 'hard', 'soft' or 'unquantized'.
     References
     ----------
     .. [1] Todd K. Moon. Error Correction Coding: Mathematical Methods and
@@ -481,49 +659,45 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     # k = Rows in G(D), n = columns in G(D)
     k = trellis.k
     n = trellis.n
-    rate = float(k)/n
+    rate = k/n
     total_memory = trellis.total_memory
-    number_states = trellis.number_states
-    number_inputs = trellis.number_inputs
 
     if tb_depth is None:
         tb_depth = 5*total_memory
 
-    next_state_table = trellis.next_state_table
-    output_table = trellis.output_table
-
     # Number of message bits after decoding
     L = int(len(coded_bits)*rate)
 
-    path_metrics = np.empty([number_states, 2])
-    path_metrics[:, :] = 1000000
+    path_metrics = np.full((trellis.number_states, 2), np.inf)
     path_metrics[0][0] = 0
-    paths = np.empty([number_states, tb_depth], 'int')
-    paths[:, :] = 1000000
+    paths = np.empty((trellis.number_states, tb_depth), 'int')
     paths[0][0] = 0
 
-    decoded_symbols = np.zeros([number_states, tb_depth], 'int')
-    decoded_bits = np.zeros(L+tb_depth+k, 'int')
+    decoded_symbols = np.zeros([trellis.number_states, tb_depth], 'int')
+    decoded_bits = np.empty(int(math.ceil((L + tb_depth) / k) * k), 'int')
     r_codeword = np.zeros(n, 'int')
 
     tb_count = 1
     count = 0
-    current_number_states = number_states
+    current_number_states = trellis.number_states
 
-    for t in range(1, int((L+total_memory+total_memory%k)/k) + 1):
+    if decoding_type == 'soft':
+        coded_bits = coded_bits.clip(-500, 500)
+
+    for t in range(1, int((L+total_memory)/k)):
         # Get the received codeword corresponding to t
-        if t <= L:
+        if t <= L // k:
             r_codeword = coded_bits[(t-1)*n:t*n]
+        # Pad with '0'
         else:
             if decoding_type == 'hard':
                 r_codeword[:] = 0
             elif decoding_type == 'soft':
-                pass
-            elif decoding_type == 'unquantized':
                 r_codeword[:] = 0
-                r_codeword = 2*r_codeword - 1
+            elif decoding_type == 'unquantized':
+                r_codeword[:] = -1
             else:
-                pass
+                raise ValueError('The available decoding types are "hard", "soft" and "unquantized')
 
         _acs_traceback(r_codeword, trellis, decoding_type, path_metrics, paths,
                 decoded_symbols, decoded_bits, tb_count, t, count, tb_depth,
@@ -538,11 +712,7 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
         # Path metrics (at t-1) = Path metrics (at t)
         path_metrics[:, 0] = path_metrics[:, 1]
 
-        # Force all the paths back to '0' state at the end of decoding
-        if t == (L+total_memory+total_memory%k)/k:
-            current_number_states = 1
-
-    return decoded_bits[0:len(decoded_bits)-tb_depth-1]
+    return decoded_bits[:L]
 
 def puncturing(message, punct_vec):
     """

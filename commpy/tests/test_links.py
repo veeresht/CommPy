@@ -1,4 +1,4 @@
-# Authors: Bastien Trotobas <bastien.trotobas@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
 from __future__ import division  # Python 2 compatibility
@@ -18,7 +18,7 @@ def test_link_performance():
     # Apply link_performance to SISO QPSK and AWGN channel
     QPSK = QAMModem(4)
 
-    def receiver(y, h, constellation):
+    def receiver(y, h, constellation, noise_var):
         return QPSK.demodulate(y, 'hard')
     model = LinkModel(QPSK.modulate, SISOFlatChannel(fading_param=(1 + 0j, 0)), receiver,
                       QPSK.num_bits_symbol, QPSK.constellation, QPSK.Es)
@@ -33,7 +33,7 @@ def test_link_performance():
     RayleighChannel = MIMOFlatChannel(4, 4)
     RayleighChannel.uncorr_rayleigh_fading(complex)
 
-    def receiver(y, h, constellation):
+    def receiver(y, h, constellation, noise_var):
         return QAM16.demodulate(kbest(y, h, constellation, 16), 'hard')
     model = LinkModel(QAM16.modulate, RayleighChannel, receiver,
                       QAM16.num_bits_symbol, QAM16.constellation, QAM16.Es)

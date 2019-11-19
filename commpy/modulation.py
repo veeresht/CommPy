@@ -1,4 +1,4 @@
-# Authors: Veeresh Taranalli <veeresht@gmail.com> & Bastien Trotobas <bastien.trotobas@gmail.com>
+# Authors: CommPy contributors
 # License: BSD 3-Clause
 
 """
@@ -15,7 +15,8 @@ Modulation Demodulation (:mod:`commpy.modulation`)
    ofdm_rx              -- OFDM Receive Signal Processing
    mimo_ml              -- MIMO Maximum Likelihood (ML) Detection.
    kbest                -- MIMO K-best Schnorr-Euchner Detection.
-   bit_lvl_repr         -- Bit level representation
+   bit_lvl_repr         -- Bit level representation.
+   max_log_approx       -- Max-log approximation.
 
 """
 from itertools import product
@@ -23,13 +24,13 @@ from itertools import product
 import matplotlib.pyplot as plt
 from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
     hstack, repeat, tile, dot, shape, concatenate, exp, \
-    log, vectorize, empty, eye, kron
+    log, vectorize, empty, eye, kron, inf
 from numpy.fft import fft, ifft
 from numpy.linalg import qr, norm
 
 from commpy.utilities import bitarray2dec, dec2bitarray
 
-__all__ = ['PSKModem', 'QAMModem', 'ofdm_tx', 'ofdm_rx', 'mimo_ml', 'kbest', 'bit_lvl_repr']
+__all__ = ['PSKModem', 'QAMModem', 'ofdm_tx', 'ofdm_rx', 'mimo_ml', 'kbest', 'bit_lvl_repr', 'max_log_approx']
 
 
 class Modem:
@@ -78,8 +79,8 @@ class Modem:
         if demod_type == 'hard':
             index_list = map(lambda i: argmin(abs(input_symbols[i] - self.constellation)),
                              range(0, len(input_symbols)))
-            demod_bits = hstack(map(lambda i: dec2bitarray(i, self.num_bits_symbol),
-                                    index_list))
+            demod_bits = array([dec2bitarray(i, self.num_bits_symbol) for i in index_list]).reshape(-1)
+
         elif demod_type == 'soft':
             demod_bits = zeros(len(input_symbols) * self.num_bits_symbol)
             for i in arange(len(input_symbols)):
@@ -96,8 +97,7 @@ class Modem:
                                 (-abs(current_symbol - self.constellation[const_index]) ** 2) / noise_var)
                     demod_bits[i * self.num_bits_symbol + self.num_bits_symbol - 1 - bit_index] = log(llr_num / llr_den)
         else:
-            pass
-            # throw an error
+            raise ValueError('demod_type must be "hard" or "soft"')
 
         return demod_bits
 
@@ -249,7 +249,7 @@ def mimo_ml(y, h, constellation):
     return x_r
 
 
-def kbest(y, h, constellation, K):
+def kbest(y, h, constellation, K, noise_var=0, output_type='hard', demode=None):
     """ MIMO K-best Schnorr-Euchner Detection.
 
     Reference: Zhan Guo and P. Nilsson, 'Algorithm and implementation of the K-best sphere decoding for MIMO detection',
@@ -269,15 +269,28 @@ def kbest(y, h, constellation, K):
     K : positive integer
         Number of candidates kept at each step
 
+    noise_var : positive float
+        Noise variance.
+        *Default* value is 0.
+
+    output_type : str
+        'hard': hard output i.e. output is a binary word
+        'soft': soft output i.e. output is a vector of Log-Likelihood Ratios.
+        *Default* value is 'hard'
+
+    demode : function with prototype binary_word = demode(point)
+        Function that provide the binary word corresponding to a symbol vector.
+
     Returns
     -------
-    x : 1D ndarray of constellation points
-        Detected vector (length: num_receive_antennas)
+    x : 1D ndarray of constellation points or of Log-Likelihood Ratios.
+        Detected vector (length: num_receive_antennas).
 
     raises
     ------
     ValueError
                 If h has more columns than rows.
+                If output_type is something else than 'hard' or 'soft'
     """
     nb_tx, nb_rx = h.shape
     if nb_rx > nb_tx:
@@ -324,7 +337,13 @@ def kbest(y, h, constellation, K):
         d[:, :nb_can] = d[:, argsort[:nb_can]]
         d[:coor, :nb_can] -= r[:coor, coor, None] * hyp[argsort[:nb_can]]
         d_tot[:nb_can] = d_tot[argsort[:nb_can]]
-    return X[:, 0]
+
+    if output_type == 'hard':
+        return X[:, 0]
+    elif output_type == 'soft':
+        return max_log_approx(y, h, noise_var, X[:, :nb_can], demode)
+    else:
+        raise ValueError('output_type must be "hard" or "soft"')
 
 
 def bit_lvl_repr(H, w):
@@ -351,3 +370,53 @@ def bit_lvl_repr(H, w):
         return dot(H, kr)
     else:
         raise ValueError('Beta must be even.')
+
+
+def max_log_approx(y, h, noise_var, pts_list, demode):
+    """ Max-log demode
+
+    parameters
+    ----------
+    y : 1D ndarray
+        Received symbol vector (length: num_receive_antennas)
+
+    h : 2D ndarray
+        Channel Matrix (shape: num_receive_antennas x num_transmit_antennas)
+
+    noise_var : positive float
+        Noise variance
+
+    pts_list : 2D ndarray of constellation points
+        Set of points to compute max log approximation (points are column-wise).
+        (shape: num_receive_antennas x num_points)
+
+    demode : function with prototype binary_word = demode(point)
+        Function that provide the binary word corresponding to a symbol vector.
+
+    return
+    ------
+    LLR : 1D ndarray of floats
+        Log-Likelihood Ratio for each bit (same length as the return of decode)
+    """
+    # Decode all pts
+    nb_pts = pts_list.shape[1]
+    bits = demode(pts_list.reshape(-1, order='F')).reshape(nb_pts, -1)  # Set of binary words (one word by row)
+
+    # Prepare LLR computation
+    nb_bits = bits.shape[1]
+    LLR = empty(nb_bits)
+
+    # Loop for each bit
+    for k in range(nb_bits):
+        # Select pts based on the k-th bit in the corresponding word
+        pts0 = pts_list.compress(bits[:, k] == 0, axis=1)
+        pts1 = pts_list.compress(bits[:, k] == 1, axis=1)
+
+        # Compute the norms and add inf to handle empty set of points
+        norms0 = hstack((norm(y[:, None] - h.dot(pts0), axis=0) ** 2, inf))
+        norms1 = hstack((norm(y[:, None] - h.dot(pts1), axis=0) ** 2, inf))
+
+        # Compute LLR
+        LLR[k] = min(norms0) - min(norms1)
+
+    return LLR / (2 * noise_var)
