@@ -2,7 +2,7 @@ Please add names as needed so that we can keep up with all the contributors.
 
 Veeresh Taranalli for initial creation and contribution of CommPy.
 Bastien Trotobas for adding some features, bugfixes, maintenance.
-Vladimir Fadeev for bugfixes, addition of convolutional code puncturing.
+Vladimir Fadeev for bugfixes, addition of convolutional code puncturing and readme explanation of codings.
 Youness Akourim for adding features and fixing some bugs.
 Rey Tucker for python3 compatibility fixes.
 Dat Nguyen for type check fix for AWGN channel model.
