@@ -3,10 +3,43 @@
 
 import numpy as np
 
-__all__ = ['get_ldpc_code_params', 'ldpc_bp_decode']
+__all__ = ['build_matrix', 'get_ldpc_code_params', 'ldpc_bp_decode']
 
 
-def get_ldpc_code_params(ldpc_design_filename):
+def build_matrix(ldpc_code_params):
+    """
+    Build the parity check matrix from parameters dictionary and add the result in this dictionary.
+
+    Parameters
+    ----------
+    ldpc_code_params: dictionary
+        Parameters of the LDPC code:
+            n_vnodes (int) - number of variable nodes.
+            n_cnodes (int) - number of check nodes.
+            max_vnode_deg (int) - maximal degree of a variable node.
+            max_cnode_deg (int) - maximal degree of a check node.
+            vnode_adj_list (1D-ndarray of ints) - flatten array so that
+                vnode_adj_list.reshape((n_vnodes, max_vnode_deg)) gives for each variable node the adjacent check nodes.
+             cnode_adj_list (1D-ndarray of ints) - flatten array so that
+                cnode_adj_list.reshape((n_cnodes, max_cnode_deg)) gives for each check node the adjacent variable nodes.
+            vnode_cnode_map (1D-ndarray of ints) - flatten array providing the mapping between vnode and cnode indexes.
+            cnode_vnode_map (1D-ndarray of ints) - flatten array providing the mapping between vnode and cnode indexes.
+            vnode_deg_list (1D-ndarray of ints) - degree of each variable node.
+            cnode_deg_list (1D-ndarray of ints) - degree of each check node.
+            parity_check_matrix (2D-ndarray of bool or None) - parity check matrix computed only if `compute_matrix`.
+    """
+    n_cnodes = ldpc_code_params['n_cnodes']
+    cnode_deg_list = ldpc_code_params['cnode_deg_list']
+    cnode_adj_list = ldpc_code_params['cnode_adj_list'].reshape((n_cnodes, ldpc_code_params['max_cnode_deg']))
+
+    parity_check_matrix = np.zeros((n_cnodes, ldpc_code_params['n_vnodes']), bool)
+    for cnode_idx in range(n_cnodes):
+        parity_check_matrix[cnode_idx, cnode_adj_list[cnode_idx, :cnode_deg_list[cnode_idx]]] = True
+
+    ldpc_code_params['parity_check_matrix'] = parity_check_matrix
+
+
+def get_ldpc_code_params(ldpc_design_filename, compute_matrix=False):
     """
     Extract parameters from LDPC code design file.
 
@@ -22,6 +55,10 @@ def get_ldpc_code_params(ldpc_design_filename):
     ----------
     ldpc_design_filename : string
         Filename of the LDPC code design file.
+
+    compute_matrix : boolean
+        Specify if the parity check matrix must be computed.
+        *Default* is False.
 
     Returns
     -------
@@ -39,27 +76,26 @@ def get_ldpc_code_params(ldpc_design_filename):
             cnode_vnode_map (1D-ndarray of ints) - flatten array providing the mapping between vnode and cnode indexes.
             vnode_deg_list (1D-ndarray of ints) - degree of each variable node.
             cnode_deg_list (1D-ndarray of ints) - degree of each check node.
+            parity_check_matrix (2D-ndarray of bool or None) - parity check matrix computed only if `compute_matrix`.
     """
 
-    ldpc_design_file = open(ldpc_design_filename)
+    with open(ldpc_design_filename) as ldpc_design_file:
 
-    ldpc_code_params = {}
+        [n_vnodes, n_cnodes] = [int(x) for x in ldpc_design_file.readline().split(' ')]
+        [max_vnode_deg, max_cnode_deg] = [int(x) for x in ldpc_design_file.readline().split(' ')]
+        vnode_deg_list = np.array([int(x) for x in ldpc_design_file.readline().split(' ')[:-1]], np.int32)
+        cnode_deg_list = np.array([int(x) for x in ldpc_design_file.readline().split(' ')[:-1]], np.int32)
 
-    [n_vnodes, n_cnodes] = [int(x) for x in ldpc_design_file.readline().split(' ')]
-    [max_vnode_deg, max_cnode_deg] = [int(x) for x in ldpc_design_file.readline().split(' ')]
-    vnode_deg_list = np.array([int(x) for x in ldpc_design_file.readline().split(' ')[:-1]], np.int32)
-    cnode_deg_list = np.array([int(x) for x in ldpc_design_file.readline().split(' ')[:-1]], np.int32)
+        cnode_adj_list = -np.ones([n_cnodes, max_cnode_deg], int)
+        vnode_adj_list = -np.ones([n_vnodes, max_vnode_deg], int)
 
-    cnode_adj_list = -np.ones([n_cnodes, max_cnode_deg], int)
-    vnode_adj_list = -np.ones([n_vnodes, max_vnode_deg], int)
+        for vnode_idx in range(n_vnodes):
+            vnode_adj_list[vnode_idx, 0:vnode_deg_list[vnode_idx]] = \
+                np.array([int(x)-1 for x in ldpc_design_file.readline().split('\t')])
 
-    for vnode_idx in range(n_vnodes):
-        vnode_adj_list[vnode_idx, 0:vnode_deg_list[vnode_idx]] = \
-            np.array([int(x)-1 for x in ldpc_design_file.readline().split('\t')])
-
-    for cnode_idx in range(n_cnodes):
-        cnode_adj_list[cnode_idx, 0:cnode_deg_list[cnode_idx]] = \
-            np.array([int(x)-1 for x in ldpc_design_file.readline().split('\t')])
+        for cnode_idx in range(n_cnodes):
+            cnode_adj_list[cnode_idx, 0:cnode_deg_list[cnode_idx]] = \
+                np.array([int(x)-1 for x in ldpc_design_file.readline().split('\t')])
 
     cnode_vnode_map = -np.ones([n_cnodes, max_cnode_deg], int)
     vnode_cnode_map = -np.ones([n_vnodes, max_vnode_deg], int)
@@ -77,9 +113,7 @@ def get_ldpc_code_params(ldpc_design_filename):
     cnode_vnode_map_1d = cnode_vnode_map.flatten().astype(np.int32)
     vnode_cnode_map_1d = vnode_cnode_map.flatten().astype(np.int32)
 
-    pmat = np.zeros([n_cnodes, n_vnodes], int)
-    for cnode_idx in range(n_cnodes):
-        pmat[cnode_idx, cnode_adj_list[cnode_idx, :]] = 1
+    ldpc_code_params = {}
 
     ldpc_code_params['n_vnodes'] = n_vnodes
     ldpc_code_params['n_cnodes'] = n_cnodes
@@ -92,7 +126,10 @@ def get_ldpc_code_params(ldpc_design_filename):
     ldpc_code_params['cnode_deg_list'] = cnode_deg_list
     ldpc_code_params['vnode_deg_list'] = vnode_deg_list
 
-    ldpc_design_file.close()
+    if compute_matrix:
+        build_matrix(ldpc_code_params)
+    else:
+        ldpc_code_params['parity_check_matrix'] = None
 
     return ldpc_code_params
 
