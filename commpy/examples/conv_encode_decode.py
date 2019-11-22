@@ -1,6 +1,8 @@
 # Authors: CommPy contributors
 # License: BSD 3-Clause
 
+from __future__ import division, print_function  # Python 2 compatibility
+
 import math
 
 import matplotlib.pyplot as plt
