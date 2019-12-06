@@ -342,7 +342,7 @@ def triang_ldpc_systematic_encode(message_bits, ldpc_code_params, pad=True):
     ldpc_code_params : dictionary that at least contains on of these options:
         Option 1: generator matrix is available.
             generator_matrix (2D-array or sparse matrix) - generator matrix of the code.
-        Option 2: parity check matrix is available, the generator matrix will be added as a CSR sparse matrix of ints.
+        Option 2: parity check matrix is available, the generator matrix will be added as a CSR sparse matrix.
             parity_check_matrix (sparse matrix) - parity check matrix of the code.
         Option 3: generator and parity check matrices will be added as sparse matrices of integers.
             n_vnodes (int) - number of variable nodes.

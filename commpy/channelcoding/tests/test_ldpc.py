@@ -98,6 +98,5 @@ class TestLDPCCode(object):
             for i in range(nb_blocks):
                 decoded_bits[i * block_length:(i + 1) * block_length] = \
                     ldpc_bp_decode(coded_bits[:, i], param, 'SPA', 10)[0][:block_length]
-                pass
             assert_equal(decoded_bits[:len(message_bits)], message_bits,
                          'Encoded and decoded message does not match the initial bits without noise')
