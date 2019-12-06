@@ -2,8 +2,11 @@
 # License: BSD 3-Clause
 
 import numpy as np
+import scipy.sparse as sp
+import scipy.sparse.linalg as splg
 
-__all__ = ['build_matrix', 'get_ldpc_code_params', 'ldpc_bp_decode']
+__all__ = ['build_matrix', 'get_ldpc_code_params', 'ldpc_bp_decode', 'write_ldpc_params',
+           'triang_ldpc_systematic_encode']
 
 
 def build_matrix(ldpc_code_params):
@@ -12,36 +15,34 @@ def build_matrix(ldpc_code_params):
 
     Parameters
     ----------
-    ldpc_code_params: dictionary
+    ldpc_code_params: dictionary that at least contains these parameters
         Parameters of the LDPC code:
             n_vnodes (int) - number of variable nodes.
             n_cnodes (int) - number of check nodes.
-            max_vnode_deg (int) - maximal degree of a variable node.
             max_cnode_deg (int) - maximal degree of a check node.
-            vnode_adj_list (1D-ndarray of ints) - flatten array so that
-                vnode_adj_list.reshape((n_vnodes, max_vnode_deg)) gives for each variable node the adjacent check nodes.
-             cnode_adj_list (1D-ndarray of ints) - flatten array so that
+            cnode_adj_list (1D-ndarray of ints) - flatten array so that
                 cnode_adj_list.reshape((n_cnodes, max_cnode_deg)) gives for each check node the adjacent variable nodes.
-            vnode_cnode_map (1D-ndarray of ints) - flatten array providing the mapping between vnode and cnode indexes.
-            cnode_vnode_map (1D-ndarray of ints) - flatten array providing the mapping between vnode and cnode indexes.
-            vnode_deg_list (1D-ndarray of ints) - degree of each variable node.
             cnode_deg_list (1D-ndarray of ints) - degree of each check node.
-            parity_check_matrix (2D-ndarray of bool or None) - parity check matrix computed only if `compute_matrix`.
+
+    Add
+    ---
+    to ldpc_code_param:
+            parity_check_matrix (CSC sparse matrix of int8) - parity check matrix.
     """
     n_cnodes = ldpc_code_params['n_cnodes']
     cnode_deg_list = ldpc_code_params['cnode_deg_list']
     cnode_adj_list = ldpc_code_params['cnode_adj_list'].reshape((n_cnodes, ldpc_code_params['max_cnode_deg']))
 
-    parity_check_matrix = np.zeros((n_cnodes, ldpc_code_params['n_vnodes']), bool)
+    parity_check_matrix = sp.lil_matrix((n_cnodes, ldpc_code_params['n_vnodes']), dtype=np.int8)
     for cnode_idx in range(n_cnodes):
-        parity_check_matrix[cnode_idx, cnode_adj_list[cnode_idx, :cnode_deg_list[cnode_idx]]] = True
+        parity_check_matrix[cnode_idx, cnode_adj_list[cnode_idx, :cnode_deg_list[cnode_idx]]] = 1
 
-    ldpc_code_params['parity_check_matrix'] = parity_check_matrix
+    ldpc_code_params['parity_check_matrix'] = parity_check_matrix.tocsc()
 
 
 def get_ldpc_code_params(ldpc_design_filename, compute_matrix=False):
     """
-    Extract parameters from LDPC code design file.
+    Extract parameters from LDPC code design file and produce an parity check matrix if asked.
 
     The file is structured as followed (examples are available in designs/ldpc/):
         n_vnode n_cnode
@@ -62,7 +63,7 @@ def get_ldpc_code_params(ldpc_design_filename, compute_matrix=False):
 
     Returns
     -------
-    ldpc_code_params : dictionary
+    ldpc_code_params : dictionary that at least contains these parameters
         Parameters of the LDPC code:
             n_vnodes (int) - number of variable nodes.
             n_cnodes (int) - number of check nodes.
@@ -76,7 +77,7 @@ def get_ldpc_code_params(ldpc_design_filename, compute_matrix=False):
             cnode_vnode_map (1D-ndarray of ints) - flatten array providing the mapping between vnode and cnode indexes.
             vnode_deg_list (1D-ndarray of ints) - degree of each variable node.
             cnode_deg_list (1D-ndarray of ints) - degree of each check node.
-            parity_check_matrix (2D-ndarray of bool or None) - parity check matrix computed only if `compute_matrix`.
+            parity_check_matrix (CSC sparse matrix of int8) - parity check matrix if asked.
     """
 
     with open(ldpc_design_filename) as ldpc_design_file:
@@ -128,8 +129,6 @@ def get_ldpc_code_params(ldpc_design_filename, compute_matrix=False):
 
     if compute_matrix:
         build_matrix(ldpc_code_params)
-    else:
-        ldpc_code_params['parity_check_matrix'] = None
 
     return ldpc_code_params
 
@@ -173,7 +172,7 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
     llr_vec : 1D array of float
         Received codeword LLR values from the channel.
 
-    ldpc_code_params : dictionary
+    ldpc_code_params : dictionary that at least contains these parameters
         Parameters of the LDPC code as provided by `get_ldpc_code_params`:
             n_vnodes (int) - number of variable nodes.
             n_cnodes (int) - number of check nodes.
@@ -281,3 +280,107 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
             break
 
     return dec_word, out_llrs
+
+
+def write_ldpc_params(parity_check_matrix, file_path):
+    """
+    Write parameters from LDPC parity check matrix to a design file.
+
+    The file is structured as followed (examples are available in designs/ldpc/):
+        n_vnode n_cnode
+        max_vnode_deg max_cnode_deg
+        List of the degree of each vnode
+        List of the degree of each cnode
+        For each vnode (line by line, separated by '\t'): index of the connected cnodes
+        For each cnode (line by line, separated by '\t'): index of the connected vnodes
+
+    Parameters
+    ----------
+    parity_check_matrix : 2D-array of int
+        Parity check matrix to save.
+
+    file_path
+        File path of the LDPC code design file.
+    """
+    with open(file_path, 'x') as file:
+        file.write('{} {}\n'.format(parity_check_matrix.shape[1], parity_check_matrix.shape[0]))
+        file.write('{} {}\n'.format(parity_check_matrix.sum(0).max(), parity_check_matrix.sum(1).max()))
+
+        for deg in parity_check_matrix.sum(0):
+            file.write('{} '.format(deg))
+        file.write('\n')
+        for deg in parity_check_matrix.sum(1):
+            file.write('{} '.format(deg))
+        file.write('\n')
+
+        for line in parity_check_matrix.T:
+            nodes = line.nonzero()[0]
+            for node in nodes[:-1]:
+                file.write('{}\t'.format(node + 1))
+            file.write('{}\n'.format(nodes[-1] + 1))
+
+        for col in parity_check_matrix:
+            nodes = col.nonzero()[0]
+            for node in nodes[:-1]:
+                file.write('{}\t'.format(node + 1))
+            file.write('{}\n'.format(nodes[-1] + 1))
+        file.write('\n')
+
+
+def triang_ldpc_systematic_encode(message_bits, ldpc_code_params, pad=True):
+    """
+    Encode bits using the LDPC code specified. If the parity check matrix and/or the generator matrix are not computed,
+    this function will build the missing one(s) and add them to the dictionary.
+
+    This function work only for LDPC specified by a triangular parity check matrix.
+
+    Parameters
+    ----------
+    message_bits : 1D-array
+        Message bit to encode.
+
+    ldpc_code_params : dictionary that at least contains on of these options:
+        Option 1: generator matrix is available.
+            generator_matrix (2D-array or sparse matrix) - generator matrix of the code.
+        Option 2: parity check matrix is available, the generator matrix will be added as a CSR sparse matrix of ints.
+            parity_check_matrix (sparse matrix) - parity check matrix of the code.
+        Option 3: generator and parity check matrices will be added as sparse matrices of integers.
+            n_vnodes (int) - number of variable nodes.
+            n_cnodes (int) - number of check nodes.
+            max_cnode_deg (int) - maximal degree of a check node.
+            cnode_adj_list (1D-ndarray of ints) - flatten array so that
+                cnode_adj_list.reshape((n_cnodes, max_cnode_deg)) gives for each check node the adjacent variable nodes.
+            cnode_deg_list (1D-ndarray of ints) - degree of each check node.
+
+    pad : boolean
+        Whether to add '0' padding to the message to fit the block length.
+        *Default* is True.
+
+    Raises
+    ------
+        ValueError
+            If the message length is not a multiple of block length and pad is False.
+    """
+
+    if ldpc_code_params.get('generator_matrix') is None:
+        if ldpc_code_params.get('parity_check_matrix') is None:
+            build_matrix(ldpc_code_params)
+
+        parity_check_matrix = ldpc_code_params['parity_check_matrix']
+        block_length = parity_check_matrix.shape[0]
+
+        systematic_part = parity_check_matrix[:, -block_length:]
+        parity_part = parity_check_matrix[:, :-block_length]
+        ldpc_code_params['generator_matrix'] = splg.inv(systematic_part).dot(parity_part).tocsr()
+
+    block_length = ldpc_code_params['generator_matrix'].shape[1]
+    modulo = len(message_bits) % block_length
+    if modulo:
+        if pad:
+            message_bits = np.concatenate((message_bits, np.zeros(block_length - modulo, message_bits.dtype)))
+        else:
+            raise ValueError('Padding is disable but message length is not a multiple of block length.')
+    message_bits = message_bits.reshape(block_length, -1, order='F')
+
+    parity_part = ldpc_code_params['generator_matrix'].dot(message_bits) % 2
+    return np.vstack((message_bits, parity_part)).squeeze()

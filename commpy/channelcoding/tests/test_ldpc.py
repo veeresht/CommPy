@@ -2,30 +2,33 @@
 # License: BSD 3-Clause
 
 import os
+from tempfile import TemporaryDirectory
 
 from nose.plugins.attrib import attr
-from numpy import array, sqrt, zeros
-from numpy.random import randn
-from numpy.testing import assert_allclose
+from numpy import array, sqrt, zeros, zeros_like, empty, int8
+from numpy.random import randn, choice
+from numpy.testing import assert_allclose, assert_equal, assert_raises
 
-from commpy.channelcoding.ldpc import get_ldpc_code_params, ldpc_bp_decode
+from commpy.channelcoding.ldpc import get_ldpc_code_params, ldpc_bp_decode, write_ldpc_params, \
+    triang_ldpc_systematic_encode
 from commpy.utilities import hamming_dist
 
 
-@attr('slow')
 class TestLDPCCode(object):
 
     @classmethod
     def setup_class(cls):
-        dir = os.path.dirname(__file__)
-        ldpc_design_file_1 = os.path.join(dir, '../designs/ldpc/gallager/96.33.964.txt')
-        cls.ldpc_code_params = get_ldpc_code_params(ldpc_design_file_1)
+        cls.dir = os.path.dirname(__file__)
 
     @classmethod
     def teardown_class(cls):
         pass
 
+    @attr('slow')
     def test_ldpc_bp_decode(self):
+        ldpc_design_file = os.path.join(self.dir, '../designs/ldpc/gallager/96.33.964.txt')
+        ldpc_code_params = get_ldpc_code_params(ldpc_design_file)
+
         N = 96
         rate = 0.5
         Es = 1.0
@@ -48,7 +51,7 @@ class TestLDPCCode(object):
                 rx_word = 1-(2*tx_codeword) + awgn_array
                 rx_llrs = 2.0*rx_word/(noise_std**2)
 
-                [dec_word, out_llrs] = ldpc_bp_decode(rx_llrs, self.ldpc_code_params, 'SPA', ldpcbp_iters)
+                [dec_word, out_llrs] = ldpc_bp_decode(rx_llrs, ldpc_code_params, 'SPA', ldpcbp_iters)
 
                 num_bit_errors = hamming_dist(tx_codeword, dec_word)
                 if num_bit_errors > 0:
@@ -59,3 +62,42 @@ class TestLDPCCode(object):
                     break
 
         assert_allclose(fer_array_test, fer_array_ref, rtol=.5, atol=0)
+
+    def test_write_ldpc_params(self):
+        with TemporaryDirectory() as tmp_dir:
+            parity_check_matrix = choice((0, 1), (1440, 720))
+
+            file_path = tmp_dir + '/matrix.txt'
+            write_ldpc_params(parity_check_matrix, file_path)
+            assert_equal(get_ldpc_code_params(file_path, True)['parity_check_matrix'].toarray(), parity_check_matrix,
+                         'The loaded matrix is not equal to the written one.')
+
+    def test_triang_ldpc_systematic_encode(self):
+        ldpc_design_files = (os.path.join(self.dir, '../designs/ldpc/802.16e/1440.720.txt'),
+                             os.path.join(self.dir, '../designs/ldpc/802.16e/960.720.a.txt'))
+        wimax_ldpc_params = [get_ldpc_code_params(ldpc_design_file) for ldpc_design_file in ldpc_design_files]
+
+        for param in wimax_ldpc_params:
+            # Test padding
+            with assert_raises(ValueError):
+                triang_ldpc_systematic_encode(choice((0, 1), 2), param, False)
+            triang_ldpc_systematic_encode(choice((0, 1), 720), param, False)
+
+            # Test encoding
+            message_bits = choice((0, 1), 1450)
+            coded_bits = triang_ldpc_systematic_encode(message_bits, param)
+            syndrome = param['parity_check_matrix'].dot(coded_bits).reshape(-1) % 2
+            assert_allclose(syndrome, zeros_like(syndrome), err_msg='Coded message is not in the code book.')
+
+            # Test decoding
+            coded_bits[coded_bits == 1] = -1
+            coded_bits[coded_bits == 0] = 1
+            block_length = param['generator_matrix'].shape[1]
+            nb_blocks = coded_bits.shape[1]
+            decoded_bits = empty(block_length * nb_blocks, int8)
+            for i in range(nb_blocks):
+                decoded_bits[i * block_length:(i + 1) * block_length] = \
+                    ldpc_bp_decode(coded_bits[:, i], param, 'SPA', 10)[0][:block_length]
+                pass
+            assert_equal(decoded_bits[:len(message_bits)], message_bits,
+                         'Encoded and decoded message does not match the initial bits without noise')
