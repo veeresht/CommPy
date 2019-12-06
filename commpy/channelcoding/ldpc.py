@@ -356,6 +356,11 @@ def triang_ldpc_systematic_encode(message_bits, ldpc_code_params, pad=True):
         Whether to add '0' padding to the message to fit the block length.
         *Default* is True.
 
+    Returns
+    -------
+    coded_message : 1D-ndarray or 2D-ndarray depending on the number of blocks
+        Coded message with the systematic part at the beginning.
+
     Raises
     ------
         ValueError
