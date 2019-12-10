@@ -11,7 +11,7 @@ __all__ = ['build_matrix', 'get_ldpc_code_params', 'ldpc_bp_decode', 'write_ldpc
 
 def build_matrix(ldpc_code_params):
     """
-    Build the parity check matrix from parameters dictionary and add the result in this dictionary.
+    Build the parity check and generator matrices from parameters dictionary and add the result in this dictionary.
 
     Parameters
     ----------
@@ -28,6 +28,7 @@ def build_matrix(ldpc_code_params):
     ---
     to ldpc_code_param:
             parity_check_matrix (CSC sparse matrix of int8) - parity check matrix.
+            generator_matrix (CSR sparse matrix) - generator matrix of the code.
     """
     n_cnodes = ldpc_code_params['n_cnodes']
     cnode_deg_list = ldpc_code_params['cnode_deg_list']
@@ -37,7 +38,12 @@ def build_matrix(ldpc_code_params):
     for cnode_idx in range(n_cnodes):
         parity_check_matrix[cnode_idx, cnode_adj_list[cnode_idx, :cnode_deg_list[cnode_idx]]] = 1
 
-    ldpc_code_params['parity_check_matrix'] = parity_check_matrix.tocsc()
+    parity_check_matrix = parity_check_matrix.tocsc()
+    systematic_part = parity_check_matrix[:, -n_cnodes:]
+    parity_part = parity_check_matrix[:, :-n_cnodes]
+
+    ldpc_code_params['parity_check_matrix'] = parity_check_matrix
+    ldpc_code_params['generator_matrix'] = splg.inv(systematic_part).dot(parity_part).tocsr()
 
 
 def get_ldpc_code_params(ldpc_design_filename, compute_matrix=False):
@@ -170,7 +176,7 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
     Parameters
     ----------
     llr_vec : 1D array of float
-        Received codeword LLR values from the channel.
+        Received codeword LLR values from the channel. They will be clipped in [-38, 38].
 
     ldpc_code_params : dictionary that at least contains these parameters
         Parameters of the LDPC code as provided by `get_ldpc_code_params`:
@@ -203,6 +209,9 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
     out_llrs : 1D array of float
         LLR values corresponding to the decoded output.
     """
+
+    # Clip LLRs into [-38, 38]
+    llr_vec.clip(-38, 38, llr_vec)
 
     n_cnodes = ldpc_code_params['n_cnodes']
     n_vnodes = ldpc_code_params['n_vnodes']
@@ -256,7 +265,7 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
             msg_sum = np.sum(cnode_list_msgs)
 
             # Compute messages on outgoing edges using the incoming message sum (LLRs are clipped in [-38, 38])
-            np.clip(llr_vec[vnode_idx] + msg_sum - cnode_list_msgs, -38, 38, vnode_msgs[start_idx:start_idx+offset])
+            vnode_msgs[start_idx:start_idx+offset] = llr_vec[vnode_idx] + msg_sum - cnode_list_msgs
 
             # Update output LLRs and decoded word
             out_llrs[vnode_idx] = llr_vec[vnode_idx] + msg_sum
@@ -329,8 +338,8 @@ def write_ldpc_params(parity_check_matrix, file_path):
 
 def triang_ldpc_systematic_encode(message_bits, ldpc_code_params, pad=True):
     """
-    Encode bits using the LDPC code specified. If the parity check matrix and/or the generator matrix are not computed,
-    this function will build the missing one(s) and add them to the dictionary.
+    Encode bits using the LDPC code specified. If the  generator matrix is not computed, this function will build it
+    and add it to the dictionary. It will also add the parity check matrix.
 
     This function work only for LDPC specified by a triangular parity check matrix.
 
@@ -339,27 +348,25 @@ def triang_ldpc_systematic_encode(message_bits, ldpc_code_params, pad=True):
     message_bits : 1D-array
         Message bit to encode.
 
-    ldpc_code_params : dictionary that at least contains on of these options:
+    ldpc_code_params : dictionary that at least contains one of these options:
         Option 1: generator matrix is available.
-            generator_matrix (2D-array or sparse matrix) - generator matrix of the code.
-        Option 2: parity check matrix is available, the generator matrix will be added as a CSR sparse matrix.
-            parity_check_matrix (sparse matrix) - parity check matrix of the code.
-        Option 3: generator and parity check matrices will be added as sparse matrices of integers.
-            n_vnodes (int) - number of variable nodes.
-            n_cnodes (int) - number of check nodes.
-            max_cnode_deg (int) - maximal degree of a check node.
-            cnode_adj_list (1D-ndarray of ints) - flatten array so that
-                cnode_adj_list.reshape((n_cnodes, max_cnode_deg)) gives for each check node the adjacent variable nodes.
-            cnode_deg_list (1D-ndarray of ints) - degree of each check node.
+                generator_matrix (2D-array or sparse matrix) - generator matrix of the code.
+        Option 2: generator and parity check matrices will be added as sparse matrices.
+                n_vnodes (int) - number of variable nodes.
+                n_cnodes (int) - number of check nodes.
+                max_cnode_deg (int) - maximal degree of a check node.
+                cnode_adj_list (1D-ndarray of ints) - flatten array so that
+                    cnode_adj_list.reshape((n_cnodes, max_cnode_deg)) gives for each check node the adjacent variable nodes.
+                cnode_deg_list (1D-ndarray of ints) - degree of each check node.
 
     pad : boolean
-        Whether to add '0' padding to the message to fit the block length.
-        *Default* is True.
+            Whether to add '0' padding to the message to fit the block length.
+            *Default* is True.
 
     Returns
     -------
-    coded_message : 1D-ndarray or 2D-ndarray depending on the number of blocks
-        Coded message with the systematic part at the beginning.
+    coded_message : 1D-ndarray or 2D-ndarray of int8 depending on the number of blocks
+                    Coded message with the systematic part at the beginning.
 
     Raises
     ------
@@ -368,15 +375,7 @@ def triang_ldpc_systematic_encode(message_bits, ldpc_code_params, pad=True):
     """
 
     if ldpc_code_params.get('generator_matrix') is None:
-        if ldpc_code_params.get('parity_check_matrix') is None:
-            build_matrix(ldpc_code_params)
-
-        parity_check_matrix = ldpc_code_params['parity_check_matrix']
-        block_length = parity_check_matrix.shape[0]
-
-        systematic_part = parity_check_matrix[:, -block_length:]
-        parity_part = parity_check_matrix[:, :-block_length]
-        ldpc_code_params['generator_matrix'] = splg.inv(systematic_part).dot(parity_part).tocsr()
+        build_matrix(ldpc_code_params)
 
     block_length = ldpc_code_params['generator_matrix'].shape[1]
     modulo = len(message_bits) % block_length
@@ -388,4 +387,4 @@ def triang_ldpc_systematic_encode(message_bits, ldpc_code_params, pad=True):
     message_bits = message_bits.reshape(block_length, -1, order='F')
 
     parity_part = ldpc_code_params['generator_matrix'].dot(message_bits) % 2
-    return np.vstack((message_bits, parity_part)).squeeze()
+    return np.vstack((message_bits, parity_part)).squeeze().astype(np.int8)

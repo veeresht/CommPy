@@ -73,6 +73,7 @@ Links
 -----
 - Estimate the BER performance of a link model with Monte Carlo simulation.
 - Link model object.
+- Helper function for MIMO Iteration Detection and Decoding scheme.
 
 FAQs
 ----

@@ -65,7 +65,7 @@ class TestLDPCCode(object):
 
     def test_write_ldpc_params(self):
         with TemporaryDirectory() as tmp_dir:
-            parity_check_matrix = choice((0, 1), (1440, 720))
+            parity_check_matrix = choice((0, 1), (720, 1440))
 
             file_path = tmp_dir + '/matrix.txt'
             write_ldpc_params(parity_check_matrix, file_path)
@@ -73,8 +73,8 @@ class TestLDPCCode(object):
                          'The loaded matrix is not equal to the written one.')
 
     def test_triang_ldpc_systematic_encode(self):
-        ldpc_design_files = (os.path.join(self.dir, '../designs/ldpc/802.16e/1440.720.txt'),
-                             os.path.join(self.dir, '../designs/ldpc/802.16e/960.720.a.txt'))
+        ldpc_design_files = (os.path.join(self.dir, '../designs/ldpc/wimax/1440.720.txt'),
+                             os.path.join(self.dir, '../designs/ldpc/wimax/960.720.a.txt'))
         wimax_ldpc_params = [get_ldpc_code_params(ldpc_design_file) for ldpc_design_file in ldpc_design_files]
 
         for param in wimax_ldpc_params:
