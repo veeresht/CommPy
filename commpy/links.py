@@ -190,16 +190,13 @@ class LinkModel:
             self.decoder = decoder
 
 
-def idd_decoder(word_size, detector, decoder, n_it):
+def idd_decoder(detector, decoder, decision, n_it):
     """
     Produce a decoder function that model the specified MIMO iterative detection and decoding (IDD) process.
     The returned function can be used as is to build a working LinkModel object.
 
     Parameters
     ----------
-    word_size : positive integer
-                Size of the words exchanged between the detector and the decoder.
-
     detector : function with prototype detector(y, H, constellation, noise_var, a_priori) that return a LLRs array.
                 y : 1D ndarray
                     Received complex symbols (shape: num_receive_antennas x 1).
@@ -215,7 +212,12 @@ def idd_decoder(word_size, detector, decoder, n_it):
                 a_priori : 1D ndarray of floats
                             A priori as Log-Likelihood Ratios.
 
-    decoder : function with the same signature as detector.
+    decoder : function with prototype(LLRs) that return a LLRs array.
+            LLRs : 1D ndarray of floats
+            A priori as Log-Likelihood Ratios.
+
+    decision : function wih prototype(LLRs) that return a binary 1D-array that model the decision to extract the
+        information bits from the LLRs array.
 
     n_it : positive integer
             Number or iteration during the IDD process.
@@ -238,7 +240,7 @@ def idd_decoder(word_size, detector, decoder, n_it):
                                 Number or bit send at each symbol vector.
     """
     def decode(y, h, constellation, noise_var, a_priori, bits_per_send):
-        a_priori_decoder = a_priori
+        a_priori_decoder = a_priori.copy()
         nb_vect, nb_rx, nb_tx = h.shape
         for iteration in range(n_it):
             a_priori_detector = (decoder(a_priori_decoder) - a_priori_decoder)
@@ -247,6 +249,6 @@ def idd_decoder(word_size, detector, decoder, n_it):
                     detector(y[i], h[i], constellation, noise_var,
                              a_priori_detector[i * bits_per_send:(i + 1) * bits_per_send])
             a_priori_decoder -= a_priori_detector
-        return np.signbit(a_priori_decoder + a_priori_detector)
+        return decision(a_priori_decoder + a_priori_detector)
 
     return decode

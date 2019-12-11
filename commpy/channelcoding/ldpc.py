@@ -8,6 +8,7 @@ import scipy.sparse.linalg as splg
 __all__ = ['build_matrix', 'get_ldpc_code_params', 'ldpc_bp_decode', 'write_ldpc_params',
            'triang_ldpc_systematic_encode']
 
+_llr_max = 500
 
 def build_matrix(ldpc_code_params):
     """
@@ -146,11 +147,12 @@ def sum_product_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
     offset = cnode_deg_list[cnode_idx]
     vnode_list = cnode_adj_list[start_idx:start_idx+offset]
     vnode_list_msgs_tanh = np.tanh(vnode_msgs[vnode_list*max_vnode_deg +
-                                   cnode_vnode_map[start_idx:start_idx+offset]]/2.0)
-    msg_prod = np.prod(vnode_list_msgs_tanh)
+                                   cnode_vnode_map[start_idx:start_idx+offset]] / 2.0)
+    msg_prod = vnode_list_msgs_tanh.prod(0)
 
     # Compute messages on outgoing edges using the incoming message product
-    cnode_msgs[start_idx:start_idx+offset]= 2.0*np.arctanh(msg_prod/vnode_list_msgs_tanh)
+    np.clip(2 * np.arctanh(msg_prod / vnode_list_msgs_tanh),
+            -_llr_max, _llr_max, cnode_msgs[start_idx:start_idx+offset])
 
 
 def min_sum_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
@@ -160,23 +162,21 @@ def min_sum_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
     offset = cnode_deg_list[cnode_idx]
     vnode_list = cnode_adj_list[start_idx:start_idx+offset]
     vnode_list_msgs = vnode_msgs[vnode_list*max_vnode_deg + cnode_vnode_map[start_idx:start_idx+offset]]
-    vnode_list_msgs = np.ma.array(vnode_list_msgs, mask=False)
 
     # Compute messages on outgoing edges using the incoming messages
     for i in range(start_idx, start_idx+offset):
-        vnode_list_msgs.mask[i-start_idx] = True
-        cnode_msgs[i] = np.prod(np.sign(vnode_list_msgs))*np.min(np.abs(vnode_list_msgs))
-        vnode_list_msgs.mask[i-start_idx] = False
+        vnode_list_msgs_excluded = vnode_list_msgs[np.arange(len(vnode_list_msgs)) != i - start_idx, :]
+        cnode_msgs[i] = np.sign(vnode_list_msgs_excluded).prod(0) * np.abs(vnode_list_msgs_excluded).min(0)
 
 
 def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
     """
-    LDPC Decoder using Belief Propagation (BP).
+    LDPC Decoder using Belief Propagation (BP). If several blocks are provided, they are all decoded at once.
 
     Parameters
     ----------
-    llr_vec : 1D array of float
-        Received codeword LLR values from the channel. They will be clipped in [-38, 38].
+    llr_vec : 1D array of float with a length multiple of block length.
+        Received codeword LLR values from the channel. They will be clipped in [-500, 500].
 
     ldpc_code_params : dictionary that at least contains these parameters
         Parameters of the LDPC code as provided by `get_ldpc_code_params`:
@@ -203,15 +203,15 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
 
     Returns
     -------
-    dec_word : 1D array of 0's and 1's
+    dec_word : 1D array or 2D array of 0's and 1's with one block per column.
         The codeword after decoding.
 
-    out_llrs : 1D array of float
+    out_llrs : 1D array or 2D array of float with one block per column.
         LLR values corresponding to the decoded output.
     """
 
-    # Clip LLRs into [-38, 38]
-    llr_vec.clip(-38, 38, llr_vec)
+    # Clip LLRs
+    llr_vec.clip(-_llr_max, _llr_max, llr_vec)
 
     n_cnodes = ldpc_code_params['n_cnodes']
     n_vnodes = ldpc_code_params['n_vnodes']
@@ -224,11 +224,13 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
     cnode_deg_list = ldpc_code_params['cnode_deg_list']
     vnode_deg_list = ldpc_code_params['vnode_deg_list']
 
-    dec_word = np.zeros(n_vnodes, int)
-    out_llrs = np.zeros(n_vnodes, int)
+    # Handling multi-block situations
+    n_blocks = llr_vec.size // n_vnodes
+    llr_vec = llr_vec.reshape(-1, n_blocks, order='F')
 
-    cnode_msgs = np.zeros(n_cnodes*max_cnode_deg)
-    vnode_msgs = np.zeros(n_vnodes*max_vnode_deg)
+    dec_word = np.empty_like(llr_vec, bool)
+    out_llrs = np.empty_like(llr_vec)
+    cnode_msgs = np.empty((n_cnodes * max_cnode_deg, n_blocks))
 
     if decoder_algorithm == 'SPA':
         check_node_update = sum_product_update
@@ -238,15 +240,12 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
         raise NameError('Please input a valid decoder_algorithm string (meanning "SPA" or "MSA").')
 
     # Initialize vnode messages with the LLR values received
-    for vnode_idx in range(n_vnodes):
-        start_idx = vnode_idx*max_vnode_deg
-        offset = vnode_deg_list[vnode_idx]
-        vnode_msgs[start_idx : start_idx+offset] = llr_vec[vnode_idx]
+    vnode_msgs = llr_vec.repeat(max_vnode_deg, 0)
 
     # Main loop of Belief Propagation (BP) decoding iterations
     for iter_cnt in range(n_iters):
 
-        continue_flag = 0
+        continue_flag = False
 
         # Check Node Update
         for cnode_idx in range(n_cnodes):
@@ -262,33 +261,31 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
             offset = vnode_deg_list[vnode_idx]
             cnode_list = vnode_adj_list[start_idx:start_idx+offset]
             cnode_list_msgs = cnode_msgs[cnode_list*max_cnode_deg + vnode_cnode_map[start_idx:start_idx+offset]]
-            msg_sum = np.sum(cnode_list_msgs)
+            msg_sum = cnode_list_msgs.sum(0)
 
-            # Compute messages on outgoing edges using the incoming message sum (LLRs are clipped in [-38, 38])
+            # Compute messages on outgoing edges using the incoming message sum
             vnode_msgs[start_idx:start_idx+offset] = llr_vec[vnode_idx] + msg_sum - cnode_list_msgs
 
             # Update output LLRs and decoded word
             out_llrs[vnode_idx] = llr_vec[vnode_idx] + msg_sum
-            if out_llrs[vnode_idx] > 0:
-                dec_word[vnode_idx] = 0
-            else:
-                dec_word[vnode_idx] = 1
+
+        np.signbit(out_llrs, out=dec_word)
 
         # Compute early termination using parity check matrix
         for cnode_idx in range(n_cnodes):
-            p_sum = 0
-            for i in range(cnode_deg_list[cnode_idx]):
-                p_sum ^= dec_word[cnode_adj_list[cnode_idx*max_cnode_deg + i]]
+            start_idx = cnode_idx * max_cnode_deg
+            offset = cnode_deg_list[cnode_idx]
+            parity_sum = np.logical_xor.reduce(dec_word[cnode_adj_list[start_idx:start_idx + offset]])
 
-            if p_sum != 0:
-                continue_flag = 1
+            if parity_sum.any():
+                continue_flag = True
                 break
 
         # Stop iterations
-        if continue_flag == 0:
+        if not continue_flag:
             break
 
-    return dec_word, out_llrs
+    return dec_word.squeeze().astype(np.int8), out_llrs.squeeze()
 
 
 def write_ldpc_params(parity_check_matrix, file_path):
