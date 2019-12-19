@@ -27,7 +27,7 @@ Available Features
 - Binary Galois Field GF(2^m) with minimal polynomials and cyclotomic cosets.
 - Create all possible generator polynomials for a (n,k) cyclic code.
 - Random Interleavers and De-interleavers.
-- Belief Propagation (BP) Decoder for LDPC Codes.
+- Belief Propagation (BP) Decoder and triangular systematic encoder for LDPC Codes.
 
 [Channel Models](https://github.com/veeresht/CommPy/blob/master/commpy/channels.py)
 --------------
@@ -73,6 +73,7 @@ Available Features
 -----
 - Estimate the BER performance of a link model with Monte Carlo simulation.
 - Link model object.
+- Helper function for MIMO Iteration Detection and Decoding scheme.
 
 FAQs
 ----
@@ -92,7 +93,7 @@ How do I use CommPy?
 --------------------
 Requirements/Dependencies
 -------------------------
-- python 2.7 or above
+- python 3.2 or above
 - numpy 1.10 or above
 - scipy 0.15 or above
 - matplotlib 1.4 or above

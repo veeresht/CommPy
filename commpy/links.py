@@ -11,16 +11,18 @@ Links (:mod:`commpy.links`)
 
    link_performance     -- Estimate the BER performance of a link model with Monte Carlo simulation.
    LinkModel            -- Link model object.
+   idd_decoder          -- Produce the decoder function to model a MIMO IDD decoder.
 """
 from __future__ import division  # Python 2 compatibility
 
 import math
+from inspect import getfullargspec
 
 import numpy as np
 
 from commpy.channels import MIMOFlatChannel
 
-__all__ = ['link_performance', 'LinkModel']
+__all__ = ['link_performance', 'LinkModel', 'idd_decoder']
 
 
 def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_rate=1):
@@ -65,6 +67,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
     send_chunk = max(divider, send_chunk // divider * divider)
 
     receive_size = link_model.channel.nb_tx * link_model.num_bits_symbol
+    full_args_decoder = len(getfullargspec(link_model.decoder).args) > 1
 
     # Computations
     for id_SNR in range(len(SNRs)):
@@ -89,7 +92,13 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
                 received_msg = link_model.receive(channel_output, link_model.channel.channel_gains,
                                                   link_model.constellation, link_model.channel.noise_std ** 2)
             # Count errors
-            bit_err += (msg != link_model.decoder(received_msg)).sum()
+            if full_args_decoder:
+                decoded_bits = link_model.decoder(channel_output, link_model.channel.channel_gains,
+                                                  link_model.constellation, link_model.channel.noise_std ** 2,
+                                                  received_msg, link_model.channel.nb_tx * link_model.num_bits_symbol)
+                bit_err += (msg != decoded_bits[:len(msg)]).sum()
+            else:
+                bit_err += (msg != link_model.decoder(received_msg)[:len(msg)]).sum()
             bit_send += send_chunk
         BERs[id_SNR] = bit_err / bit_send
     return BERs
@@ -97,60 +106,74 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
 
 class LinkModel:
     """
-        Construct a link model.
+    Construct a link model.
 
-        Parameters
-        ----------
-        modulate : function with same prototype as Modem.modulate
+    Parameters
+    ----------
+    modulate : function with same prototype as Modem.modulate
 
-        channel : _FlatChannel object
+    channel : FlatChannel object
 
-        receive : function with prototype receive(y, H, constellation, noise_var) that return a binary array.
-                    y : 1D ndarray
-                        Received complex symbols (shape: num_receive_antennas x 1)
+    receive : function with prototype receive(y, H, constellation, noise_var) that return a binary array.
+                y : 1D ndarray
+                    Received complex symbols (shape: num_receive_antennas x 1)
 
-                    h : 2D ndarray
-                        Channel Matrix (shape: num_receive_antennas x num_transmit_antennas)
+                h : 2D ndarray
+                    Channel Matrix (shape: num_receive_antennas x num_transmit_antennas)
 
-                    constellation : 1D ndarray
+                constellation : 1D ndarray
 
-                    noise_var : positive float
-                                Noise variance
+                noise_var : positive float
+                            Noise variance
 
-        num_bits_symbols : int
+    num_bits_symbols : int
 
-        constellation : array of float or complex
+    constellation : array of float or complex
 
-        Es : float
-             Average energy per symbols.
-             *Default* Es=1.
+    Es : float
+         Average energy per symbols.
+         *Default* Es=1.
 
-        decoder : function with prototype decoder(binary array) that return a binary array.
-                  *Default* is no process.
+    decoder : function with prototype decoder(array) or decoder(y, H, constellation, noise_var, array) that return a
+                binary array.
+              *Default* is no process.
 
-        Attributes
-        ----------
-        modulate : function with same prototype as Modem.modulate
+    rate : float
+        Code rate.
+        *Default* is 1.
 
-        channel : _FlatChannel object
+    Attributes
+    ----------
+    modulate : function with same prototype as Modem.modulate
 
-        receive : function with prototype receive(y, H, constellation) that return a binary array.
-                    y : 1D ndarray of floats
-                        Received complex symbols (shape: num_receive_antennas x 1)
+    channel : _FlatChannel object
 
-                    h : 2D ndarray of floats
-                        Channel Matrix (shape: num_receive_antennas x num_transmit_antennas)
+    receive : function with prototype receive(y, H, constellation, noise_var) that return a binary array.
+                y : 1D ndarray
+                    Received complex symbols (shape: num_receive_antennas x 1)
 
-                    constellation : 1D ndarray of floats
+                h : 2D ndarray
+                    Channel Matrix (shape: num_receive_antennas x num_transmit_antennas)
 
-        num_bits_symbols : int
+                constellation : 1D ndarray
 
-        constellation : array of float or complex
+                noise_var : positive float
+                            Noise variance
 
-        Es : float
-             Average energy per symbols.
-             *Default* Es=1.
-        """
+    num_bits_symbols : int
+
+    constellation : array of float or complex
+
+    Es : float
+         Average energy per symbols.
+
+    decoder : function with prototype decoder(binary array) that return a binary array.
+              *Default* is no process.
+
+    rate : float
+        Code rate.
+        *Default* is 1.
+    """
 
     def __init__(self, modulate, channel, receive, num_bits_symbol, constellation, Es=1, decoder=None, rate=1):
         self.modulate = modulate
@@ -165,3 +188,67 @@ class LinkModel:
             self.decoder = lambda msg: msg
         else:
             self.decoder = decoder
+
+
+def idd_decoder(detector, decoder, decision, n_it):
+    """
+    Produce a decoder function that model the specified MIMO iterative detection and decoding (IDD) process.
+    The returned function can be used as is to build a working LinkModel object.
+
+    Parameters
+    ----------
+    detector : function with prototype detector(y, H, constellation, noise_var, a_priori) that return a LLRs array.
+                y : 1D ndarray
+                    Received complex symbols (shape: num_receive_antennas x 1).
+
+                h : 2D ndarray
+                    Channel Matrix (shape: num_receive_antennas x num_transmit_antennas).
+
+                constellation : 1D ndarray.
+
+                noise_var : positive float
+                            Noise variance.
+
+                a_priori : 1D ndarray of floats
+                            A priori as Log-Likelihood Ratios.
+
+    decoder : function with prototype(LLRs) that return a LLRs array.
+            LLRs : 1D ndarray of floats
+            A priori as Log-Likelihood Ratios.
+
+    decision : function wih prototype(LLRs) that return a binary 1D-array that model the decision to extract the
+        information bits from the LLRs array.
+
+    n_it : positive integer
+            Number or iteration during the IDD process.
+
+    Returns
+    -------
+    decode : function useable as it is to build a LinkModel object that produce a bit array from the parameters
+                y : 1D ndarray
+                    Received complex symbols (shape: num_receive_antennas x 1).
+
+                h : 2D ndarray
+                    Channel Matrix (shape: num_receive_antennas x num_transmit_antennas).
+
+                constellation : 1D ndarray
+
+                noise_var : positive float
+                            Noise variance.
+
+                bits_per_send : positive integer
+                                Number or bit send at each symbol vector.
+    """
+    def decode(y, h, constellation, noise_var, a_priori, bits_per_send):
+        a_priori_decoder = a_priori.copy()
+        nb_vect, nb_rx, nb_tx = h.shape
+        for iteration in range(n_it):
+            a_priori_detector = (decoder(a_priori_decoder) - a_priori_decoder)
+            for i in range(nb_vect):
+                a_priori_decoder[i * bits_per_send:(i + 1) * bits_per_send] = \
+                    detector(y[i], h[i], constellation, noise_var,
+                             a_priori_detector[i * bits_per_send:(i + 1) * bits_per_send])
+            a_priori_decoder -= a_priori_detector
+        return decision(a_priori_decoder + a_priori_detector)
+
+    return decode

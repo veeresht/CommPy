@@ -419,4 +419,4 @@ def max_log_approx(y, h, noise_var, pts_list, demode):
         # Compute LLR
         LLR[k] = min(norms0) - min(norms1)
 
-    return LLR / (2 * noise_var)
+    return -LLR / (2 * noise_var)

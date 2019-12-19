@@ -62,12 +62,12 @@ def test_max_log_approx():
 
     # noise_var = 1
     LLR = max_log_approx(y + noise, H, 1, pts_list, decode)
-    assert_allclose(LLR, (-9.45, -inf, -7.75, -inf, inf, -inf), atol=0.1,
+    assert_allclose(LLR, (9.45, inf, 7.75, inf, -inf, inf), atol=0.1,
                     err_msg='Wrong LLRs with noise')
 
     # noise_var = 0
     LLR = max_log_approx(y, H, 0, pts_list, decode)
-    assert_allclose(LLR, (-inf, -inf, -inf, -inf, inf, -inf),
+    assert_allclose(LLR, (inf, inf, inf, inf, -inf, inf),
                     err_msg='Wrong LLRs without noise')
 
 
