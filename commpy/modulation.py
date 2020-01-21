@@ -19,12 +19,13 @@ Modulation Demodulation (:mod:`commpy.modulation`)
    max_log_approx       -- Max-log approximation.
 
 """
+from bisect import insort
 from itertools import product
 
 import matplotlib.pyplot as plt
 from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
     hstack, repeat, tile, dot, shape, concatenate, exp, \
-    log, vectorize, empty, eye, kron, inf
+    log, vectorize, empty, eye, kron, inf, full, abs, newaxis, minimum, clip
 from numpy.fft import fft, ifft
 from numpy.linalg import qr, norm
 
@@ -344,6 +345,120 @@ def kbest(y, h, constellation, K, noise_var=0, output_type='hard', demode=None):
         return max_log_approx(y, h, noise_var, X[:, :nb_can], demode)
     else:
         raise ValueError('output_type must be "hard" or "soft"')
+
+
+class _Node:
+    """ Helper data model for best_first_detector. Implement __lt__ aka '<' as required to use bisect.insort. """
+    def __init__(self, symb_vectors, partial_metrics):
+        """
+        Recursive initializer that build a sequence of siblings.
+        Inputs are assumed to be ordered based on metric
+        """
+        if len(partial_metrics) == 1:
+            # There is one node to build
+            self.symb_vector = symb_vectors.reshape(-1)  # Insure that self.symb_vector is a 1d-ndarray
+            self.partial_metric = partial_metrics
+            self.best_sibling = None
+        else:
+            # Recursive call to build several nodes
+            self.symb_vector = symb_vectors[:, 0].reshape(-1)  # Insure that self.symb_vector is a 1d-ndarray
+            self.partial_metric = partial_metrics[0]
+            self.best_sibling = _Node(symb_vectors[:, 1:], partial_metrics[1:])
+
+    def __lt__(self, other):
+        return self.partial_metric < other.partial_metric
+
+    def expand(self, yt, r, constellation):
+        """ Build all children and return the best one. constellation must be a numpy ndarray."""
+        # Construct children's symbol vector
+        child_size = self.symb_vector.size + 1
+        children_symb_vectors = empty((child_size, constellation.size), constellation.dtype)
+        children_symb_vectors[:-1] = self.symb_vector[:, newaxis]
+        children_symb_vectors[-1] = constellation
+
+        # Compute children's partial metric and sort
+        children_metric = abs(yt[-child_size] - r[-child_size, -child_size:].dot(children_symb_vectors)) ** 2
+        children_metric += self.partial_metric
+        ordering = children_metric.argsort()
+
+        # Build children and return the best one
+        return _Node(children_symb_vectors[:, ordering], children_metric[ordering])
+
+
+def best_first_detector(y, h, constellation, stack_size, noise_var, demode, llr_max):
+    # TODO doc, __all__, readme
+    # TODO doc details : ref sans a priori, ordre de modulation entier
+    # TODO TESTS!!!
+
+    # Extract information from arguments
+    nb_tx, nb_rx = h.shape
+    constellation = array(constellation)
+    m = constellation.size
+    modulation_order = int(log2(m))
+
+    # QR decomposition
+    q, r = qr(h)
+    yt = q.conj().T.dot(y)
+
+    # Initialisation
+    map_metric = inf
+    map_bit_vector = None
+    counter_hyp_metric = full((nb_tx, modulation_order), inf)
+    stacks = tuple([] for _ in range(nb_tx))
+
+    # Start process by adding the best root's child in the last stack
+    stacks[-1].append(_Node(empty(0, constellation.dtype), array(0, float, ndmin=1)).expand(yt, r, constellation))
+
+    # While there is at least one non-empty stack (exempt first one)
+    while any(stacks[1:]):
+        # Node processing
+        for idx_next_stack in range(len(stacks) - 1):
+            try:
+                idx_this_stack = idx_next_stack + 1
+                best_node = stacks[idx_this_stack].pop(0)
+
+                # Update search radius
+                if map_bit_vector is None:
+                    radius = inf  # No leaf has been reached yet so we keep all nodes
+                else:
+                    bit_vector = demode(best_node.symb_vector).reshape(-1, modulation_order)
+                    bit_vector[bit_vector == 0] = -1
+
+                    # Select the counter hyp metrics that could be affected by this node. Details: eq. (14)-(16) in [1].
+                    try:
+                        a2 = counter_hyp_metric[idx_this_stack:][map_bit_vector[idx_this_stack:] != bit_vector].max()
+                    except ValueError:
+                        a2 = inf  # NumPy can compute max on empty an matrix
+                    radius = max(counter_hyp_metric[:idx_this_stack].max(), a2)
+
+                # Process best sibling
+                if best_node.best_sibling is not None and best_node.best_sibling.partial_metric <= radius:
+                    insort(stacks[idx_this_stack], best_node.best_sibling)
+
+                # Process children
+                best_child = best_node.expand(yt, r, constellation)
+                if best_child.partial_metric <= radius:
+                    insort(stacks[idx_next_stack], best_child)
+            except IndexError:  # Raised when popping an empty stack
+                pass
+
+        # LLR update if there is a new leaf
+        if stacks[0]:
+            if stacks[0][0].partial_metric < map_metric:
+                minimum(counter_hyp_metric, map_metric, out=counter_hyp_metric)
+                map_metric = stacks[0][0].partial_metric
+                map_bit_vector = demode(stacks[0][0].symb_vector).reshape(-1, modulation_order)
+                map_bit_vector[map_bit_vector == 0] = -1
+            else:
+                minimum(counter_hyp_metric, stacks[0][0].partial_metric, out=counter_hyp_metric)
+            clip(counter_hyp_metric, map_metric - llr_max, map_metric + llr_max, counter_hyp_metric)
+
+        # Trimming stack according to requested max stack size
+        del stacks[0][0:]  # there is no stack for the leafs
+        for idx_next_stack in range(len(stacks) - 1):
+            del stacks[idx_next_stack + 1][stack_size[idx_next_stack]:]
+
+    return (counter_hyp_metric - map_metric) * map_bit_vector / 2 / noise_var
 
 
 def bit_lvl_repr(H, w):
