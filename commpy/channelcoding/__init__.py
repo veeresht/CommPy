@@ -62,12 +62,13 @@ Interleavers and De-interleavers
 
 """
 
-from commpy.channelcoding.convcode import Trellis, conv_encode, viterbi_decode
-from commpy.channelcoding.interleavers import *
-from commpy.channelcoding.turbo import turbo_encode, map_decode, turbo_decode
-from commpy.channelcoding.ldpc import get_ldpc_code_params, ldpc_bp_decode
-from commpy.channelcoding.gfields import *
 from commpy.channelcoding.algcode import *
+from commpy.channelcoding.convcode import Trellis, conv_encode, viterbi_decode
+from commpy.channelcoding.gfields import *
+from commpy.channelcoding.interleavers import *
+from commpy.channelcoding.ldpc import get_ldpc_code_params, ldpc_bp_decode, triang_ldpc_systematic_encode, \
+    write_ldpc_params, build_matrix
+from commpy.channelcoding.turbo import turbo_encode, map_decode, turbo_decode
 
 try:
     from numpy.testing import Tester
