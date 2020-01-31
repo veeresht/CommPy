@@ -492,7 +492,7 @@ def best_first_detector(y, h, constellation, stack_size, noise_var, demode, llr_
         for idx_next_stack in range(len(stacks) - 1):
             del stacks[idx_next_stack + 1][stack_size[idx_next_stack]:]
 
-    return ((map_metric - counter_hyp_metric) * map_bit_vector).reshape(-1) / 2 / noise_var
+    return ((map_metric - counter_hyp_metric) * map_bit_vector).reshape(-1)
 
 
 def bit_lvl_repr(H, w):
