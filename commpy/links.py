@@ -59,7 +59,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
     """
 
     # Initialization
-    BERs = np.empty_like(SNRs, dtype=float)
+    BERs = np.zeros_like(SNRs)
     # Set chunk size and round it to be a multiple of num_bits_symbol*nb_tx to avoid padding
     if send_chunk is None:
         send_chunk = err_min
@@ -83,7 +83,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
             # Deals with MIMO channel
             if isinstance(link_model.channel, MIMOFlatChannel):
                 nb_symb_vector = len(channel_output)
-                received_msg = np.empty(int(math.ceil(len(msg) / link_model.rate)), int)
+                received_msg = np.empty(int(math.ceil(len(msg) / link_model.rate)))
                 for i in range(nb_symb_vector):
                     received_msg[receive_size * i:receive_size * (i + 1)] = \
                         link_model.receive(channel_output[i], link_model.channel.channel_gains[i],
@@ -101,6 +101,8 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
                 bit_err += (msg != link_model.decoder(received_msg)[:len(msg)]).sum()
             bit_send += send_chunk
         BERs[id_SNR] = bit_err / bit_send
+        if bit_err < err_min:
+            break
     return BERs
 
 
