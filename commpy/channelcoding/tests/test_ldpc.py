@@ -38,31 +38,32 @@ class TestLDPCCode(object):
             tx_codeword = zeros(N, int)
             ldpcbp_iters = 100
 
-            fer_array_ref = array([200.0/1000, 200.0/2000])
-            fer_array_test = zeros(len(snr_list))
+            for decoder_algorithm in ('MSA', 'SPA'):
+                fer_array_ref = array((.2, .1))
+                fer_array_test = zeros(len(snr_list))
 
-            for idx, ebno in enumerate(snr_list):
+                for idx, ebno in enumerate(snr_list):
 
-                noise_std = 1/sqrt((10**(ebno/10.0))*rate*2/Es)
-                fer_cnt_bp = 0
+                    noise_std = 1/sqrt((10**(ebno/10.0))*rate*2/Es)
+                    fer_cnt_bp = 0
 
-                for iter_cnt in range(niters):
+                    for iter_cnt in range(niters):
 
-                    awgn_array = noise_std * randn(N)
-                    rx_word = 1-(2*tx_codeword) + awgn_array
-                    rx_llrs = 2.0*rx_word/(noise_std**2)
+                        awgn_array = noise_std * randn(N)
+                        rx_word = 1-(2*tx_codeword) + awgn_array
+                        rx_llrs = 2.0*rx_word/(noise_std**2)
 
-                    [dec_word, out_llrs] = ldpc_bp_decode(rx_llrs, ldpc_code_params, 'SPA', ldpcbp_iters)
+                        [dec_word, _] = ldpc_bp_decode(rx_llrs, ldpc_code_params, decoder_algorithm, ldpcbp_iters)
 
-                    num_bit_errors = hamming_dist(tx_codeword, dec_word.reshape(-1))
-                    if num_bit_errors > 0:
-                        fer_cnt_bp += 1
+                        if hamming_dist(tx_codeword, dec_word.reshape(-1)):
+                            fer_cnt_bp += 1
 
-                    if fer_cnt_bp >= 200:
-                        fer_array_test[idx] = float(fer_cnt_bp) / (iter_cnt + 1) / n_blocks
-                        break
+                        if fer_cnt_bp >= 50:
+                            fer_array_test[idx] = float(fer_cnt_bp) / (iter_cnt + 1) / n_blocks
+                            break
 
-            assert_allclose(fer_array_test, fer_array_ref, rtol=.5, atol=0)
+                assert_allclose(fer_array_test, fer_array_ref, rtol=.5, atol=0,
+                                err_msg=decoder_algorithm + ' algorithm does not perform as expected.')
 
     def test_write_ldpc_params(self):
         with TemporaryDirectory() as tmp_dir:
