@@ -59,7 +59,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
     """
 
     # Initialization
-    BERs = np.zeros_like(SNRs)
+    BERs = np.zeros_like(SNRs, dtype=float)
     # Set chunk size and round it to be a multiple of num_bits_symbol*nb_tx to avoid padding
     if send_chunk is None:
         send_chunk = err_min
