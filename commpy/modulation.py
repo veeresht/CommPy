@@ -30,13 +30,46 @@ from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
 from numpy.fft import fft, ifft
 from numpy.linalg import qr, norm
 
-from commpy.utilities import bitarray2dec, dec2bitarray
+from commpy.utilities import bitarray2dec, dec2bitarray, signal_power
 
 __all__ = ['PSKModem', 'QAMModem', 'ofdm_tx', 'ofdm_rx', 'mimo_ml', 'kbest', 'best_first_detector',
            'bit_lvl_repr', 'max_log_approx']
 
 
 class Modem:
+
+    """ Creates a custom Modem object.
+
+        Parameters
+        ----------
+        constellation : array-like with a length which is a power of 2
+                        Constellation of the custom modem
+
+        Attributes
+        ----------
+        constellation : 1D-ndarray of complex
+                        Modem constellation. If changed, the length of the new constellation must be a power of 2.
+
+        Es            : float
+                        Average energy per symbols.
+
+        m             : integer
+                        Constellation length.
+
+        num_bits_symb : integer
+                        Number of bits per symbol.
+
+        Raises
+        ------
+        ValueError
+                        If the constellation is changed to an array-like with length that is not a power of 2.
+        """
+
+    def __init__(self, constellation):
+        """ Creates a custom Modem object. """
+
+        self.constellation = constellation
+
     def modulate(self, input_bits):
         """ Modulate (map) an array of bits to constellation symbols.
 
@@ -52,7 +85,7 @@ class Modem:
 
         """
         mapfunc = vectorize(lambda i:
-                            self.constellation[bitarray2dec(input_bits[i:i + self.num_bits_symbol])])
+                            self._constellation[bitarray2dec(input_bits[i:i + self.num_bits_symbol])])
 
         baseband_symbols = mapfunc(arange(0, len(input_bits), self.num_bits_symbol))
 
@@ -80,9 +113,8 @@ class Modem:
 
         """
         if demod_type == 'hard':
-            index_list = map(lambda i: argmin(abs(input_symbols[i] - self.constellation)),
-                             range(0, len(input_symbols)))
-            demod_bits = array([dec2bitarray(i, self.num_bits_symbol) for i in index_list]).reshape(-1)
+            index_list = abs(input_symbols - self._constellation[:, None]).argmin(0)
+            demod_bits = dec2bitarray(index_list, self.num_bits_symbol)
 
         elif demod_type == 'soft':
             demod_bits = zeros(len(input_symbols) * self.num_bits_symbol)
@@ -94,10 +126,10 @@ class Modem:
                     for const_index in self.symbol_mapping:
                         if (const_index >> bit_index) & 1:
                             llr_num = llr_num + exp(
-                                (-abs(current_symbol - self.constellation[const_index]) ** 2) / noise_var)
+                                (-abs(current_symbol - self._constellation[const_index]) ** 2) / noise_var)
                         else:
                             llr_den = llr_den + exp(
-                                (-abs(current_symbol - self.constellation[const_index]) ** 2) / noise_var)
+                                (-abs(current_symbol - self._constellation[const_index]) ** 2) / noise_var)
                     demod_bits[i * self.num_bits_symbol + self.num_bits_symbol - 1 - bit_index] = log(llr_num / llr_den)
         else:
             raise ValueError('demod_type must be "hard" or "soft"')
@@ -142,36 +174,92 @@ class Modem:
         plt.grid()
         plt.show()
 
+    @property
+    def constellation(self):
+        """ Constellation of the modem. """
+        return self._constellation
+
+    @constellation.setter
+    def constellation(self, value):
+        # Check value input
+        num_bits_symbol = log2(len(value))
+        if num_bits_symbol != int(num_bits_symbol):
+            raise ValueError('Constellation length must be a power of 2.')
+
+        # Set constellation as an array
+        self._constellation = array(value)
+
+        # Update other attributes
+        self.Es = signal_power(self.constellation)
+        self.m = self._constellation.size
+        self.num_bits_symbol = int(num_bits_symbol)
+        self.constellation_mapping = arange(self.m)
+
 
 class PSKModem(Modem):
-    """ Creates a Phase Shift Keying (PSK) Modem object. """
-
-    Es = 1
-
-    def _constellation_symbol(self, i):
-        return cos(2 * pi * (i - 1) / self.m) + sin(2 * pi * (i - 1) / self.m) * (0 + 1j)
-
-    def __init__(self, m):
-        """ Creates a Phase Shift Keying (PSK) Modem object.
+    """ Creates a Phase Shift Keying (PSK) Modem object.
 
         Parameters
         ----------
         m : int
             Size of the PSK constellation.
 
+        Attributes
+        ----------
+        constellation : 1D-ndarray of complex
+                        Modem constellation. If changed, the length of the new constellation must be a power of 2.
+
+        Es            : float
+                        Average energy per symbols.
+
+        m             : integer
+                        Constellation length.
+
+        num_bits_symb : integer
+                        Number of bits per symbol.
+
+        Raises
+        ------
+        ValueError
+                        If the constellation is changed to an array-like with length that is not a power of 2.
         """
-        self.m = m
-        self.num_bits_symbol = int(log2(self.m))
-        self.symbol_mapping = arange(self.m)
-        self.constellation = list(map(self._constellation_symbol,
-                                      self.symbol_mapping))
+
+    def __init__(self, m):
+        """ Creates a Phase Shift Keying (PSK) Modem object. """
+
+        def _constellation_symbol(i):
+            return cos(2 * pi * (i - 1) / m) + sin(2 * pi * (i - 1) / m) * (0 + 1j)
+
+        self.constellation = list(map(_constellation_symbol, arange(m)))
 
 
 class QAMModem(Modem):
-    """ Creates a Quadrature Amplitude Modulation (QAM) Modem object."""
+    """ Creates a Quadrature Amplitude Modulation (QAM) Modem object.
 
-    def _constellation_symbol(self, i):
-        return (2 * i[0] - 1) + (2 * i[1] - 1) * (1j)
+        Parameters
+        ----------
+        m : int
+            Size of the PSK constellation.
+
+        Attributes
+        ----------
+        constellation : 1D-ndarray of complex
+                        Modem constellation. If changed, the length of the new constellation must be a power of 2.
+
+        Es            : float
+                        Average energy per symbols.
+
+        m             : integer
+                        Constellation length.
+
+        num_bits_symb : integer
+                        Number of bits per symbol.
+
+        Raises
+        ------
+        ValueError
+                        If the constellation is changed to an array-like with length that is not a power of 2.
+    """
 
     def __init__(self, m):
         """ Creates a Quadrature Amplitude Modulation (QAM) Modem object.
@@ -183,13 +271,12 @@ class QAMModem(Modem):
 
         """
 
-        self.m = m
-        self.num_bits_symbol = int(log2(self.m))
-        self.symbol_mapping = arange(self.m)
-        mapping_array = arange(1, sqrt(self.m) + 1) - (sqrt(self.m) / 2)
-        self.constellation = list(map(self._constellation_symbol,
+        def _constellation_symbol(i):
+            return (2 * i[0] - 1) + (2 * i[1] - 1) * (1j)
+
+        mapping_array = arange(1, sqrt(m) + 1) - (sqrt(m) / 2)
+        self.constellation = list(map(_constellation_symbol,
                                       list(product(mapping_array, repeat=2))))
-        self.Es = 2 * (self.m - 1) / 3
 
 
 def ofdm_tx(x, nfft, nsc, cp_length):
@@ -510,6 +597,11 @@ def bit_lvl_repr(H, w):
     ------
     A : 2D nbarray (shape : nb_rx, nb_tx*beta)
         Channel matrix adapted to the bit-level representation.
+
+    raises
+    ------
+    ValueError
+                    If beta (the length of w) is not even)
     """
     beta = len(w)
     if beta % 2 == 0:
@@ -518,7 +610,7 @@ def bit_lvl_repr(H, w):
         kr = kron(In, w)
         return dot(H, kr)
     else:
-        raise ValueError('Beta must be even.')
+        raise ValueError('Beta (length of w) must be even.')
 
 
 def max_log_approx(y, h, noise_var, pts_list, demode):
