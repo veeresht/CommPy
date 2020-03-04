@@ -138,37 +138,10 @@ class Modem:
 
     def plot_constellation(self):
         """ Plot the constellation """
-        # init some arrays
-        beta = self.num_bits_symbol
-        numbit = '0' + str(beta) + 'b'
-        Bin = []
-        mot = []
-        const = []
+        plt.scatter(self.constellation.real, self.constellation.imag)
 
-        # creation of w array
-        reel = [pow(2, i) for i in range(beta // 2 - 1, -1, -1)]
-        im = [1j * pow(2, i) for i in range(beta // 2 - 1, -1, -1)]
-        w = concatenate((reel, im), axis=None)
-
-        listBin = [format(i, numbit) for i in range(2 ** beta)]
-        for e in listBin:
-            for i in range(beta):
-                Bin.append(ord(e[i]) - 48)
-                if ord(e[i]) - 48 == 0:
-                    mot.append(-1)
-                else:
-                    mot.append(1)
-            const.append(dot(w, mot))
-            mot = []
-        symb = self.modulate(Bin)
-
-        # plot the symbols
-        x = symb.real
-        y = symb.imag
-
-        plt.plot(x, y, '+', linewidth=4)
-        for i in range(len(x)):
-            plt.text(x[i], y[i], listBin[i])
+        for symb in self.constellation:
+            plt.text(symb.real + .2, symb.imag, self.demodulate(symb, 'hard'))
 
         plt.title('Constellation')
         plt.grid()
@@ -193,7 +166,6 @@ class Modem:
         self.Es = signal_power(self.constellation)
         self.m = self._constellation.size
         self.num_bits_symbol = int(num_bits_symbol)
-        self.constellation_mapping = arange(self.m)
 
 
 class PSKModem(Modem):
