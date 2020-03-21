@@ -1,13 +1,16 @@
 # Authors: CommPy contributors
 # License: BSD 3-Clause
 
+from itertools import product
+
 from numpy import zeros, identity, arange, concatenate, log2, array, inf
 from numpy.random import seed
-from numpy.testing import run_module_suite, assert_allclose, dec
+from numpy.testing import run_module_suite, assert_allclose, dec, assert_raises, assert_array_equal
 
 from commpy.channels import MIMOFlatChannel
 from commpy.links import *
-from commpy.modulation import QAMModem, mimo_ml, bit_lvl_repr, max_log_approx
+from commpy.modulation import QAMModem, mimo_ml, bit_lvl_repr, max_log_approx, PSKModem, Modem
+from commpy.utilities import signal_power
 
 
 @dec.slow
@@ -49,6 +52,10 @@ def test_bit_lvl_repr():
     assert_allclose(ber_without_blr, ber_with_blr, rtol=0.5,
                     err_msg='bit_lvl_repr changes the performance')
 
+    # Test error raising
+    with assert_raises(ValueError):
+        bit_lvl_repr(RayleighChannel.channel_gains[0], array((2, 4, 6)))
+
 
 def test_max_log_approx():
     x = array((-1, -1, 1))
@@ -71,8 +78,68 @@ def test_max_log_approx():
                     err_msg='Wrong LLRs without noise')
 
 
-def test_kbest():
-    pass  # Tested in test_links
+class ModemTestcase:
+    qam_modems = [QAMModem(4), QAMModem(16), QAMModem(64)]
+    psk_modems = [PSKModem(4), PSKModem(16), PSKModem(64)]
+    modems = qam_modems + psk_modems
+
+    def __init__(self):
+        # Create a custom Modem
+        custom_constellation = [re + im * 1j for re, im in product((-3.5, -0.5, 0.5, 3.5), repeat=2)]
+        self.custom_modems = [Modem(custom_constellation)]
+
+        # Add to custom modems a QAM modem with modified constellation
+        QAM_custom = QAMModem(16)
+        QAM_custom.constellation = custom_constellation
+        self.custom_modems.append(QAM_custom)
+        self.modems += self.custom_modems
+
+        # Assert that error is raised when the contellation length is not a power of 2
+        with assert_raises(ValueError):
+            QAM_custom.constellation = (0, 0, 0)
+
+    def test(self):
+        for modem in self.modems:
+            self.do(modem)
+        for modem in self.qam_modems:
+            self.do_qam(modem)
+        for modem in self.psk_modems:
+            self.do_psk(modem)
+        for modem in self.custom_modems:
+            self.do_custom(modem)
+
+    # Default methods for TestClasses that not implement a specific test
+    def do(self, modem):
+        pass
+
+    def do_qam(self, modem):
+        pass
+
+    def do_psk(self, modem):
+        pass
+
+    def do_custom(self, modem):
+        pass
+
+
+class TestModulateHardDemodulate(ModemTestcase):
+
+    def do(self, modem):
+        for bits in product(*((0, 1),) * modem.num_bits_symbol):
+            assert_array_equal(bits, modem.demodulate(modem.modulate(bits), 'hard'),
+                               err_msg='Bits are not equal after modulation and hard demodulation')
+
+
+class TestEs(ModemTestcase):
+
+    def do_qam(self, modem):
+        assert_allclose(signal_power(modem.constellation), 2 * (modem.m - 1) / 3)
+
+    def do_psk(self, modem):
+        assert_allclose(modem.Es, 1)
+
+    def do_custom(self, modem):
+        assert_allclose(modem.Es, 12.5)
 
 
 if __name__ == "__main__":

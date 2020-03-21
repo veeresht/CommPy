@@ -13,6 +13,7 @@ _llr_max = 500
 def build_matrix(ldpc_code_params):
     """
     Build the parity check and generator matrices from parameters dictionary and add the result in this dictionary.
+    Generator matrix is valid only for triangular systematic LDPC codes.
 
     Parameters
     ----------
@@ -140,35 +141,6 @@ def get_ldpc_code_params(ldpc_design_filename, compute_matrix=False):
     return ldpc_code_params
 
 
-def sum_product_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
-                       vnode_msgs, cnode_vnode_map, max_cnode_deg, max_vnode_deg):
-
-    start_idx = cnode_idx*max_cnode_deg
-    offset = cnode_deg_list[cnode_idx]
-    vnode_list = cnode_adj_list[start_idx:start_idx+offset]
-    vnode_list_msgs_tanh = np.tanh(vnode_msgs[vnode_list*max_vnode_deg +
-                                   cnode_vnode_map[start_idx:start_idx+offset]] / 2.0)
-    msg_prod = vnode_list_msgs_tanh.prod(0)
-
-    # Compute messages on outgoing edges using the incoming message product
-    np.clip(2 * np.arctanh(msg_prod / vnode_list_msgs_tanh),
-            -_llr_max, _llr_max, cnode_msgs[start_idx:start_idx+offset])
-
-
-def min_sum_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
-                   vnode_msgs, cnode_vnode_map, max_cnode_deg, max_vnode_deg):
-
-    start_idx = cnode_idx*max_cnode_deg
-    offset = cnode_deg_list[cnode_idx]
-    vnode_list = cnode_adj_list[start_idx:start_idx+offset]
-    vnode_list_msgs = vnode_msgs[vnode_list*max_vnode_deg + cnode_vnode_map[start_idx:start_idx+offset]]
-
-    # Compute messages on outgoing edges using the incoming messages
-    for i in range(start_idx, start_idx+offset):
-        vnode_list_msgs_excluded = vnode_list_msgs[np.arange(len(vnode_list_msgs)) != i - start_idx, :]
-        cnode_msgs[i] = np.sign(vnode_list_msgs_excluded).prod(0) * np.abs(vnode_list_msgs_excluded).min(0)
-
-
 def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
     """
     LDPC Decoder using Belief Propagation (BP). If several blocks are provided, they are all decoded at once.
@@ -213,79 +185,73 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
     # Clip LLRs
     llr_vec.clip(-_llr_max, _llr_max, llr_vec)
 
-    n_cnodes = ldpc_code_params['n_cnodes']
-    n_vnodes = ldpc_code_params['n_vnodes']
-    max_cnode_deg = ldpc_code_params['max_cnode_deg']
-    max_vnode_deg = ldpc_code_params['max_vnode_deg']
-    cnode_adj_list = ldpc_code_params['cnode_adj_list']
-    cnode_vnode_map = ldpc_code_params['cnode_vnode_map']
-    vnode_adj_list = ldpc_code_params['vnode_adj_list']
-    vnode_cnode_map = ldpc_code_params['vnode_cnode_map']
-    cnode_deg_list = ldpc_code_params['cnode_deg_list']
-    vnode_deg_list = ldpc_code_params['vnode_deg_list']
+    # Build parity_check_matrix if required
+    if ldpc_code_params.get('parity_check_matrix') is None:
+        build_matrix(ldpc_code_params)
 
-    # Handling multi-block situations
-    n_blocks = llr_vec.size // n_vnodes
-    llr_vec = llr_vec.reshape(-1, n_blocks, order='F')
+    # Initialization
+    dec_word = np.signbit(llr_vec)
+    out_llrs = llr_vec.copy()
+    parity_check_matrix = ldpc_code_params['parity_check_matrix'].astype(float).tocoo()
 
-    dec_word = np.empty_like(llr_vec, bool)
-    out_llrs = np.empty_like(llr_vec)
-    cnode_msgs = np.empty((n_cnodes * max_cnode_deg, n_blocks))
+    for i_start in range(0, llr_vec.size, ldpc_code_params['n_vnodes']):
+        i_stop = i_start + ldpc_code_params['n_vnodes']
+        message_matrix = parity_check_matrix.multiply(llr_vec[i_start:i_stop])
 
-    if decoder_algorithm == 'SPA':
-        check_node_update = sum_product_update
-    elif decoder_algorithm == 'MSA':
-        check_node_update = min_sum_update
-    else:
-        raise NameError('Please input a valid decoder_algorithm string (meanning "SPA" or "MSA").')
+        # Main loop of Belief Propagation (BP) decoding iterations
+        for iter_cnt in range(n_iters):
 
-    # Initialize vnode messages with the LLR values received
-    vnode_msgs = llr_vec.repeat(max_vnode_deg, 0)
-
-    # Main loop of Belief Propagation (BP) decoding iterations
-    for iter_cnt in range(n_iters):
-
-        continue_flag = False
-
-        # Check Node Update
-        for cnode_idx in range(n_cnodes):
-
-            check_node_update(cnode_idx, cnode_adj_list, cnode_deg_list, cnode_msgs,
-                              vnode_msgs, cnode_vnode_map, max_cnode_deg, max_vnode_deg)
-
-        # Variable Node Update
-        for vnode_idx in range(n_vnodes):
-
-            # Compute sum of all incoming messages at the variable node
-            start_idx = vnode_idx*max_vnode_deg
-            offset = vnode_deg_list[vnode_idx]
-            cnode_list = vnode_adj_list[start_idx:start_idx+offset]
-            cnode_list_msgs = cnode_msgs[cnode_list*max_cnode_deg + vnode_cnode_map[start_idx:start_idx+offset]]
-            msg_sum = cnode_list_msgs.sum(0)
-
-            # Compute messages on outgoing edges using the incoming message sum
-            vnode_msgs[start_idx:start_idx+offset] = llr_vec[vnode_idx] + msg_sum - cnode_list_msgs
-
-            # Update output LLRs and decoded word
-            out_llrs[vnode_idx] = llr_vec[vnode_idx] + msg_sum
-
-        np.signbit(out_llrs, out=dec_word)
-
-        # Compute early termination using parity check matrix
-        for cnode_idx in range(n_cnodes):
-            start_idx = cnode_idx * max_cnode_deg
-            offset = cnode_deg_list[cnode_idx]
-            parity_sum = np.logical_xor.reduce(dec_word[cnode_adj_list[start_idx:start_idx + offset]])
-
-            if parity_sum.any():
-                continue_flag = True
+            # Compute early termination using parity check matrix
+            if np.all(ldpc_code_params['parity_check_matrix'].multiply(dec_word[i_start:i_stop]).sum(1) % 2 == 0):
                 break
 
-        # Stop iterations
-        if not continue_flag:
-            break
+            # Check Node Update
+            if decoder_algorithm == 'SPA':
+                # Compute incoming messages
+                message_matrix.data *= .5
+                np.tanh(message_matrix.data, out=message_matrix.data)
 
-    return dec_word.squeeze().astype(np.int8), out_llrs.squeeze()
+                # Runtime Warnings are expected when llr = 0. No warn should be raised as this case are expected.
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    # Compute product as exponent of the sum of logarithm
+                    log2_msg_matrix = message_matrix.astype(complex).copy()
+                    np.log2(message_matrix.data.astype(complex), out=log2_msg_matrix.data)
+                    msg_products = np.exp2(log2_msg_matrix.sum(1)).real
+
+                    # Compute outgoing messages
+                    message_matrix.data = 1 / message_matrix.data
+                    message_matrix = message_matrix.multiply(msg_products)
+                    message_matrix.data.clip(-1, 1, message_matrix.data)
+                    np.arctanh(message_matrix.data, out=message_matrix.data)
+                    message_matrix.data *= 2
+                    message_matrix.data.clip(-_llr_max, _llr_max, message_matrix.data)
+
+            elif decoder_algorithm == 'MSA':
+                message_matrix = message_matrix.tocsr()
+                for row_idx in range(message_matrix.shape[0]):
+                    begin_row = message_matrix.indptr[row_idx]
+                    end_row = message_matrix.indptr[row_idx+1]
+                    row_data = message_matrix.data[begin_row:end_row].copy()
+                    indexes = np.arange(len(row_data))
+                    for j, i in enumerate(range(begin_row, end_row)):
+                        other_val = row_data[indexes != j]
+                        message_matrix.data[i] = np.sign(other_val).prod() * np.abs(other_val).min()
+            else:
+                raise NameError('Please input a valid decoder_algorithm string (meanning "SPA" or "MSA").')
+
+            # Variable Node Update
+            msg_sum = np.array(message_matrix.sum(0)).squeeze()
+            message_matrix *= -1
+            message_matrix += parity_check_matrix.multiply(msg_sum + llr_vec[i_start:i_stop])
+
+            out_llrs = msg_sum + llr_vec[i_start:i_stop]
+            np.signbit(out_llrs, out=dec_word[i_start:i_stop])
+
+    # Reformat outputs
+    n_blocks = llr_vec.size // ldpc_code_params['n_vnodes']
+    dec_word = dec_word.reshape(-1, n_blocks, order='F').squeeze().astype(np.int8)
+    out_llrs = out_llrs.reshape(-1, n_blocks, order='F').squeeze()
+    return dec_word, out_llrs
 
 
 def write_ldpc_params(parity_check_matrix, file_path):

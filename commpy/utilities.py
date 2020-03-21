@@ -16,12 +16,16 @@ Utilities (:mod:`commpy.utilities`)
    upsample             -- Upsample by an integral factor (zero insertion).
    signal_power         -- Compute the power of a discrete time signal.
 """
-from __future__ import division  # Python 2 compatibility
+
+import itertools as it
 
 import numpy as np
 
 __all__ = ['dec2bitarray', 'bitarray2dec', 'hamming_dist', 'euclid_dist', 'upsample',
            'signal_power']
+
+vectorized_binary_repr = np.vectorize(np.binary_repr)
+
 
 def dec2bitarray(in_number, bit_width):
     """
@@ -30,7 +34,7 @@ def dec2bitarray(in_number, bit_width):
 
     Parameters
     ----------
-    in_number : int
+    in_number : int or array-like of int
         Positive integer to be converted to a bit array.
 
     bit_width : int
@@ -39,17 +43,12 @@ def dec2bitarray(in_number, bit_width):
     Returns
     -------
     bitarray : 1D ndarray of ints
-        Array containing the binary representation of the input decimal.
+        Array containing the binary representation of all the input decimal(s).
 
     """
 
-    binary_string = bin(in_number)
-    length = len(binary_string)
-    bitarray = np.zeros(bit_width, 'int')
-    for i in range(length - 2):
-        bitarray[bit_width - i - 1] = int(binary_string[length - i - 1])
-
-    return bitarray
+    binary_words = vectorized_binary_repr(np.array(in_number, ndmin=1), bit_width)
+    return np.fromiter(it.chain.from_iterable(binary_words), dtype=np.int8)
 
 
 def bitarray2dec(in_bitarray):

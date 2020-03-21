@@ -54,6 +54,7 @@ Available Features
 - OFDM Tx/Rx signal processing
 - MIMO Maximum Likelihood (ML) Detection.
 - MIMO K-best Schnorr-Euchner Detection.
+- MIMO Best-First Detection.
 - Convert channel matrix to Bit-level representation.
 - Computation of LogLikelihood ratio using max-log approximation.
 
