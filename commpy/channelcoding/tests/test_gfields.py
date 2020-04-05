@@ -15,7 +15,7 @@ class TestGaloisFields(object):
             for a in x.elements:
                 for b in x.elements:
                     assert_((GF(array([a]), m) + GF(array([b]), m)).elements[0] in x.elements)
-                    assert_((GF(array([a]), m) * GF(array([b]), m)).elements[0] in x.elements)
+                    assert_((GF(array([a]), m, input_form="power") * GF(array([b]), m, input_form="power")).elements[0] in x.elements)
 
     def test_addition(self):
         m = 3
@@ -66,3 +66,24 @@ class TestGaloisFields(object):
         x = GF(array([2, 8, 32, 6, 24, 35, 10, 40, 59, 41, 14, 37]), m)
         z = array([67, 87, 103, 73, 13, 109, 91, 117, 7, 115, 11, 97])
         assert_array_equal(x.minpolys(), z)
+
+    def test_power_form_input(self):
+        m = 3
+        y = GF(arange(2**m - 1), m, input_form="power")
+        z = GF(array([1, 2, 4, 3, 6, 7, 5]), m)
+        assert_array_equal(y, z)
+
+        m = 4
+        y = GF(arange(2**m - 1), m, input_form="power")
+        z = GF(array([1, 2, 4, 8, 3, 6, 12, 11, 5, 10, 7, 14, 15, 13, 9]), m)
+        assert_array_equal(y, z)
+
+    def test_power_mult(self):
+        m = 3
+        x = GF(array([0, 1, 2, 5]), m, input_form="power", repr_form="power")
+        y = GF(array([3, 2, 0, 1]), m, input_form="power", repr_form="power")
+        z = x * y
+        e = GF(array([3, 3, 2, 6]), m, input_form="power", repr_form="power")
+        assert_array_equal(z, e)
+
+
