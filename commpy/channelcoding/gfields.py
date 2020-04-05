@@ -5,11 +5,12 @@
 
 from fractions import gcd
 
-from numpy import array, zeros, arange, convolve, ndarray, concatenate
+from numpy import array, zeros, arange, convolve, ndarray, concatenate, empty
 
 from commpy.utilities import dec2bitarray, bitarray2dec
 
 __all__ = ['GF', 'polydivide', 'polymultiply', 'poly_to_string']
+
 
 class GF:
     """
@@ -23,6 +24,14 @@ class GF:
 
     m : int
         Specifies the order of the Galois Field.
+
+    input_form : string
+        Specifies input element(s) representation form.
+        *Default* is "tuple"
+
+    repr_form : string
+        Specifies element(s) representation form for __repr__.
+        *Default* is "tuple"
 
     Returns
     -------
@@ -41,35 +50,78 @@ class GF:
     >>> print x.prim_poly
     19
 
+
     """
 
     # Initialization
-    def __init__(self, x, m):
+    def __init__(self, x, m, input_form="tuple", repr_form="tuple"):
+        rep_list = ["tuple", "power"]
+        if input_form not in rep_list or repr_form not in rep_list:
+            raise AssertionError("GF representation should be in tuple or power forms.")
+        self.input_form = input_form
+        self.repr_form = repr_form
         self.m = m
         primpoly_array = array([0, 3, 7, 11, 19, 37, 67, 137, 285, 529, 1033,
                                    2053, 4179, 8219, 17475, 32771, 69643])
         self.prim_poly = primpoly_array[self.m]
-        if type(x) is int and x >= 0 and x < pow(2, m):
-            self.elements = array([x])
+
+        if type(x) is int:
+            if self.input_form == "power":
+                if x == -1:
+                    self.elements = array([x]).astype(int)
+                else:
+                    self.elements = array([x % int((pow(2, self.m)) - 1)]).astype(int)
+                self.elements = self.power_to_tuple().elements.astype(int)
+            elif self.input_form == "tuple" and x >= 0 and x < pow(2, m):
+                self.elements = array([x])
+            else:
+                raise AssertionError("GF input not in a supported form.")
         elif type(x) is ndarray and len(x) >= 1:
-            self.elements = x
+            if self.input_form == "power":
+                self.elements = array([e % int((pow(2, self.m)) - 1) if e!=-1 else -1 for e in x]).astype(int)
+                self.elements = self.power_to_tuple().elements.astype(int)
+            elif self.input_form == "tuple":
+                self.elements = x.astype(int)
+            else:
+                raise AssertionError("GF input not in a supported form.")
+        else:
+            raise AssertionError("Input should be integer or ndarray")
 
     # Overloading addition operator for Galois Field
     def __add__(self, x):
         if len(self.elements) == len(x.elements):
-            return GF(self.elements ^ x.elements, self.m)
+            return GF(self.elements ^ x.elements, self.m, repr_form=self.repr_form)
         else:
             raise ValueError("The arguments should have the same number of elements")
 
     # Overloading multiplication operator for Galois Field
     def __mul__(self, x):
         if len(x.elements) == len(self.elements):
-            prod_elements = arange(len(self.elements))
+            prod_elements = empty(len(self.elements))
+            a = x.tuple_to_power().elements
+            b = self.tuple_to_power().elements
             for i in range(len(self.elements)):
-                prod_elements[i] = polymultiply(self.elements[i], x.elements[i], self.m, self.prim_poly)
-            return GF(prod_elements, self.m)
+                if a[i] == -1 or b[i] == -1:
+                    prod_elements[i] = -1
+                else:
+                    prod_elements[i] = (a[i] + b[i]) % (pow(2, self.m) - 1)
+            return GF(prod_elements, self.m, input_form="power", repr_form=self.repr_form)
         else:
              raise ValueError("Two sets of elements cannot be multiplied")
+
+    # Overloading equality operator for Galois Field
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return all(self.elements == other.elements)
+        else:
+            return False
+
+    # String representation for class
+    def __repr__(self):
+        if self.repr_form == "tuple":
+            return f"Tuple representation for elements in GF(2^{self.m}): {self.elements}"
+        elif self.repr_form == "power":
+            return f"Power representation for elements in GF(2^{self.m}): {self.tuple_to_power().elements.astype(int)}"
 
     def power_to_tuple(self):
         """
@@ -77,8 +129,10 @@ class GF:
         """
         y = zeros(len(self.elements))
         for idx, i in enumerate(self.elements):
-            if 2**i < 2**self.m:
-                y[idx] = 2**i
+            if i == -1:
+                y[idx] = 0
+            #  elif i < self.m:
+                #  y[idx] = 2**i
             else:
                 y[idx] = polydivide(2**i, self.prim_poly)
         return GF(y, self.m)
@@ -97,10 +151,11 @@ class GF:
                     cur_state = ((cur_state << 1) & (2**self.m-1)) ^ (-((cur_state & 2**(self.m-1)) >> (self.m - 1)) &
                                 (self.prim_poly & (2**self.m-1)))
                     power+=1
-                y[idx] = power
+                y[idx] = int(power % int(pow(2, self.m) - 1))
             else:
-                y[idx] = 0
-        return GF(y, self.m)
+                y[idx] = -1
+        r = GF(y, self.m)
+        return r
 
     def order(self):
         """
