@@ -5,7 +5,7 @@
 
 from fractions import gcd
 
-from numpy import array, zeros, arange, convolve, ndarray, concatenate, empty
+from numpy import array, zeros, arange, convolve, ndarray, concatenate, empty, where
 
 from commpy.utilities import dec2bitarray, bitarray2dec
 
@@ -131,8 +131,8 @@ class GF:
         for idx, i in enumerate(self.elements):
             if i == -1:
                 y[idx] = 0
-            #  elif i < self.m:
-                #  y[idx] = 2**i
+            elif i < self.m:
+                y[idx] = int(2**i)
             else:
                 y[idx] = polydivide(2**i, self.prim_poly)
         return GF(y, self.m)
@@ -173,6 +173,7 @@ class GF:
         """
         coset_list = []
         x = self.tuple_to_power().elements
+        x = where(x == -1, 0, x)
         mark_list = zeros(len(x))
         coset_count = 1
         for idx in range(len(x)):
@@ -188,7 +189,7 @@ class GF:
                 coset_count+=1
 
         for counts in range(1, coset_count):
-            coset_list.append(GF(self.elements[mark_list==counts], self.m))
+            coset_list.append(GF(self.elements[mark_list==counts], self.m, repr_form = "power"))
 
         return coset_list
 
