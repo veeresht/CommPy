@@ -34,7 +34,7 @@ def dec2bitarray(in_number, bit_width):
 
     Parameters
     ----------
-    in_number : int or array-like of int
+    in_number : int
         Positive integer to be converted to a bit array.
 
     bit_width : int
@@ -43,12 +43,18 @@ def dec2bitarray(in_number, bit_width):
     Returns
     -------
     bitarray : 1D ndarray of ints
-        Array containing the binary representation of all the input decimal(s).
+        Array containing the binary representation of the input decimal.
 
     """
 
-    binary_words = vectorized_binary_repr(np.array(in_number, ndmin=1), bit_width)
-    return np.fromiter(it.chain.from_iterable(binary_words), dtype=np.int8)
+    bitarray = np.zeros(bit_width, 'int')
+    index = bit_width - 1
+    while in_number:
+        bitarray[index] = in_number % 2
+        in_number >>= 1
+        index -= 1
+
+    return bitarray
 
 
 def bitarray2dec(in_bitarray):
@@ -88,13 +94,10 @@ def hamming_dist(in_bitarray_1, in_bitarray_2):
 
     Returns
     -------
-    distance : int
-        Hamming distance between input bit arrays.
+    Hamming distance between input bit arrays.
     """
 
-    distance = np.bitwise_xor(in_bitarray_1, in_bitarray_2).sum()
-
-    return distance
+    return np.count_nonzero(in_bitarray_1 != in_bitarray_2)
 
 
 def euclid_dist(in_array1, in_array2):

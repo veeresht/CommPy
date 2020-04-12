@@ -533,20 +533,19 @@ def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=Non
     return p_outbits
 
 
-def _where_c(inarray, rows, cols, search_value, index_array):
+def _precompute_state_table(next_state_table, number_states, number_inputs):
 
-    number_found = 0
-    for i in range(rows):
-        for j in range(cols):
-            if inarray[i, j] == search_value:
-                index_array[number_found, 0] = i
-                index_array[number_found, 1] = j
-                number_found += 1
+    # Precalculate table to find previous states and inputs
+    prev_state_table = [[] for i in range(number_states)]
 
-    return number_found
+    for i in range(number_states):
+        for j in range(number_inputs):
+            prev_state_table[next_state_table[i][j]].append((i, j))
+
+    return prev_state_table
 
 
-def _acs_traceback(r_codeword, trellis, decoding_type,
+def _acs_traceback(r_codeword, trellis, prev_state_table, decoding_type,
                    path_metrics, paths, decoded_symbols,
                    decoded_bits, tb_count, t, count,
                    tb_depth, current_number_states):
@@ -566,15 +565,15 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
     # Loop over all the current states (Time instant: t)
     for state_num in range(current_number_states):
 
-        # Using the next state table find the previous states and inputs
+        # Using the precalculated state table to find the previous states and inputs
         # leading into the current state (Trellis)
-        number_found = _where_c(next_state_table, number_states, number_inputs, state_num, index_array)
+        number_found, index_array = len(prev_state_table[state_num]), prev_state_table[state_num]
 
         # Loop over all the previous states (Time instant: t-1)
         for i in range(number_found):
 
-            previous_state = index_array[i, 0]
-            previous_input = index_array[i, 1]
+            previous_state = index_array[i][0]
+            previous_input = index_array[i][1]
 
             # Using the output table, find the ideal codeword
             i_codeword = output_table[previous_state, previous_input]
@@ -597,16 +596,16 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
 
         # COMPARE and SELECT operations
         # Compare and Select the minimum accumulated path metric
-        path_metrics[state_num, 1] = pmetrics.min()
+        min_idx = pmetrics.argmin()
+        path_metrics[state_num, 1] = pmetrics[min_idx]
 
         # Store the previous state corresponding to the minimum
         # accumulated path metric
-        min_idx = pmetrics.argmin()
-        paths[state_num, tb_count] = index_array[min_idx, 0]
+        paths[state_num, tb_count] = index_array[min_idx][0]
 
         # Store the previous input corresponding to the minimum
         # accumulated path metric
-        decoded_symbols[state_num, tb_count] = index_array[min_idx, 1]
+        decoded_symbols[state_num, tb_count] = index_array[min_idx][1]
 
     if t >= tb_depth - 1:
         current_state = path_metrics[:,1].argmin()
@@ -661,6 +660,7 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     n = trellis.n
     rate = k/n
     total_memory = trellis.total_memory
+    prev_state_table = _precompute_state_table(trellis.next_state_table, trellis.number_states, trellis.number_inputs)
 
     if tb_depth is None:
         tb_depth = 5*total_memory
@@ -699,7 +699,7 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
             else:
                 raise ValueError('The available decoding types are "hard", "soft" and "unquantized')
 
-        _acs_traceback(r_codeword, trellis, decoding_type, path_metrics, paths,
+        _acs_traceback(r_codeword, trellis, prev_state_table, decoding_type, path_metrics, paths,
                 decoded_symbols, decoded_bits, tb_count, t, count, tb_depth,
                 current_number_states)
 
