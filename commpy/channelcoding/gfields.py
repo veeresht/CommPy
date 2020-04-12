@@ -62,7 +62,7 @@ class GF:
         self.repr_form = repr_form
         self.m = m
         primpoly_array = array([0, 3, 7, 11, 19, 37, 67, 137, 285, 529, 1033,
-                                   2053, 4179, 8219, 17475, 32771, 69643])
+                                2053, 4179, 8219, 17475, 32771, 69643])
         self.prim_poly = primpoly_array[self.m]
 
         if type(x) is int:
@@ -78,7 +78,7 @@ class GF:
                 raise AssertionError("GF input not in a supported form.")
         elif type(x) is ndarray and len(x) >= 1:
             if self.input_form == "power":
-                self.elements = array([e % int((pow(2, self.m)) - 1) if e!=-1 else -1 for e in x]).astype(int)
+                self.elements = array([e % int((pow(2, self.m)) - 1) if e != -1 else -1 for e in x]).astype(int)
                 self.elements = self.power_to_tuple().elements.astype(int)
             elif self.input_form == "tuple":
                 self.elements = x.astype(int)
@@ -107,7 +107,7 @@ class GF:
                     prod_elements[i] = (a[i] + b[i]) % (pow(2, self.m) - 1)
             return GF(prod_elements, self.m, input_form="power", repr_form=self.repr_form)
         else:
-             raise ValueError("Two sets of elements cannot be multiplied")
+            raise ValueError("Two sets of elements cannot be multiplied")
 
     # Overloading equality operator for Galois Field
     def __eq__(self, other):
@@ -119,9 +119,9 @@ class GF:
     # String representation for class
     def __repr__(self):
         if self.repr_form == "tuple":
-            return f"Tuple representation for elements in GF(2^{self.m}): {self.elements}"
+            return "Tuple representation for elements in GF(2^{}): {}".format(self.m, self.elements)
         elif self.repr_form == "power":
-            return f"Power representation for elements in GF(2^{self.m}): {self.tuple_to_power().elements.astype(int)}"
+            return "Power representation for elements in GF(2^{}): {}".format(self.m, self.tuple_to_power().elements.astype(int))
 
     def power_to_tuple(self):
         """
