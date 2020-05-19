@@ -33,7 +33,7 @@ class Trellis:
         Number of memory elements per input of the convolutional encoder.
     g_matrix : 2D ndarray of ints (decimal representation)
         Generator matrix G(D) of the convolutional encoder. Each element of
-        G(D) represents a polynomial with a MSB first decimal convention (ie, 1+D^2+D^3 <-> 1101 <-> 13 or 0o15).
+        G(D) represents a polynomial with a MSB first convention (ie, 1+D^2+D^3 <-> 1101 <-> 13 or 0o15).
         Coef [i,j] is the influence of input i on output j.
     feedback : 2D ndarray of ints (decimal representation), optional
         Feedback matrix F(D) of the convolutional encoder. Each element of
@@ -48,9 +48,9 @@ class Trellis:
         G(D) must represent a identity matrix along with a non-zero
         feedback polynomial.
         *Default* is 'default'.
-    polynomial_format : {'MSB', 'LSB'}, optional
+    polynomial_format : {'MSB', 'LSB', 'Matlab'}, optional
         Defines how to interpret g_matrix and feedback. In MSB format, we have 1+D <-> 3 <-> 011.
-        In LSB format, we have 1+D <-> 6 <-> 110.
+        In LSB format, which is used in Matlab, we have 1+D <-> 6 <-> 110.
         *Default* is 'MSB' format.
 
     Attributes
