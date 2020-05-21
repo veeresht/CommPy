@@ -46,12 +46,12 @@ def dec2bitarray(in_number, bit_width):
         Array containing the binary representation of all the input decimal(s).
 
     """
-    result = np.zeros(size, 'int')
+    result = np.zeros(bit_width, 'int')
     i = 1
     pox = 0
-    while i <= number:
-        if i & number:
-            result[size - pox - 1] = 1
+    while i <= in_number:
+        if i & in_number:
+            result[bit_width - pox - 1] = 1
         i <<= 1
         pox += 1
     return result
