@@ -20,13 +20,27 @@ import commpy.utilities as util
 # =============================================================================
 
 # Number of delay elements in the convolutional encoder
-memory1 = np.array(2, ndmin=1)
+memory = np.array(2, ndmin=1)
 
 # Generator matrix
-g_matrix1 = np.array((0o5, 0o7), ndmin=2)
+g_matrix = np.array((0o5, 0o7), ndmin=2)
 
 # Create trellis data structure
-trellis1 = cc.Trellis(memory1, g_matrix1)
+trellis1 = cc.Trellis(memory, g_matrix)
+
+# =============================================================================
+# Convolutional Code 1: G(D) = [1+D^2, 1+D^2+D^3]
+# Standard code with rate 1/2
+# =============================================================================
+
+# Number of delay elements in the convolutional encoder
+memory = np.array(3, ndmin=1)
+
+# Generator matrix (1+D^2+D^3 <-> 13 or 0o15)
+g_matrix = np.array((0o5, 0o15), ndmin=2)
+
+# Create trellis data structure
+trellis2 = cc.Trellis(memory, g_matrix)
 
 # =============================================================================
 # Convolutional Code 2: G(D) = [[1, 0, 0], [0, 1, 1+D]]; F(D) = [[D, D], [1+D, 1]]
@@ -34,14 +48,14 @@ trellis1 = cc.Trellis(memory1, g_matrix1)
 # =============================================================================
 
 # Number of delay elements in the convolutional encoder
-memory2 = np.array((1, 1))
+memory = np.array((1, 1))
 
 # Generator matrix & feedback matrix
-g_matrix2 = np.array(((1, 0, 0), (0, 1, 3)))
+g_matrix = np.array(((1, 0, 0), (0, 1, 3)))
 feedback = np.array(((2, 2), (3, 1)))
 
 # Create trellis data structure
-trellis2 = cc.Trellis(memory2, g_matrix2, feedback, 'rsc')
+trellis3 = cc.Trellis(memory, g_matrix, feedback, 'rsc')
 
 # =============================================================================
 # Basic example using homemade counting and hard decoding
@@ -50,7 +64,7 @@ trellis2 = cc.Trellis(memory2, g_matrix2, feedback, 'rsc')
 # Traceback depth of the decoder
 tb_depth = None  # Default value is 5 times the number or memories
 
-for trellis in (trellis1, trellis2):
+for trellis in (trellis1, trellis2, trellis3):
     for i in range(10):
         # Generate random message bits to be encoded
         message_bits = np.random.randint(0, 2, 1000)

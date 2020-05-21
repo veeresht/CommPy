@@ -33,7 +33,7 @@ class Trellis:
         Number of memory elements per input of the convolutional encoder.
     g_matrix : 2D ndarray of ints (decimal representation)
         Generator matrix G(D) of the convolutional encoder. Each element of
-        G(D) represents a polynomial.
+        G(D) represents a polynomial with a MSB first convention (ie, 1+D^2+D^3 <-> 1101 <-> 13 or 0o15).
         Coef [i,j] is the influence of input i on output j.
     feedback : 2D ndarray of ints (decimal representation), optional
         Feedback matrix F(D) of the convolutional encoder. Each element of
@@ -47,6 +47,12 @@ class Trellis:
         If 'rsc' is specified, then the first 'k x k' sub-matrix of
         G(D) must represent a identity matrix along with a non-zero
         feedback polynomial.
+        *Default* is 'default'.
+    polynomial_format : {'MSB', 'LSB', 'Matlab'}, optional
+        Defines how to interpret g_matrix and feedback. In MSB format, we have 1+D <-> 3 <-> 011.
+        In LSB format, which is used in Matlab, we have 1+D <-> 6 <-> 110.
+        *Default* is 'MSB' format.
+
     Attributes
     ----------
     k : int
@@ -71,6 +77,12 @@ class Trellis:
         Table representing the output matrix of the convolutional code trellis.
         Rows represent current states and columns represent current inputs in
         decimal. Elements represent corresponding outputs in decimal.
+
+    Raises
+    ------
+    ValueError
+        polynomial_format is not 'MSB', 'LSB' or 'Matlab'.
+
     Examples
     --------
     >>> from numpy import array
@@ -103,7 +115,7 @@ class Trellis:
     [1] S. Benedetto, R. Garello et G. Montorsi, "A search for good convolutional codes to be used in the
     construction of turbo codes", IEEE Transactions on Communications, vol. 46, n. 9, p. 1101-1005, spet. 1998
     """
-    def __init__(self, memory, g_matrix, feedback = None, code_type = 'default'):
+    def __init__(self, memory, g_matrix, feedback=None, code_type='default', polynomial_format='MSB'):
 
         [self.k, self.n] = g_matrix.shape
         self.code_type = code_type
@@ -118,7 +130,8 @@ class Trellis:
 
         if isinstance(feedback, int):
             warn('Trellis  will only accept feedback as a matrix in the future. '
-                 'Using the backwards compatibility version that may contain bugs for k > 1.', DeprecationWarning)
+                 'Using the backwards compatibility version that may contain bugs for k > 1 or with LSB format.',
+                 DeprecationWarning)
 
             if code_type == 'rsc':
                 for i in range(self.k):
@@ -181,24 +194,37 @@ class Trellis:
                         bitarray2dec(shift_register)
 
         else:
+            if polynomial_format == 'MSB':
+                bit_order = -1
+            elif polynomial_format in ('LSB', 'Matlab'):
+                bit_order = 1
+            else:
+                raise ValueError('polynomial_format must be "LSB", "MSB" or "Matlab"')
+
             if feedback is None:
                 feedback = np.identity(self.k, int)
+                if polynomial_format in ('LSB', 'Matlab'):
+                    feedback *= 2**memory.max()
+
+            max_values_lign = memory.max() + 1  # Max number of value on a delay lign
 
             # feedback_array[i] holds the i-th bit corresponding to each feedback polynomial.
-            feedback_array = np.empty((self.total_memory + self.k, self.k, self.k), np.int8)
+            feedback_array = np.zeros((max_values_lign, self.k, self.k), np.int8)
             for i in range(self.k):
                 for j in range(self.k):
-                    feedback_array[:, i, j] = dec2bitarray(feedback[i, j], self.total_memory + self.k)[::-1]
+                    binary_view = dec2bitarray(feedback[i, j], max_values_lign)[::bit_order]
+                    feedback_array[:max_values_lign, i, j] = binary_view[-max_values_lign-2:]
 
             # g_matrix_array[i] holds the i-th bit corresponding to each g_matrix polynomial.
-            g_matrix_array = np.empty((self.total_memory + self.k, self.k, self.n), np.int8)
+            g_matrix_array = np.zeros((max_values_lign, self.k, self.n), np.int8)
             for i in range(self.k):
                 for j in range(self.n):
-                    g_matrix_array[:, i, j] = dec2bitarray(g_matrix[i, j], self.total_memory + self.k)[::-1]
+                    binary_view = dec2bitarray(g_matrix[i, j], max_values_lign)[::bit_order]
+                    g_matrix_array[:max_values_lign, i, j] = binary_view[-max_values_lign-2:]
 
             # shift_regs holds on each column the state of a shift register.
             # The first row is the input of each shift reg.
-            shift_regs = np.empty((self.total_memory + self.k, self.k), np.int8)
+            shift_regs = np.empty((max_values_lign, self.k), np.int8)
 
             # Compute the entries in the next state table and the output table
             for current_state in range(self.number_states):

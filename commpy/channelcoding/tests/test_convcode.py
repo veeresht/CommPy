@@ -73,6 +73,28 @@ class TestConvCode(object):
                                                [7, 6, 1, 0]]))
         cls.desired_encode_msg.append(array([0., 0., 0., 1., 1., 0.]))
 
+        # Convolutional Code 1: G(D) = [[1+D^2, 1+D+D^2 0], [0, D, 1+D]] with LSB format
+        memory = array([2, 1])
+        g_matrix = array([[5, 7, 0], [0, 2, 6]])
+        cls.trellis.append(Trellis(memory, g_matrix, code_type='default', polynomial_format='LSB'),)
+        cls.desired_next_state_table.append(array([[0, 1, 4, 5],
+                                                   [0, 1, 4, 5],
+                                                   [0, 1, 4, 5],
+                                                   [0, 1, 4, 5],
+                                                   [2, 3, 6, 7],
+                                                   [2, 3, 6, 7],
+                                                   [2, 3, 6, 7],
+                                                   [2, 3, 6, 7]]))
+        cls.desired_output_table.append(array([[0, 1, 6, 7],
+                                               [3, 2, 5, 4],
+                                               [6, 7, 0, 1],
+                                               [5, 4, 3, 2],
+                                               [2, 3, 4, 5],
+                                               [1, 0, 7, 6],
+                                               [4, 5, 2, 3],
+                                               [7, 6, 1, 0]]))
+        cls.desired_encode_msg.append(array([0., 0., 0., 1., 1., 0.]))
+
         # Convolutional Code 2: G(D) = [[1, 0, 0], [0, 1, 1+D]]; F(D) = [[D, D], [1+D, 1]]
         memory = array([1, 1])
         g_matrix = array([[1, 0, 0], [0, 1, 3]])
@@ -102,7 +124,7 @@ class TestConvCode(object):
 
     def test_conv_encode(self):
         for i in range(len(self.trellis)):
-            assert_array_equal(conv_encode(self.mes, self.trellis[i],'cont'), self.desired_encode_msg[i])
+            assert_array_equal(conv_encode(self.mes, self.trellis[i], 'cont'), self.desired_encode_msg[i])
 
     def test_viterbi_decode(self):
         pass  # Tested below
