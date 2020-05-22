@@ -165,13 +165,13 @@ class Trellis:
 
                             output_generator_array[l] = generator_array[0]
                             if l == 0:
-                                feedback_array = (dec2bitarray(feedback, memory[l])[1:] * shift_register[0:memory[l]]).sum()
+                                feedback_array = (dec2bitarray(feedback, memory[l] + 1)[1:] * shift_register[0:memory[l]]).sum()
                                 shift_register[1:memory[l]] = \
                                     shift_register[0:memory[l] - 1]
                                 shift_register[0] = (dec2bitarray(current_input,
                                                                   self.k)[0] + feedback_array) % 2
                             else:
-                                feedback_array = (dec2bitarray(feedback, memory[l]) *
+                                feedback_array = (dec2bitarray(feedback, memory[l] + 1) *
                                                   shift_register[
                                                   l + memory[l - 1] - 1:l + memory[l - 1] + memory[l] - 1]).sum()
                                 shift_register[l + memory[l - 1]:l + memory[l - 1] + memory[l] - 1] = \

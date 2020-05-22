@@ -9,7 +9,8 @@ Utilities (:mod:`commpy.utilities`)
 .. autosummary::
    :toctree: generated/
 
-   dec2bitarray         -- Integer to binary (bit array).
+   dec2bitarray         -- Integer or array-like of integers to binary (bit array).
+   decimal2bitarray     -- Specialized version for one integer to binary (bit array).
    bitarray2dec         -- Binary (bit array) to integer.
    hamming_dist         -- Hamming distance.
    euclid_dist          -- Squared Euclidean distance.
@@ -17,11 +18,9 @@ Utilities (:mod:`commpy.utilities`)
    signal_power         -- Compute the power of a discrete time signal.
 """
 
-import itertools as it
-
 import numpy as np
 
-__all__ = ['dec2bitarray', 'bitarray2dec', 'hamming_dist', 'euclid_dist', 'upsample',
+__all__ = ['dec2bitarray', 'decimal2bitarray', 'bitarray2dec', 'hamming_dist', 'euclid_dist', 'upsample',
            'signal_power']
 
 vectorized_binary_repr = np.vectorize(np.binary_repr)
@@ -29,7 +28,7 @@ vectorized_binary_repr = np.vectorize(np.binary_repr)
 
 def dec2bitarray(in_number, bit_width):
     """
-    Converts a positive integer to NumPy array of the specified size containing
+    Converts a positive integer or an array-like of positive integers to NumPy array of the specified size containing
     bits (0 and 1).
 
     Parameters
@@ -42,13 +41,47 @@ def dec2bitarray(in_number, bit_width):
 
     Returns
     -------
-    bitarray : 1D ndarray of ints
+    bitarray : 1D ndarray of numpy.int8
         Array containing the binary representation of all the input decimal(s).
 
     """
 
-    binary_words = vectorized_binary_repr(np.array(in_number, ndmin=1), bit_width)
-    return np.fromiter(it.chain.from_iterable(binary_words), dtype=np.int8)
+    if isinstance(in_number, (np.integer, int)):
+        return decimal2bitarray(in_number, bit_width)
+    result = np.zeros(bit_width * len(in_number), np.int8)
+    for pox, number in enumerate(in_number):
+        result[pox * bit_width:(pox + 1) * bit_width] = decimal2bitarray(number, bit_width)
+    return result
+
+
+def decimal2bitarray(number, bit_width):
+    """
+    Converts a positive integer to NumPy array of the specified size containing bits (0 and 1). This version is slightly
+    quicker that dec2bitarray but only work for one integer.
+
+    Parameters
+    ----------
+    in_number : int
+        Positive integer to be converted to a bit array.
+
+    bit_width : int
+        Size of the output bit array.
+
+    Returns
+    -------
+    bitarray : 1D ndarray of numpy.int8
+        Array containing the binary representation of all the input decimal(s).
+
+    """
+    result = np.zeros(bit_width, np.int8)
+    i = 1
+    pox = 0
+    while i <= number:
+        if i & number:
+            result[bit_width - pox - 1] = 1
+        i <<= 1
+        pox += 1
+    return result
 
 
 def bitarray2dec(in_bitarray):

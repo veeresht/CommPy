@@ -62,7 +62,7 @@ class TestLDPCCode(object):
                             fer_array_test[idx] = float(fer_cnt_bp) / (iter_cnt + 1) / n_blocks
                             break
 
-                assert_allclose(fer_array_test, fer_array_ref, rtol=.5, atol=0,
+                assert_allclose(fer_array_test, fer_array_ref, rtol=.6, atol=0,
                                 err_msg=decoder_algorithm + ' algorithm does not perform as expected.')
 
     def test_write_ldpc_params(self):
