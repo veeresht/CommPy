@@ -88,15 +88,15 @@ for trellis in (trellis1, trellis2, trellis3):
         elif i == 9:
             print("No Bit Errors :)")
 
-# =============================================================================
-# Complete example using commpy features. Example with code 1
-# =============================================================================
+# ==================================================================================================
+# Complete example using Commpy features and compare hard and soft demodulation. Example with code 1
+# ==================================================================================================
 
 # Modem : QPSK
 modem = mod.QAMModem(4)
 
 # AWGN channel
-channels = chan.SISOFlatChannel(None, (1+0j, 0j))
+channels = chan.SISOFlatChannel(None, (1 + 0j, 0j))
 
 # SNR range to test
 SNRs = np.arange(0, 6) + 10 * math.log10(modem.num_bits_symbol)
@@ -107,31 +107,41 @@ def modulate(bits):
     return modem.modulate(cc.conv_encode(bits, trellis1, 'cont'))
 
 
-# Demodulation function
-def demode(msg):
-    return modem.demodulate(msg, 'hard')
-
-
 # Receiver function (no process required as there are no fading)
-def receiver(y, h, constellation, noise_var):
+def receiver_hard(y, h, constellation, noise_var):
     return modem.demodulate(y, 'hard')
 
 
+# Receiver function (no process required as there are no fading)
+def receiver_soft(y, h, constellation, noise_var):
+    return modem.demodulate(y, 'soft', noise_var)
+
+
 # Decoder function
-def decoder(msg):
+def decoder_hard(msg):
     return cc.viterbi_decode(msg, trellis1)
+
+
+# Decoder function
+def decoder_soft(msg):
+    return cc.viterbi_decode(msg, trellis1, decoding_type='soft')
 
 
 # Build model from parameters
 code_rate = trellis1.k / trellis1.n
-model = lk.LinkModel(modulate, channels, receiver,
-                     modem.num_bits_symbol, modem.constellation, modem.Es,
-                     decoder, code_rate)
+model_hard = lk.LinkModel(modulate, channels, receiver_hard,
+                          modem.num_bits_symbol, modem.constellation, modem.Es,
+                          decoder_hard, code_rate)
+model_soft = lk.LinkModel(modulate, channels, receiver_soft,
+                          modem.num_bits_symbol, modem.constellation, modem.Es,
+                          decoder_soft, code_rate)
 
 # Test
-BERs = lk.link_performance(model, SNRs, 10000, 600, 5000, code_rate)
-plt.semilogy(SNRs, BERs, 'o-')
+BERs_hard = model_hard.link_performance(SNRs, 10000, 600, 5000, code_rate)
+BERs_soft = model_soft.link_performance(SNRs, 10000, 600, 5000, code_rate)
+plt.semilogy(SNRs, BERs_hard, 'o-', SNRs, BERs_soft, 'o-')
 plt.grid()
 plt.xlabel('Signal to Noise Ration (dB)')
 plt.ylabel('Bit Error Rate')
+plt.legend(('Hard demodulation', 'Soft demodulation'))
 plt.show()
