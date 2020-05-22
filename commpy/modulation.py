@@ -123,13 +123,11 @@ class Modem:
                 for bit_index in arange(self.num_bits_symbol):
                     llr_num = 0
                     llr_den = 0
-                    for const_index in self.symbol_mapping:
-                        if (const_index >> bit_index) & 1:
-                            llr_num = llr_num + exp(
-                                (-abs(current_symbol - self._constellation[const_index]) ** 2) / noise_var)
+                    for bit_value, symbol in enumerate(self._constellation):
+                        if (bit_value >> bit_index) & 1:
+                            llr_num += exp((-abs(current_symbol - symbol) ** 2) / noise_var)
                         else:
-                            llr_den = llr_den + exp(
-                                (-abs(current_symbol - self._constellation[const_index]) ** 2) / noise_var)
+                            llr_den += exp((-abs(current_symbol - symbol) ** 2) / noise_var)
                     demod_bits[i * self.num_bits_symbol + self.num_bits_symbol - 1 - bit_index] = log(llr_num / llr_den)
         else:
             raise ValueError('demod_type must be "hard" or "soft"')
