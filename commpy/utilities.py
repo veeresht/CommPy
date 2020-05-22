@@ -47,7 +47,7 @@ def dec2bitarray(in_number, bit_width):
 
     """
 
-    if isinstance(in_number, np.int):
+    if isinstance(in_number, (np.integer, int)):
         return decimal2bitarray(in_number, bit_width)
     result = np.zeros(bit_width * len(in_number), 'int')
     for pox, number in enumerate(in_number):
