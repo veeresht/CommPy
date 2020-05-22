@@ -46,11 +46,21 @@ def dec2bitarray(in_number, bit_width):
         Array containing the binary representation of all the input decimal(s).
 
     """
+
+    if type(in_number) == int:
+        return decimal2bitarray(in_number, bit_width)
+    result = np.zeros(bit_width * len(in_number), 'int')
+    for pox, number in enumerate(in_number):
+        result[pox * bit_width:(pox + 1) * bit_width] = decimal2bitarray(number, bit_width)
+    return result
+
+
+def decimal2bitarray(number, bit_width):
     result = np.zeros(bit_width, 'int')
     i = 1
     pox = 0
-    while i <= in_number:
-        if i & in_number:
+    while i <= number:
+        if i & number:
             result[bit_width - pox - 1] = 1
         i <<= 1
         pox += 1
