@@ -633,4 +633,4 @@ def max_log_approx(y, h, noise_var, pts_list, demode):
     return -LLR / (2 * noise_var)
 
 
-# Il manque du code
+# salut !!
