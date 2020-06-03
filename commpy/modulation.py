@@ -631,3 +631,6 @@ def max_log_approx(y, h, noise_var, pts_list, demode):
         LLR[k] = min(norms0) - min(norms1)
 
     return -LLR / (2 * noise_var)
+
+
+# Il manque du code
