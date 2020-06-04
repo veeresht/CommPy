@@ -29,11 +29,11 @@ def pnsequence(pn_order, pn_seed, pn_mask, seq_length):
     pn_order : int
         Number of delay elements used in the LFSR.
 
-    pn_seed : string containing 0's and 1's
+    pn_seed : iterable providing 0's and 1's
         Seed for the initialization of the LFSR delay elements.
         The length of this string must be equal to 'pn_order'.
 
-    pn_mask : string containing 0's and 1's
+    pn_mask : iterable providing 0's and 1's
         Mask representing which delay elements contribute to the feedback
         in the LFSR. The length of this string must be equal to 'pn_order'.
 

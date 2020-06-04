@@ -15,7 +15,9 @@ def test_pnsequence():
         pnsequence(4, '0011', '110', 2 ** 4 - 1)
 
     # Test output with
-    assert_equal(pnsequence(4, '0011', '1101', 7), array((1, 1, 0, 0, 1, 0, 1), int),
+    assert_equal(pnsequence(4, '0011', [1, 1, 0, 1], 7), array((1, 1, 0, 0, 1, 0, 1), int),
+                 err_msg='Pseudo-noise sequence is not the one expected.')
+    assert_equal(pnsequence(4, (0, 0, 1, 1), array((1, 1, 0, 1)), 7), array((1, 1, 0, 0, 1, 0, 1), int),
                  err_msg='Pseudo-noise sequence is not the one expected.')
 
 if __name__ == "__main__":
