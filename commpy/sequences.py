@@ -15,22 +15,25 @@ Sequences (:mod:`commpy.sequences`)
 """
 __all__ = ['pnsequence', 'zcsequence']
 
-from numpy import array, zeros, roll, exp, pi, arange
+from numpy import empty, exp, pi, arange, int8, fromiter, sum
 
 def pnsequence(pn_order, pn_seed, pn_mask, seq_length):
     """
     Generate a PN (Pseudo-Noise) sequence using a Linear Feedback Shift Register (LFSR).
+    Seed and mask are ordered so that:
+        - seed[-1] will be the first output
+        - the new bit computed as :math:`sum(shift_register & mask) % 2` is inserted in shift[0]
 
     Parameters
     ----------
     pn_order : int
         Number of delay elements used in the LFSR.
 
-    pn_seed : string containing 0's and 1's
+    pn_seed : iterable providing 0's and 1's
         Seed for the initialization of the LFSR delay elements.
         The length of this string must be equal to 'pn_order'.
 
-    pn_mask : string containing 0's and 1's
+    pn_mask : iterable providing 0's and 1's
         Mask representing which delay elements contribute to the feedback
         in the LFSR. The length of this string must be equal to 'pn_order'.
 
@@ -42,24 +45,32 @@ def pnsequence(pn_order, pn_seed, pn_mask, seq_length):
     pnseq : 1D ndarray of ints
         PN sequence generated.
 
+    Raises
+    ------
+    ValueError
+        If the pn_order is equal to the length of the strings pn_seed and pn_mask.
+
     """
     # Check if pn_order is equal to the length of the strings 'pn_seed' and 'pn_mask'
+    if len(pn_seed) != pn_order:
+        raise ValueError('pn_seed has not the same length as pn_order')
+    if len(pn_mask) != pn_order:
+        raise ValueError('pn_mask has not the same length as pn_order')
 
-    pnseq = zeros(seq_length)
+    # Pre-allocate memory for output
+    pnseq = empty(seq_length, int8)
 
-    # Initialize shift register with the pn_seed
-    sr = array(map(lambda i: int(pn_seed[i]), range(0, len(pn_seed))))
+    # Convert input as array
+    sr = fromiter(pn_seed, int8, pn_order)
+    mask = fromiter(pn_mask, int8, pn_order)
 
     for i in range(seq_length):
-        new_bit = 0
-        for j in range(pn_order):
-            if int(pn_mask[j]) == 1:
-                new_bit = new_bit ^ sr[j]
-        pnseq[i] = sr[pn_order-1]
-        sr = roll(sr, 1)
+        pnseq[i] = sr[-1]
+        new_bit = sum(sr & mask) % 2
+        sr[1:] = sr[:-1]
         sr[0] = new_bit
 
-    return pnseq.astype(int)
+    return pnseq
 
 def zcsequence(u, seq_length):
     """
