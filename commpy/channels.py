@@ -617,13 +617,6 @@ class MIMOFlatChannel(_FlatChannel):
         expo_rx = fromiter((j - i for i in range(self.nb_rx) for j in range(self.nb_rx)), int, self.nb_rx ** 2)
 
         # Reshape
-        expo_tx = expo_tx.reshape(self.nb_tx, self.nb_tx)
-        expo_rx = expo_rx.reshape(self.nb_rx, self.nb_rx)
-
-        # Set fading
-        self.fading_param = mean, t ** expo_tx * NLOS_gain / nb_antennas, r ** expo_rx
-
-        # Update Rr and Rt
         self._update_corr_KBSM(betat, betar)
 
 
