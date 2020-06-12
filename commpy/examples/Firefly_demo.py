@@ -75,7 +75,7 @@ def firefly(y, h, nb_iter = 100, gamma = 0.5, k = 1):
             E_temp = E_temp + (yt[i] - r[i][i] * x[i] - sum_temp) ** 2
 
         if E_opt > E_temp:
-            x_opt = x
+            x_opt = x.copy()
             E_opt = E_temp
 
 
@@ -90,8 +90,6 @@ def firefly(y, h, nb_iter = 100, gamma = 0.5, k = 1):
 ################################################################################
 # testing the code
 
-# Same SNRs for every model
-SNRs = np.arange(0, 21, 5) + 10 * np.log10(4)
 
 ############################################
 # Model
@@ -100,6 +98,11 @@ modem = QAMModem(2)
 modem.constellation = -1, 1
 receivers_str = ('KSE-16', 'firefly')
 channels = tuple(MIMOFlatChannel(8, 8) for i in range(2))
+
+
+
+# Same SNRs for every model
+SNRs = np.arange(0, 12, 2) + 10 * np.log10(modem.num_bits_symbol)
 
 ############################################
 # Set channel fading
