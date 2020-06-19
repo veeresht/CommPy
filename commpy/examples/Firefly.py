@@ -22,67 +22,47 @@ def firefly(y, h, nb_iter = 100, gamma = 0.5, k = 1):
     nb_tx, nb_rx = h.shape
     N = nb_tx
 
-    # construction of optimal vector and constructed vector
-    x_opt = np.empty(N, dtype= np.int8)
-    x = np.empty(N, dtype= np.int8)
+    # allocate memory for vectors
+    x = np.ones((nb_iter, N), dtype= np.int8)
 
     # construction Euclidien distance list for the 2 cases
-    ud = np.zeros(2)
+    ud = np.empty((nb_iter, 2))
 
     # construction attractiveness list
-    beta = np.zeros(2)
+    beta = np.empty((nb_iter, 2))
 
     # QR decomposition
     q, r = qr(h)
-    yt = q.conj().T.dot(y)
-
-    # Computing !
-    # print("Computing !")
-    # usually number of transmit antennas is not different than those receive
-    E_opt = np.inf  # E(x_opt)
-    iter = 0
-
-    while iter < nb_iter :
+    yt = q.T.dot(y)
+    
+    # allocate memory for E
+    E = np.empty(nb_iter)
+    
+    for i in range(N-1,-1,-1):
+        # compute the Euclidien distance (equ 16)
+        sum_temp = np.sum(r[i] * x, axis=1)
+    
+        # make assuptions
+        ud[:, 0] = (yt[i] + r[i, i] - sum_temp) ** 2  # xi = -1
+        ud[:, 1] = (yt[i] - r[i, i] - sum_temp) ** 2  # x = 1
         
-        E_temp = 0.   # E(x)
-        for i in range(N-1,-1,-1):
+        # compute attractiveness parameter (equ 17)
+        beta = np.exp(-gamma * ud ** k)
 
-            # compute the Euclidien distance (equ 16)
-            sum_temp = 0
-            for j in range(i+1,N):
-                sum_temp = sum_temp + r[i][j] * x[j]
+        # Compute probability metric (equ 18)
+        p = beta[:, 0] / (beta[:, 0] + beta[:, 1])
 
-            xi = -1  # for first case
-            ud[0] = (yt[i] - r[i][i] * xi - sum_temp) ** 2
-            xi =  1  # for second case
-            ud[1] = (yt[i] - r[i][i] * xi - sum_temp) ** 2
+        # generate uniformly random variable called alpha
+        alpha = np.random.random(nb_iter)
 
-            # Compute attractiveness parameter (equ 17)
-            beta[0] = np.exp(-gamma * ud[0] ** k)
-            beta[1] = np.exp(-gamma * ud[1] ** k)
-
-            # Compute probability metric (equ 18)
-            p = beta[0] / ( beta[0] + beta[1] )
-
-            # generate uniformly random variable called alpha
-            alpha = np.random.random()
-
-            # calculate xi value (equ 19)
-            if p > alpha :
-                x[i] = -1
-            else:
-                x[i] = 1
+        # calculate xi value (equ 19)
+        x[p > alpha, i] = -1
             
-            # Update E_temp
-            E_temp += (yt[i] - r[i][i] * x[i] - sum_temp) ** 2
-
-        if E_opt > E_temp:
-            x_opt = x.copy()
-            E_opt = E_temp
-
-
-        iter = iter + 1     # increment the iterator
-        #print("We are in ", iter," iteration and remain ", nb_iter - iter)
+        # update E
+        E += (yt[i] - r[i][i] * x[:, i] - sum_temp) ** 2
+        
+    x_opt = x[E.argmin()]
+    
     if is_complex:
         return x_opt[:int(N/2)]+1j*x_opt[int(N/2):]
     else:
