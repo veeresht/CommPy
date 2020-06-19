@@ -43,7 +43,8 @@ def firefly(y, h, nb_iter = 100, gamma = 0.5, k = 1):
     iter = 0
 
     while iter < nb_iter :
-
+        
+        E_temp = 0.   # E(x)
         for i in range(N-1,-1,-1):
 
             # compute the Euclidien distance (equ 16)
@@ -71,15 +72,9 @@ def firefly(y, h, nb_iter = 100, gamma = 0.5, k = 1):
                 x[i] = -1
             else:
                 x[i] = 1
-
-        # update x_opt (equ 22)
-        E_temp = 0.   # E(x)
-
-        for i in range(N-1,-1,-1):
-            sum_temp = 0
-            for j in range(i+1,N):
-                sum_temp = sum_temp + r[i][j] * x[j]
-            E_temp = E_temp + (yt[i] - r[i][i] * x[i] - sum_temp) ** 2
+            
+            # Update E_temp
+            E_temp += (yt[i] - r[i][i] * x[i] - sum_temp) ** 2
 
         if E_opt > E_temp:
             x_opt = x.copy()
