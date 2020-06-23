@@ -9,8 +9,45 @@ from numpy.testing import run_module_suite, assert_allclose, dec, assert_raises,
 
 from commpy.channels import MIMOFlatChannel
 from commpy.links import *
-from commpy.modulation import QAMModem, mimo_ml, bit_lvl_repr, max_log_approx, PSKModem, Modem
+from commpy.modulation import QAMModem, mimo_ml, bit_lvl_repr, max_log_approx, PSKModem, Modem, firefly
 from commpy.utilities import signal_power
+
+
+@dec.slow
+def test_firefly():
+    # Apply firefly to 8x8 MIMO with 4QAM
+    QAM4 = QAMModem(4)
+    RayleighChannel = MIMOFlatChannel(8, 8)
+    RayleighChannel.uncorr_rayleigh_fading(complex)
+    SNRs = arange(0, 13, 2)
+
+    def FA20(y, h, constellation, t):
+        return QAM4.demodulate(firefly(y, h, 20), 'hard')
+
+    def FA40(y, h, constellation, t):
+        return QAM4.demodulate(firefly(y, h, 40), 'hard')
+
+    def FA60(y, h, constellation, t):
+        return QAM4.demodulate(firefly(y, h, 60), 'hard')
+
+    def FA100(y, h, constellation, t):
+        return QAM4.demodulate(firefly(y, h, 100), 'hard')
+
+    receivers = FA20, FA40, FA60, FA100
+    nb_it = '20', '40', '60', '100'
+    desired = array(((2.5e-1, 2e-1, 1.8e-1, 1e-1, 7e-2, 2e-2, 7e-3),
+                     (2.5e-1, 2e-1, 1.6e-1, 8e-2, 5e-2, 0.8e-2, 2.5e-3),
+                     (2.5e-1, 2e-1, 1.4e-1, 8e-2, 5e-2, 1e-2, 2e-3),
+                     (2.5e-1, 2e-1, 1.2e-1, 6e-2, 5e-2, 1e-2, 1.5e-3)))  # From reference
+
+    for i in range(len(receivers)):
+        model = LinkModel(QAM4.modulate, RayleighChannel, receivers[i],
+                          QAM4.num_bits_symbol, QAM4.constellation, QAM4.Es)
+
+        BERs = model.link_performance(SNRs, 4e5, 300)
+
+        assert_allclose(BERs, desired[i], rtol=1.25,
+                        err_msg='Wrong performance firefly algorithm with {} iterations'.format(nb_it[i]))
 
 
 @dec.slow

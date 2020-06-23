@@ -603,9 +603,6 @@ def firefly(y, h, nb_iter=60, gamma=0.5, k=1):
     # construction Euclidean distance list for the 2 cases
     ud = empty((nb_iter, 2))
 
-    # construction attractiveness list
-    beta = empty((nb_iter, 2))
-
     # QR decomposition
     q, r = qr(h)
     yt = q.T.dot(y)
