@@ -15,25 +15,27 @@ Modulation Demodulation (:mod:`commpy.modulation`)
    ofdm_rx              -- OFDM Receive Signal Processing
    mimo_ml              -- MIMO Maximum Likelihood (ML) Detection.
    kbest                -- MIMO K-best Schnorr-Euchner Detection.
+   firefly              -- MIMO Firefly Algorithm Detection.
    best_first_detector  -- MIMO Best-First Detection.
    bit_lvl_repr         -- Bit Level Representation.
    max_log_approx       -- Max-Log Approximation.
-
 """
+
 from bisect import insort
 from itertools import product
 
 import matplotlib.pyplot as plt
 from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
-    hstack, repeat, tile, dot, shape, concatenate, exp, \
-    log, vectorize, empty, eye, kron, inf, full, abs, newaxis, minimum, clip
+    hstack, repeat, tile, dot, shape, concatenate, exp, sum, \
+    log, vectorize, empty, eye, kron, inf, full, abs, newaxis, minimum, clip, int8, block
 from numpy.fft import fft, ifft
 from numpy.linalg import qr, norm
+from numpy.random import random
 
 from commpy.utilities import bitarray2dec, dec2bitarray, signal_power
 
 __all__ = ['PSKModem', 'QAMModem', 'ofdm_tx', 'ofdm_rx', 'mimo_ml', 'kbest', 'best_first_detector',
-           'bit_lvl_repr', 'max_log_approx']
+           'bit_lvl_repr', 'max_log_approx', 'firefly']
 
 
 class Modem:
@@ -550,6 +552,97 @@ def best_first_detector(y, h, constellation, stack_size, noise_var, demode, llr_
             del stacks[idx_next_stack + 1][stack_size[idx_next_stack]:]
 
     return ((map_metric - counter_hyp_metric) * map_bit_vector).reshape(-1)
+
+
+def firefly(y, h, nb_iter=60, gamma=0.5, k=1):
+    """ MIMO Firefly Algorithm Detection. This detector is suitable for QPSK only.
+
+        Reference: A. Datta et V. Bhatia, "A near maximum likelihood performance modified firefly algorithm for large
+        MIMO detection", Swarm and Evolutionary Computation, vol. 44, p. 828‑839, 2019
+
+        Parameters
+        ----------
+        y : 1D ndarray
+            Received complex symbols (length: num_receive_antennas)
+
+        h : 2D ndarray
+            Channel Matrix (shape: num_receive_antennas x num_transmit_antennas)
+
+        nb_iter : positive integer
+            Number of iterations.
+            **Default:** 100
+
+        gamma : positive float
+            Absorption coefficient.
+            **Default:** 0.5
+
+        k : positive float
+            Exponent coefficient for computing the attractiveness.
+            *Default* value is 1.
+
+        Returns
+        -------
+        x : 1D ndarray
+            Detected vector (length: num_receive_antennas).
+    """
+
+    if isinstance(h[0, 0], complex):
+        h = block([[h.real, -h.imag], [h.imag, h.real]])
+        y = concatenate((y.real, y.imag))
+        is_complex = True
+    else:
+        is_complex = False
+
+    # number of transmit antennas & receive antennas
+    nb_tx, nb_rx = h.shape
+    N = nb_tx
+
+    # allocate memory for vectors
+    x = empty((nb_iter, N), dtype=int8)
+
+    # construction Euclidean distance list for the 2 cases
+    ud = empty((nb_iter, 2))
+
+    # construction attractiveness list
+    beta = empty((nb_iter, 2))
+
+    # QR decomposition
+    q, r = qr(h)
+    yt = q.T.dot(y)
+
+    # allocate memory for E
+    E = zeros(nb_iter)
+
+    for i in range(N - 1, -1, -1):
+        # compute the Euclidean distance (equ 16)
+        sum_temp = sum(r[i, i + 1:] * x[:, i + 1:], axis=1)
+
+        # make assumptions
+        ud[:, 0] = (yt[i] + r[i, i] - sum_temp) ** 2  # xi = -1
+        ud[:, 1] = (yt[i] - r[i, i] - sum_temp) ** 2  # xi = 1
+
+        # compute attractiveness parameter (equ 17)
+        beta = exp(-gamma * ud ** k)
+
+        # Compute probability metric (equ 18)
+        p = beta[:, 0] / (beta[:, 0] + beta[:, 1])
+
+        # generate uniformly random variable called alpha
+        alpha = random(nb_iter)
+
+        # calculate xi value (equ 19)
+        x[p > alpha, i] = -1
+        x[p <= alpha, i] = 1
+
+        # update E
+        E += (yt[i] - r[i, i] * x[:, i] - sum_temp) ** 2
+
+    x_opt = x[E.argmin()]
+
+    if is_complex:
+        return x_opt[:int(N / 2)] + 1j * x_opt[int(N / 2):]
+    else:
+        return x_opt
 
 
 def bit_lvl_repr(H, w):

@@ -55,6 +55,7 @@ Available Features
 - MIMO Maximum Likelihood (ML) Detection.
 - MIMO K-best Schnorr-Euchner Detection.
 - MIMO Best-First Detection.
+- MIMO Firefly Algorithm Detection.
 - Convert channel matrix to Bit-level representation.
 - Computation of LogLikelihood ratio using max-log approximation.
 
