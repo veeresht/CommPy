@@ -23,9 +23,9 @@ def firefly(y, h, nb_iter = 100, gamma = 0.5, k = 1):
     N = nb_tx
 
     # allocate memory for vectors
-    x = np.ones((nb_iter, N), dtype= np.int8)
+    x = np.empty((nb_iter, N), dtype= np.int8)
 
-    # construction Euclidien distance list for the 2 cases
+    # construction Euclidean distance list for the 2 cases
     ud = np.empty((nb_iter, 2))
 
     # construction attractiveness list
@@ -36,15 +36,15 @@ def firefly(y, h, nb_iter = 100, gamma = 0.5, k = 1):
     yt = q.T.dot(y)
     
     # allocate memory for E
-    E = np.empty(nb_iter)
+    E = np.zeros(nb_iter)
     
     for i in range(N-1,-1,-1):
-        # compute the Euclidien distance (equ 16)
-        sum_temp = np.sum(r[i] * x, axis=1)
+        # compute the Euclidean distance (equ 16)
+        sum_temp = np.sum(r[i, i+1:] * x[:, i+1:], axis=1)
     
-        # make assuptions
+        # make assumptions
         ud[:, 0] = (yt[i] + r[i, i] - sum_temp) ** 2  # xi = -1
-        ud[:, 1] = (yt[i] - r[i, i] - sum_temp) ** 2  # x = 1
+        ud[:, 1] = (yt[i] - r[i, i] - sum_temp) ** 2  # xi = 1
         
         # compute attractiveness parameter (equ 17)
         beta = np.exp(-gamma * ud ** k)
@@ -57,9 +57,10 @@ def firefly(y, h, nb_iter = 100, gamma = 0.5, k = 1):
 
         # calculate xi value (equ 19)
         x[p > alpha, i] = -1
-            
+        x[p <= alpha, i] = 1
+
         # update E
-        E += (yt[i] - r[i][i] * x[:, i] - sum_temp) ** 2
+        E += (yt[i] - r[i, i] * x[:, i] - sum_temp) ** 2
         
     x_opt = x[E.argmin()]
     
@@ -86,7 +87,7 @@ channels = tuple(MIMOFlatChannel(8, 8) for i in range(5))
 
 
 # Same SNRs for every model
-SNRs = np.arange(0, 14, 2) #+ 10 * np.log10(modem.num_bits_symbol)
+SNRs = np.arange(0, 14, 2) + 10 * np.log10(modem.num_bits_symbol)
 
 ############################################
 # Set channel fading
@@ -146,9 +147,11 @@ end1 = time.clock()
 print("Finish computing in ", (end1 - start)/60,"min")
 
 print("Computing FA20")
+end1 = time.clock()
 BERs1 = perf(models[1])
 end2 = time.clock()
 print("Finish computing in ", (end2 - end1)/60,"min")
+
 
 print("Computing FA40")
 BERs2 = perf(models[2])
@@ -165,9 +168,9 @@ BERs4 = perf(models[4])
 end5 = time.clock()
 print("Finish computing in ", (end5 - end4)/60,"min")
 
-
 #plotting
 
+plt.figure()
 plt.semilogy(10*np.log10(SNRs), BERs0,'-*', label = "KSE-16")
 plt.semilogy(10*np.log10(SNRs), BERs1,'-*' ,label = "FA, iT = 20")
 plt.semilogy(10*np.log10(SNRs), BERs2,'-*' ,label = "FA, iT = 40")
@@ -179,7 +182,8 @@ plt.ylabel("BER")
 plt.legend()
 plt.grid()
 plt.show()
-
+#
+plt.figure()
 temps = [end2 - end1, end3 - end2, end4 - end3, end5 - end4]
 it = [20, 40, 60, 100]
 plt.plot(it, temps,"-*" ,label = "temporal complexity")
