@@ -32,12 +32,10 @@ class Trellis:
     memory : 1D ndarray of ints
         Number of memory elements per input of the convolutional encoder.
     g_matrix : 2D ndarray of ints (decimal representation)
-        Generator matrix G(D) of the convolutional encoder. Each element of
-        G(D) represents a polynomial with a MSB first convention (ie, 1+D^2+D^3 <-> 1101 <-> 13 or 0o15).
+        Generator matrix G(D) of the convolutional encoder. Each element of G(D) represents a polynomial.
         Coef [i,j] is the influence of input i on output j.
     feedback : 2D ndarray of ints (decimal representation), optional
-        Feedback matrix F(D) of the convolutional encoder. Each element of
-        F(D) represents a polynomial.
+        Feedback matrix F(D) of the convolutional encoder. Each element of F(D) represents a polynomial.
         Coef [i,j] is the feedback influence of input i on input j.
         *Default* implies no feedback.
 
