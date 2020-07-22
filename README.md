@@ -120,9 +120,10 @@ $ conda install -c https://conda.binstar.org/veeresht scikit-commpy
 
 Citing CommPy
 -------------
-If you use CommPy for a publication, presentation or a demo, I request you to please cite CommPy as follows:
+If you use CommPy for a publication, presentation or a demo, a citation would be greatly appreciated. A citation example is presented here and we suggest to had the revision or version number and the date:
 
-Veeresh Taranalli, "CommPy: Digital Communication with Python, version 0.3.0. Available at https://github.com/veeresht/CommPy", 2015.
+V. Taranalli, B. Trotobas, and contributors, “CommPy: Digital Communication with Python”. [Online]. Available: github.com/veeresht/CommPy
+
 
 I would also greatly appreciate your feedback if you have found CommPy useful. Just send me a mail: veeresht@gmail.com
 
