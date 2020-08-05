@@ -203,7 +203,7 @@ class LinkModel:
                 # Deals with MIMO channel
                 if isinstance(self.channel, MIMOFlatChannel):
                     nb_symb_vector = len(channel_output)
-                    received_msg = np.empty(int(math.ceil(len(msg) / self.rate)))
+                    received_msg = np.empty(int(math.ceil(len(msg) / self.rate)), dtype=np.int8)
                     for i in range(nb_symb_vector):
                         received_msg[receive_size * i:receive_size * (i + 1)] = \
                             self.receive(channel_output[i], self.channel.channel_gains[i],
