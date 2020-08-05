@@ -216,9 +216,9 @@ class LinkModel:
                     decoded_bits = self.decoder(channel_output, self.channel.channel_gains,
                                                 self.constellation, self.channel.noise_std ** 2,
                                                 received_msg, self.channel.nb_tx * self.num_bits_symbol)
-                    bit_err += (msg != decoded_bits[:len(msg)]).sum()
+                    bit_err += np.bitwise_xor(msg, decoded_bits[:len(msg)]).sum()
                 else:
-                    bit_err += (msg != self.decoder(received_msg)[:len(msg)]).sum()
+                    bit_err += np.bitwise_xor(msg, self.decoder(received_msg)[:len(msg)]).sum()
                 bit_send += send_chunk
             BERs[id_SNR] = bit_err / bit_send
             if bit_err < err_min:
