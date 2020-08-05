@@ -561,12 +561,13 @@ def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=Non
 def _where_c(inarray, rows, cols, search_value, index_array):
 
     number_found = 0
-    for i in range(rows):
-        for j in range(cols):
-            if inarray[i, j] == search_value:
-                index_array[number_found, 0] = i
-                index_array[number_found, 1] = j
-                number_found += 1
+    res = np.where(inarray == search_value)
+    i_s, j_s = res
+    for i, j in zip(i_s, j_s):
+        if inarray[i, j] == search_value:
+            index_array[number_found, 0] = i
+            index_array[number_found, 1] = j
+            number_found += 1
 
     return number_found
 
