@@ -146,6 +146,7 @@ class LinkModel:
             self.decoder = lambda msg: msg
         else:
             self.decoder = decoder
+        self.full_simulation_results = None
 
     def link_performance(self, SNRs, send_max, err_min, send_chunk=None, code_rate=1):
         """
@@ -180,6 +181,8 @@ class LinkModel:
 
         # Initialization
         BERs = np.zeros_like(SNRs, dtype=float)
+        CEs = np.zeros_like(SNRs, dtype=float)  # Chunk Errors
+        NCs = np.zeros_like(SNRs, dtype=float)  # Number of Chunks
         # Set chunk size and round it to be a multiple of num_bits_symbol*nb_tx to avoid padding
         if send_chunk is None:
             send_chunk = err_min
@@ -192,9 +195,11 @@ class LinkModel:
         # Computations
         for id_SNR in range(len(SNRs)):
             self.channel.set_SNR_dB(SNRs[id_SNR], code_rate, self.Es)
-            bit_send = 0
-            bit_err = 0
-            while bit_send < send_max and bit_err < err_min:
+            total_bit_send = 0
+            total_bit_err = 0
+            total_chunk_loss = 0
+            total_chunk_count = 0
+            while total_bit_send < send_max and total_bit_err < err_min:
                 # Propagate some bits
                 msg = np.random.choice((0, 1), send_chunk)
                 symbs = self.modulate(msg)
@@ -216,13 +221,19 @@ class LinkModel:
                     decoded_bits = self.decoder(channel_output, self.channel.channel_gains,
                                                 self.constellation, self.channel.noise_std ** 2,
                                                 received_msg, self.channel.nb_tx * self.num_bits_symbol)
-                    bit_err += np.bitwise_xor(msg, decoded_bits[:len(msg)]).sum()
+                    bit_err = (msg != decoded_bits[:len(msg)]).sum()
                 else:
-                    bit_err += np.bitwise_xor(msg, self.decoder(received_msg)[:len(msg)]).sum()
-                bit_send += send_chunk
-            BERs[id_SNR] = bit_err / bit_send
-            if bit_err < err_min:
+                    bit_err = (msg != self.decoder(received_msg)[:len(msg)]).sum()
+                total_bit_err += bit_err
+                total_chunk_count += 1
+                total_chunk_loss += 1 if bit_err > 0 else 0
+                total_bit_send += send_chunk
+            BERs[id_SNR] = total_bit_err / total_bit_send
+            CEs[id_SNR] = total_chunk_loss
+            NCs[id_SNR] = total_chunk_count
+            if total_bit_err < err_min:
                 break
+        self.full_simulation_results = BERs, CEs, NCs
         return BERs
 
 
