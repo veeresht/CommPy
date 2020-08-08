@@ -5,6 +5,7 @@
 
 from __future__ import division
 
+import functools
 import math
 from warnings import warn
 
@@ -560,14 +561,28 @@ def conv_encode(message_bits, trellis, termination = 'term', puncture_matrix=Non
 def _where_c(inarray, rows, cols, search_value, index_array):
 
     number_found = 0
-    for i in range(rows):
-        for j in range(cols):
-            if inarray[i, j] == search_value:
-                index_array[number_found, 0] = i
-                index_array[number_found, 1] = j
-                number_found += 1
+    res = np.where(inarray == search_value)
+    i_s, j_s = res
+    for i, j in zip(i_s, j_s):
+        if inarray[i, j] == search_value:
+            index_array[number_found, 0] = i
+            index_array[number_found, 1] = j
+            number_found += 1
 
     return number_found
+
+
+@functools.lru_cache(maxsize=128, typed=False)
+def _compute_branch_metrics(decoding_type, r_codeword, i_codeword_array):
+    if decoding_type == 'hard':
+        return hamming_dist(r_codeword.astype(int), i_codeword_array.astype(int))
+    elif decoding_type == 'soft':
+        neg_LL_0 = np.log(np.exp(r_codeword) + 1)  # negative log-likelihood to have received a 0
+        neg_LL_1 = neg_LL_0 - r_codeword  # negative log-likelihood to have received a 1
+        return np.where(i_codeword_array, neg_LL_1, neg_LL_0).sum()
+    elif decoding_type == 'unquantized':
+        i_codeword_array = 2 * i_codeword_array - 1
+        return euclid_dist(r_codeword, i_codeword_array)
 
 
 def _acs_traceback(r_codeword, trellis, decoding_type,
@@ -605,15 +620,7 @@ def _acs_traceback(r_codeword, trellis, decoding_type,
             i_codeword_array = dec2bitarray(i_codeword, n)
 
             # Compute Branch Metrics
-            if decoding_type == 'hard':
-                branch_metric = hamming_dist(r_codeword.astype(int), i_codeword_array.astype(int))
-            elif decoding_type == 'soft':
-                neg_LL_0 = np.log(np.exp(r_codeword) + 1)  # negative log-likelihood to have received a 0
-                neg_LL_1 = neg_LL_0 - r_codeword  # negative log-likelihood to have received a 1
-                branch_metric = np.where(i_codeword_array, neg_LL_1, neg_LL_0).sum()
-            elif decoding_type == 'unquantized':
-                i_codeword_array = 2*i_codeword_array - 1
-                branch_metric = euclid_dist(r_codeword, i_codeword_array)
+            branch_metric = _compute_branch_metrics(decoding_type, tuple(r_codeword), tuple(i_codeword_array))
 
             # ADD operation: Add the branch metric to the
             # accumulated path metric and store it in the temporary array

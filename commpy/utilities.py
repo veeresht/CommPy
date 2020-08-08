@@ -17,6 +17,7 @@ Utilities (:mod:`commpy.utilities`)
    upsample             -- Upsample by an integral factor (zero insertion).
    signal_power         -- Compute the power of a discrete time signal.
 """
+import functools
 
 import numpy as np
 
@@ -47,13 +48,14 @@ def dec2bitarray(in_number, bit_width):
     """
 
     if isinstance(in_number, (np.integer, int)):
-        return decimal2bitarray(in_number, bit_width)
+        return decimal2bitarray(in_number, bit_width).copy()
     result = np.zeros(bit_width * len(in_number), np.int8)
     for pox, number in enumerate(in_number):
-        result[pox * bit_width:(pox + 1) * bit_width] = decimal2bitarray(number, bit_width)
+        result[pox * bit_width:(pox + 1) * bit_width] = decimal2bitarray(number, bit_width).copy()
     return result
 
 
+@functools.lru_cache(maxsize=128, typed=False)
 def decimal2bitarray(number, bit_width):
     """
     Converts a positive integer to NumPy array of the specified size containing bits (0 and 1). This version is slightly

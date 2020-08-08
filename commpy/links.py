@@ -203,7 +203,7 @@ class LinkModel:
                 # Deals with MIMO channel
                 if isinstance(self.channel, MIMOFlatChannel):
                     nb_symb_vector = len(channel_output)
-                    received_msg = np.empty(int(math.ceil(len(msg) / self.rate)))
+                    received_msg = np.empty(int(math.ceil(len(msg) / self.rate)), dtype=np.int8)
                     for i in range(nb_symb_vector):
                         received_msg[receive_size * i:receive_size * (i + 1)] = \
                             self.receive(channel_output[i], self.channel.channel_gains[i],
@@ -216,9 +216,9 @@ class LinkModel:
                     decoded_bits = self.decoder(channel_output, self.channel.channel_gains,
                                                 self.constellation, self.channel.noise_std ** 2,
                                                 received_msg, self.channel.nb_tx * self.num_bits_symbol)
-                    bit_err += (msg != decoded_bits[:len(msg)]).sum()
+                    bit_err += np.bitwise_xor(msg, decoded_bits[:len(msg)]).sum()
                 else:
-                    bit_err += (msg != self.decoder(received_msg)[:len(msg)]).sum()
+                    bit_err += np.bitwise_xor(msg, self.decoder(received_msg)[:len(msg)]).sum()
                 bit_send += send_chunk
             BERs[id_SNR] = bit_err / bit_send
             if bit_err < err_min:
