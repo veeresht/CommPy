@@ -59,7 +59,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
            Estimated Bit Error Ratio corresponding to each SNRs
     """
 
-    return link_model.link_performance(SNRs, send_max, err_min, send_chunk, code_rate)
+    return link_model.link_performance(SNRs, send_max/send_chunk, err_min, send_chunk, code_rate)
 
 
 class LinkModel:
@@ -148,7 +148,8 @@ class LinkModel:
             self.decoder = decoder
         self.full_simulation_results = None
 
-    def link_performance(self, SNRs, send_max, err_min, send_chunk=None, code_rate=1):
+    def link_performance(self, SNRs, tx_max, err_min, send_chunk=None, code_rate=1,
+                         number_chunks_per_send=1, stop_on_surpass_error=True):
         """
         Estimate the BER performance of a link model with Monte Carlo simulation.
 
@@ -158,8 +159,8 @@ class LinkModel:
                Signal to Noise ratio in dB defined as :math:`SNR_{dB} = (E_b/N_0)_{dB} + 10 \log_{10}(R_cM_c)`
                where :math:`Rc` is the code rate and :math:`Mc` the modulation rate.
 
-        send_max : int
-                   Maximum number of bits send for each SNR.
+        tx_max : int
+                 Maximum number of transmissions for each SNR.
 
         err_min : int
                   link_performance send bits until it reach err_min errors (see also send_max).
@@ -173,6 +174,13 @@ class LinkModel:
                     Rate of the used code.
                     *Default*: 1 i.e. no code.
 
+        number_chunks_per_send : int
+                                 Number of chunks per transmission
+
+        stop_on_surpass_error : bool
+                                Controls if during simulation of a SNR it should break and move to the next SNR when
+                                the bit error is above the err_min parameter
+
         Returns
         -------
         BERs : 1d ndarray
@@ -181,8 +189,9 @@ class LinkModel:
 
         # Initialization
         BERs = np.zeros_like(SNRs, dtype=float)
-        CEs = np.zeros_like(SNRs, dtype=float)  # Chunk Errors
-        NCs = np.zeros_like(SNRs, dtype=float)  # Number of Chunks
+        BEs = np.zeros((len(SNRs), tx_max), dtype=int)  # Bit errors per tx
+        CEs = np.zeros((len(SNRs), tx_max), dtype=int)  # Chunk Errors per tx
+        NCs = np.zeros((len(SNRs), tx_max), dtype=int)  # Number of Chunks per tx
         # Set chunk size and round it to be a multiple of num_bits_symbol*nb_tx to avoid padding
         if send_chunk is None:
             send_chunk = err_min
@@ -195,13 +204,15 @@ class LinkModel:
         # Computations
         for id_SNR in range(len(SNRs)):
             self.channel.set_SNR_dB(SNRs[id_SNR], code_rate, self.Es)
-            total_bit_send = 0
-            total_bit_err = 0
-            total_chunk_loss = 0
-            total_chunk_count = 0
-            while total_bit_send < send_max and total_bit_err < err_min:
+            total_tx_send = 0
+            bit_err = np.zeros(tx_max, dtype=int)
+            chunk_loss = np.zeros(tx_max, dtype=int)
+            chunk_count = np.zeros(tx_max, dtype=int)
+            for id_tx in range(tx_max):
+                if stop_on_surpass_error and bit_err.sum() > err_min:
+                    break
                 # Propagate some bits
-                msg = np.random.choice((0, 1), send_chunk)
+                msg = np.random.choice((0, 1), send_chunk * number_chunks_per_send)
                 symbs = self.modulate(msg)
                 channel_output = self.channel.propagate(symbs)
 
@@ -221,19 +232,24 @@ class LinkModel:
                     decoded_bits = self.decoder(channel_output, self.channel.channel_gains,
                                                 self.constellation, self.channel.noise_std ** 2,
                                                 received_msg, self.channel.nb_tx * self.num_bits_symbol)
-                    bit_err = (msg != decoded_bits[:len(msg)]).sum()
                 else:
-                    bit_err = (msg != self.decoder(received_msg)[:len(msg)]).sum()
-                total_bit_err += bit_err
-                total_chunk_count += 1
-                total_chunk_loss += 1 if bit_err > 0 else 0
-                total_bit_send += send_chunk
-            BERs[id_SNR] = total_bit_err / total_bit_send
-            CEs[id_SNR] = total_chunk_loss
-            NCs[id_SNR] = total_chunk_count
-            if total_bit_err < err_min:
+                    decoded_bits = self.decoder(received_msg)
+                # calculate number of error frames
+                for i in range(number_chunks_per_send):
+                    errors = np.bitwise_xor(msg[send_chunk * i:send_chunk * (i + 1)],
+                                          decoded_bits[send_chunk * i:send_chunk * (i + 1)]).sum()
+                    bit_err[id_tx] += errors
+                    chunk_loss[id_tx] += 1 if errors > 0 else 0
+
+                chunk_count[id_tx] += number_chunks_per_send
+                total_tx_send += 1
+            BERs[id_SNR] = bit_err.sum() / (total_tx_send*send_chunk)
+            BEs[id_SNR] = bit_err
+            CEs[id_SNR] = np.where(bit_err > 0, 1, 0)
+            NCs[id_SNR] = chunk_count
+            if BEs[id_SNR].sum() < err_min:
                 break
-        self.full_simulation_results = BERs, CEs, NCs
+        self.full_simulation_results = BERs, BEs, CEs, NCs
         return BERs
 
 
