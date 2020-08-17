@@ -58,8 +58,9 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
     BERs : 1d ndarray
            Estimated Bit Error Ratio corresponding to each SNRs
     """
-
-    return link_model.link_performance(SNRs, send_max/send_chunk, err_min, send_chunk, code_rate)
+    if not send_chunk:
+        send_chunk = err_min
+    return link_model.link_performance(SNRs, math.ceil(send_max/send_chunk), err_min, send_chunk, code_rate)
 
 
 class LinkModel:
