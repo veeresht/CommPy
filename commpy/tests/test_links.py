@@ -15,6 +15,9 @@ from commpy.modulation import QAMModem, kbest
 
 @dec.slow
 def test_link_performance():
+    # Set seed
+    seed(17121996)
+
     # Apply link_performance to SISO QPSK and AWGN channel
     QPSK = QAMModem(4)
 
@@ -46,5 +49,4 @@ def test_link_performance():
 
 
 if __name__ == "__main__":
-    seed(17121996)
     run_module_suite()

@@ -2,7 +2,6 @@
 # License: BSD 3-Clause
 
 from numpy import array
-from numpy.random import seed
 from numpy.testing import run_module_suite, assert_array_equal
 
 from commpy.utilities import dec2bitarray
@@ -15,5 +14,4 @@ def test_dec2bitarray():
 
 
 if __name__ == "__main__":
-    seed(17121996)
     run_module_suite()

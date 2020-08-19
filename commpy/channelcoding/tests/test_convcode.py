@@ -131,6 +131,9 @@ class TestConvCode(object):
 
     @dec.slow
     def test_conv_encode_viterbi_decode(self):
+        # Set seed
+        seed(17121996)
+
         niters = 10
         blocklength = 1000
 
@@ -176,6 +179,5 @@ class TestConvCode(object):
 
 
 if __name__ == "__main__":
-    seed(17121996)
     run_module_suite()
 
