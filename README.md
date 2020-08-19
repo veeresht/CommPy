@@ -1,7 +1,7 @@
 
 
 [![Build Status](https://secure.travis-ci.org/veeresht/CommPy.svg?branch=master)](https://secure.travis-ci.org/veeresht/CommPy)
-[![Coverage](https://coveralls.io/repos/veeresht/CommPy/badge.svg)](https://coveralls.io/r/veeresht/CommPy)
+[![Coverage](https://coveralls.io/repos/veeresht/CommPy/badge.svg?branch=master)](https://coveralls.io/r/veeresht/CommPy)
 [![PyPi](https://badge.fury.io/py/scikit-commpy.svg)](https://badge.fury.io/py/scikit-commpy)
 [![Docs](https://readthedocs.org/projects/commpy/badge/?version=latest)](http://commpy.readthedocs.io/en/latest/?badge=latest)
 
