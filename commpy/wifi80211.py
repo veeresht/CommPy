@@ -14,6 +14,18 @@ from commpy.channels import _FlatChannel
 
 
 class Wifi80211:
+    """
+    This class aims to simulate the transmissions and receiving parameters of physical layer 802.11 (currently till VHT (ac))
+
+    First the chunk is coded according to the generator matrix from the standard, having a rate of 1/2.
+    Then, depending on the Modulation Coding Scheme (MCS) used, puncturing is applied to achieve other coding rates.
+    For more details of which MCS map to which modulation and each coding the standard is *the* recommended place,
+    but for a lighter and faster source to check  https://mcsindex.com is a good place.
+    Finally the bits are then mapped to the modulation scheme in conformity to the MCS (BPSK, QPSK, 16-QAM, 64-QAM, 256-QAM).
+
+    On the receiving the inverse operations are perform, with depuncture when MCS needs it.
+
+    """
     # Build memory and generator matrix
     # Number of delay elements in the convolutional encoder
     # "The encoder uses a 6-stage shift register."
