@@ -60,7 +60,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
     """
     if not send_chunk:
         send_chunk = err_min
-    return link_model.link_performance(SNRs, math.ceil(send_max/send_chunk), err_min, send_chunk, code_rate)
+    return link_model.link_performance(SNRs, math.ceil(send_max / send_chunk), err_min, send_chunk, code_rate)
 
 
 class LinkModel:
@@ -134,7 +134,7 @@ class LinkModel:
         *Default* is 1.
     """
 
-    def __init__(self, modulate, channel, receive, num_bits_symbol, constellation, Es=1, decoder=None, rate=1):
+    def __init__(self, modulate, channel, receive, num_bits_symbol, constellation, Es=1, decoder=None, rate=1.):
         self.modulate = modulate
         self.channel = channel
         self.receive = receive
@@ -149,7 +149,7 @@ class LinkModel:
             self.decoder = decoder
         self.full_simulation_results = None
 
-    def link_performance(self, SNRs, tx_max, err_min, send_chunk=None, code_rate=1,
+    def link_performance(self, SNRs, tx_max, err_min, send_chunk=None, code_rate: float = 1.,
                          number_chunks_per_send=1, stop_on_surpass_error=True):
         """
         Estimate the BER performance of a link model with Monte Carlo simulation.
@@ -171,7 +171,7 @@ class LinkModel:
                       so it should be large enough regarding the code type.
                       *Default*: send_chunck = err_min
 
-        code_rate : float in (0,1]
+        code_rate : float in (0,1)
                     Rate of the used code.
                     *Default*: 1 i.e. no code.
 
@@ -238,13 +238,13 @@ class LinkModel:
                 # calculate number of error frames
                 for i in range(number_chunks_per_send):
                     errors = np.bitwise_xor(msg[send_chunk * i:send_chunk * (i + 1)],
-                                          decoded_bits[send_chunk * i:send_chunk * (i + 1)]).sum()
+                                            decoded_bits[send_chunk * i:send_chunk * (i + 1)]).sum()
                     bit_err[id_tx] += errors
                     chunk_loss[id_tx] += 1 if errors > 0 else 0
 
                 chunk_count[id_tx] += number_chunks_per_send
                 total_tx_send += 1
-            BERs[id_SNR] = bit_err.sum() / (total_tx_send*send_chunk)
+            BERs[id_SNR] = bit_err.sum() / (total_tx_send * send_chunk)
             BEs[id_SNR] = bit_err
             CEs[id_SNR] = np.where(bit_err > 0, 1, 0)
             NCs[id_SNR] = chunk_count
