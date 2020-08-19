@@ -8,6 +8,10 @@ from numpy.testing import assert_array_equal, dec, run_module_suite
 from commpy.channelcoding.convcode import Trellis, conv_encode, viterbi_decode
 
 
+def setup():
+    seed(17121996)
+
+
 class TestConvCode(object):
 
     @classmethod
@@ -136,6 +140,7 @@ class TestConvCode(object):
 
         for n in range(niters):
             msg = randint(0, 2, blocklength)
+            print(msg)
 
             # Previous tests
             for i in range(len(self.trellis)):
@@ -176,6 +181,5 @@ class TestConvCode(object):
 
 
 if __name__ == "__main__":
-    seed(17121996)
     run_module_suite()
 

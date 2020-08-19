@@ -15,8 +15,10 @@ from commpy.utilities import signal_power
 
 @dec.slow
 def test_bit_lvl_repr():
-    # Test the BLR by comparing the performance of a receiver with and without it.
+    # Set seed
+    seed(17121996)
 
+    # Test the BLR by comparing the performance of a receiver with and without it.
     qam = QAMModem(4)
 
     nb_rx = 2
@@ -143,5 +145,4 @@ class TestEs(ModemTestcase):
 
 
 if __name__ == "__main__":
-    seed(17121996)
     run_module_suite()

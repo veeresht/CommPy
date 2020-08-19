@@ -2,7 +2,6 @@
 # License: BSD 3-Clause
 
 from numpy import array
-from numpy.random import seed
 from numpy.testing import run_module_suite, assert_raises, assert_equal
 
 from commpy.sequences import pnsequence
@@ -20,6 +19,6 @@ def test_pnsequence():
     assert_equal(pnsequence(4, (0, 0, 1, 1), array((1, 1, 0, 1)), 7), array((1, 1, 0, 0, 1, 0, 1), int),
                  err_msg='Pseudo-noise sequence is not the one expected.')
 
+
 if __name__ == "__main__":
-    seed(17121996)
     run_module_suite()
