@@ -573,7 +573,9 @@ def _where_c(inarray, rows, cols, search_value, index_array):
 
 
 @functools.lru_cache(maxsize=128, typed=False)
-def _compute_branch_metrics(decoding_type, r_codeword, i_codeword_array):
+def _compute_branch_metrics(decoding_type, _r_codeword: tuple, _i_codeword_array: tuple):
+    r_codeword = np.array(_r_codeword)
+    i_codeword_array = np.array(_i_codeword_array)
     if decoding_type == 'hard':
         return hamming_dist(r_codeword.astype(int), i_codeword_array.astype(int))
     elif decoding_type == 'soft':
