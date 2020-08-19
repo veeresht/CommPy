@@ -26,7 +26,7 @@ install:
     - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib nose
     - source activate test-environment
     #- conda install --yes -c dan_blanchard python-coveralls nose-cov
-    - pip install python-coveralls
+    - pip install coveralls
     - pip install coverage
     - python setup.py install
 script:
