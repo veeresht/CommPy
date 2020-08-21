@@ -1,4 +1,5 @@
 import math
+from typing import List
 
 import numpy as np
 
@@ -33,7 +34,10 @@ class Wifi80211:
     memory = np.array(6, ndmin=1)
     generator_matrix = np.array((133, 171), ndmin=2)  # from 802.11 standard, page 2295
 
-    def get_modem(self):
+    def get_modem(self) -> mod.Modem:
+        """
+        Gets the modem that is going to be used for this particular WiFi simulation according to the MCS
+        """
         qpsks = [
             2,
             4,
@@ -53,7 +57,7 @@ class Wifi80211:
             return mod.QAMModem(qpsks[self.mcs])
 
     @staticmethod
-    def get_puncture_matrix(numerator, denominator):
+    def _get_puncture_matrix(numerator: int, denominator: int) -> List:
         if numerator == 1 and denominator == 2:
             return None
         # from the standard 802.11 2016
@@ -68,7 +72,7 @@ class Wifi80211:
             return [1, 1, 1, 0, 0, 1, 1, 0, 0, 1]
         return None
 
-    def get_coding(self):
+    def _get_coding(self):
         coding = [
             (1, 2),
             (1, 2),
@@ -84,22 +88,70 @@ class Wifi80211:
         return coding[self.mcs]
 
     @staticmethod
-    def get_trellis():
+    def _get_trellis():
         return cc.Trellis(Wifi80211.memory, Wifi80211.generator_matrix)
 
-    def __init__(self, mcs):
+    def __init__(self, mcs: int):
+        """
+        Build WiFi 802.11 simulation class
+        Parameters
+        ----------
+        mcs : int
+              The Modulation Coding Scheme (MCS) to simulate.
+              A list of MCS and which coding and modulations they correspond to
+        """
         self.mcs = mcs
         self.modem = None
 
-    def link_performance(self, channels: _FlatChannel, SNRs, tx_max, err_min, send_chunk=None,
+    def link_performance(self, channel: _FlatChannel, SNRs, tx_max, err_min, send_chunk=None,
                          frame_aggregation=1, receiver=None, stop_on_surpass_error=True):
-        trellis1 = Wifi80211.get_trellis()
-        coding = self.get_coding()
+        """
+        Estimate the BER performance of a link model with Monte Carlo simulation as in commpy.links.link_performance
+
+        Parameters
+        ----------
+        channel : _FlatChannel
+                  The channel to be used for the simulation
+
+        SNRs : 1D arraylike
+               Signal to Noise ratio in dB defined as :math:`SNR_{dB} = (E_b/N_0)_{dB} + 10 \log_{10}(R_cM_c)`
+               where :math:`Rc` is the code rate and :math:`Mc` the modulation rate.
+
+        tx_max : int
+                 Maximum number of transmissions for each SNR.
+
+        err_min : int
+                  link_performance send bits until it reach err_min errors (see also send_max).
+
+        send_chunk : int
+                     Number of bits to be send at each frame. This is also the frame length of the decoder if available
+                     so it should be large enough regarding the code type.
+                     *Default*: send_chunck = err_min
+
+        frame_aggregation : int
+                            Number of frames aggregated per transmission (each frame with size send_chunk)
+
+        receiver  : function
+                    Specify a custom receiver function to be used in the simulation.
+                    This is particular useful for MIMO simulations.
+
+        stop_on_surpass_error : bool
+                                Controls if during simulation of a SNR it should break and move to the next SNR when
+                                the bit error is above the err_min parameter
+
+        Returns
+        -------
+        BERs : 1d ndarray
+               Estimated Bit Error Ratio corresponding to each SNRs
+        """
+
+        trellis1 = Wifi80211._get_trellis()
+        coding = self._get_coding()
         modem = self.get_modem()
 
         def modulate(bits):
             res = cc.conv_encode(bits, trellis1, 'cont')
-            puncture_matrix = Wifi80211.get_puncture_matrix(coding[0], coding[1])
+            puncture_matrix = Wifi80211._get_puncture_matrix(coding[0], coding[1])
             res_p = res
             if puncture_matrix:
                 res_p = cc.puncturing(res, puncture_matrix)
@@ -116,7 +168,7 @@ class Wifi80211:
         # Decoder function
         def decoder_soft(msg):
             msg_d = msg
-            puncture_matrix = Wifi80211.get_puncture_matrix(coding[0], coding[1])
+            puncture_matrix = Wifi80211._get_puncture_matrix(coding[0], coding[1])
             if puncture_matrix:
                 try:
                     msg_d = cc.depuncturing(msg, puncture_matrix, math.ceil(len(msg) * coding[0] / coding[1] * 2))
@@ -127,12 +179,12 @@ class Wifi80211:
                     print("Coding %d/%d" % (coding[0], coding[1]))
             return cc.viterbi_decode(msg_d, trellis1, decoding_type='soft')
 
-        self.model = lk.LinkModel(modulate, channels, receiver,
+        self.model = lk.LinkModel(modulate, channel, receiver,
                                   modem.num_bits_symbol, modem.constellation, modem.Es,
                                   decoder_soft, coding[0] / coding[1])
-        return self.model.link_performance(SNRs, tx_max,
-                                           err_min=err_min, send_chunk=send_chunk,
-                                           code_rate=coding[0] / coding[1],
-                                           number_chunks_per_send=frame_aggregation,
-                                           stop_on_surpass_error=stop_on_surpass_error
-                                           )
+        return self.model.link_performance_full_metrics(SNRs, tx_max,
+                                                        err_min=err_min, send_chunk=send_chunk,
+                                                        code_rate=coding[0] / coding[1],
+                                                        number_chunks_per_send=frame_aggregation,
+                                                        stop_on_surpass_error=stop_on_surpass_error
+                                                        )
