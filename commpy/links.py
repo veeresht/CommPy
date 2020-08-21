@@ -171,7 +171,7 @@ class LinkModel:
                       so it should be large enough regarding the code type.
                       *Default*: send_chunck = err_min
 
-        code_rate : float in (0,1)
+        code_rate : float in (0,1]
                     Rate of the used code.
                     *Default*: 1 i.e. no code.
 
