@@ -16,10 +16,10 @@ from commpy.wifi80211 import Wifi80211
 def test_wifi80211_siso_channel():
     seed(17121996)
     wifi80211 = Wifi80211(1)
-    BERs = wifi80211.link_performance(SISOFlatChannel(fading_param=(1 + 0j, 0)), range(0, 9, 2), 10 ** 4, 600)
+    BERs = wifi80211.link_performance(SISOFlatChannel(fading_param=(1 + 0j, 0)), range(0, 9, 2), 10 ** 4, 600)[0]
     desired = (0.489, 0.503, 0.446, 0.31, 0.015)  # From previous tests
-    for i, val in enumerate(desired):
-        print((BERs[i] - val) / val)
+    # for i, val in enumerate(desired):
+    #     print((BERs[i] - val) / val)
     assert_allclose(BERs, desired, rtol=0.3,
                     err_msg='Wrong performance for SISO QPSK and AWGN channel')
 
@@ -37,7 +37,7 @@ def test_wifi80211_mimo_channel():
         return modem.demodulate(kbest(y, h, constellation, 16), 'hard')
 
     BERs = wifi80211.link_performance(RayleighChannel, arange(0, 21, 5) + 10 * log10(modem.num_bits_symbol), 10 ** 4,
-                                      600, receiver=receiver)
+                                      600, receiver=receiver)[0]
     desired = (0.535, 0.508, 0.521, 0.554, 0.475)  # From previous test
     assert_allclose(BERs, desired, rtol=1.25,
                     err_msg='Wrong performance for MIMO 16QAM and 4x4 Rayleigh channel')
