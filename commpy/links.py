@@ -60,7 +60,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
     """
     if not send_chunk:
         send_chunk = err_min
-    return link_model.link_performance(SNRs, math.ceil(send_max / send_chunk), err_min, send_chunk, code_rate)
+    return link_model.link_performance(SNRs, send_max, err_min, send_chunk, code_rate)
 
 
 class LinkModel:
@@ -149,8 +149,8 @@ class LinkModel:
             self.decoder = decoder
         self.full_simulation_results = None
 
-    def link_performance(self, SNRs, tx_max, err_min, send_chunk=None, code_rate: float = 1.,
-                         number_chunks_per_send=1, stop_on_surpass_error=True):
+    def link_performance_full_metrics(self, SNRs, tx_max, err_min, send_chunk=None, code_rate: float = 1.,
+                                      number_chunks_per_send=1, stop_on_surpass_error=True):
         """
         Estimate the BER performance of a link model with Monte Carlo simulation.
 
@@ -184,8 +184,15 @@ class LinkModel:
 
         Returns
         -------
-        BERs : 1d ndarray
-               Estimated Bit Error Ratio corresponding to each SNRs
+        List[BERs, BEs, CEs, NCs]
+           BERs : 1d ndarray
+                  Estimated Bit Error Ratio corresponding to each SNRs
+           BEs : 2d ndarray
+                 Number of Estimated Bits with Error per transmission corresponding to each SNRs
+           CEs : 2d ndarray
+                 Number of Estimated Chunks with Errors per transmission corresponding to each SNRs
+           NCs : 2d ndarray
+                 Number of Chunks transmitted per transmission corresponding to each SNRs
         """
 
         # Initialization
@@ -251,6 +258,78 @@ class LinkModel:
             if BEs[id_SNR].sum() < err_min:
                 break
         self.full_simulation_results = BERs, BEs, CEs, NCs
+        return BERs, BEs, CEs, NCs
+
+    def link_performance(self, SNRs, send_max, err_min, send_chunk=None, code_rate=1):
+        """
+        Estimate the BER performance of a link model with Monte Carlo simulation.
+        Parameters
+        ----------
+        SNRs : 1D arraylike
+               Signal to Noise ratio in dB defined as :math:`SNR_{dB} = (E_b/N_0)_{dB} + 10 \log_{10}(R_cM_c)`
+               where :math:`Rc` is the code rate and :math:`Mc` the modulation rate.
+        send_max : int
+                   Maximum number of bits send for each SNR.
+        err_min : int
+                  link_performance send bits until it reach err_min errors (see also send_max).
+        send_chunk : int
+                      Number of bits to be send at each iteration. This is also the frame length of the decoder if available
+                      so it should be large enough regarding the code type.
+                      *Default*: send_chunck = err_min
+        code_rate : float in (0,1]
+                    Rate of the used code.
+                    *Default*: 1 i.e. no code.
+        Returns
+        -------
+        BERs : 1d ndarray
+               Estimated Bit Error Ratio corresponding to each SNRs
+        """
+
+        # Initialization
+        BERs = np.zeros_like(SNRs, dtype=float)
+        # Set chunk size and round it to be a multiple of num_bits_symbol*nb_tx to avoid padding
+        if send_chunk is None:
+            send_chunk = err_min
+        divider = self.num_bits_symbol * self.channel.nb_tx
+        send_chunk = max(divider, send_chunk // divider * divider)
+
+        receive_size = self.channel.nb_tx * self.num_bits_symbol
+        full_args_decoder = len(getfullargspec(self.decoder).args) > 1
+
+        # Computations
+        for id_SNR in range(len(SNRs)):
+            self.channel.set_SNR_dB(SNRs[id_SNR], code_rate, self.Es)
+            bit_send = 0
+            bit_err = 0
+            while bit_send < send_max and bit_err < err_min:
+                # Propagate some bits
+                msg = np.random.choice((0, 1), send_chunk)
+                symbs = self.modulate(msg)
+                channel_output = self.channel.propagate(symbs)
+
+                # Deals with MIMO channel
+                if isinstance(self.channel, MIMOFlatChannel):
+                    nb_symb_vector = len(channel_output)
+                    received_msg = np.empty(int(math.ceil(len(msg) / self.rate)), dtype=np.int8)
+                    for i in range(nb_symb_vector):
+                        received_msg[receive_size * i:receive_size * (i + 1)] = \
+                            self.receive(channel_output[i], self.channel.channel_gains[i],
+                                         self.constellation, self.channel.noise_std ** 2)
+                else:
+                    received_msg = self.receive(channel_output, self.channel.channel_gains,
+                                                self.constellation, self.channel.noise_std ** 2)
+                # Count errors
+                if full_args_decoder:
+                    decoded_bits = self.decoder(channel_output, self.channel.channel_gains,
+                                                self.constellation, self.channel.noise_std ** 2,
+                                                received_msg, self.channel.nb_tx * self.num_bits_symbol)
+                    bit_err += np.bitwise_xor(msg, decoded_bits[:len(msg)]).sum()
+                else:
+                    bit_err += np.bitwise_xor(msg, self.decoder(received_msg)[:len(msg)]).sum()
+                bit_send += send_chunk
+            BERs[id_SNR] = bit_err / bit_send
+            if bit_err < err_min:
+                break
         return BERs
 
 

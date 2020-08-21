@@ -137,8 +137,8 @@ model_soft = lk.LinkModel(modulate, channels, receiver_soft,
                           decoder_soft, code_rate)
 
 # Test
-BERs_hard = model_hard.link_performance(SNRs, 2, 600, 5000, code_rate)
-BERs_soft = model_soft.link_performance(SNRs, 2, 600, 5000, code_rate)
+BERs_hard = model_hard.link_performance(SNRs, 10000, 600, 5000, code_rate)
+BERs_soft = model_soft.link_performance(SNRs, 10000, 600, 5000, code_rate)
 plt.semilogy(SNRs, BERs_hard, 'o-', SNRs, BERs_soft, 'o-')
 plt.grid()
 plt.xlabel('Signal to Noise Ration (dB)')
