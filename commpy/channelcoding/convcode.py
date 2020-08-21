@@ -748,7 +748,7 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     return decoded_bits[:L]
 
 
-def puncturing(message: list, punct_vec: list):
+def puncturing(message: np.ndarray, punct_vec: np.ndarray) -> np.ndarray:
     """
     Applying of the punctured procedure.
     Parameters
@@ -773,7 +773,7 @@ def puncturing(message: list, punct_vec: list):
     return np.array(punctured)
 
 
-def depuncturing(punctured: list, punct_vec: list, shouldbe: int):
+def depuncturing(punctured: np.ndarray, punct_vec: np.ndarray, shouldbe: int) -> np.ndarray:
     """
     Applying of the inserting zeros procedure.
     Parameters
