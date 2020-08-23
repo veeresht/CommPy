@@ -1,3 +1,17 @@
+# Authors: CommPy contributors
+# License: BSD 3-Clause
+
+"""
+============================================
+Wifi 802.11 simulation (:mod:`commpy.wifi80211`)
+============================================
+
+.. autosummary::
+   :toctree: generated/
+
+   Wifi80211    -- Class to simulate the transmissions and receiving parameters of physical layer 802.11
+"""
+
 import math
 from typing import List
 
