@@ -112,7 +112,17 @@ class Wifi80211:
         ----------
         mcs : int
               The Modulation Coding Scheme (MCS) to simulate.
-              A list of MCS and which coding and modulations they correspond to
+              A list of MCS and which coding and modulations they correspond to is bellow:
+                 - 0 : BPSK 1/2
+                 - 1 : QPSK 1/2
+                 - 2 : QPSK 3/4
+                 - 3 : 16-QAM 1/2
+                 - 4 : 16-QAM 3/4
+                 - 5 : 64-QAM 2/3
+                 - 6 : 64-QAM 3/4
+                 - 7 : 64-QAM 5/6
+                 - 8 : 256-QAM 3/4
+                 - 9 : 256-QAM 5/6
         """
         self.mcs = mcs
         self.modem = None
