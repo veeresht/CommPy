@@ -152,7 +152,7 @@ class Wifi80211(SPWifi80211):
 
     def link_performance(self, channel: _FlatChannel, SNRs: Iterable, tx_max, err_min, send_chunk=None,
                          frame_aggregation=1, receiver=None, stop_on_surpass_error=True):
-        return self.link_performance_mp_mcs([self.mcs], SNRs, channel, tx_max, err_min, send_chunk, frame_aggregation,
+        return self.link_performance_mp_mcs([self.mcs], [SNRs], channel, tx_max, err_min, send_chunk, frame_aggregation,
                                             [receiver], stop_on_surpass_error)[self.mcs]
 
     def link_performance_mp_mcs(self, mcss: list, SNRss: Iterable[Iterable],
