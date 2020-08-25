@@ -19,6 +19,8 @@ from itertools import product, cycle
 from multiprocessing import Pool
 from typing import Iterable, List, Optional
 
+import numpy as np
+
 from commpy.channels import _FlatChannel
 from commpy.links import LinkModel as SPLinkModel
 from commpy.wifi80211 import Wifi80211 as SPWifi80211
@@ -71,7 +73,7 @@ class LinkModel(SPLinkModel):
         tmp_res_keys = sorted(tmp_res.keys())
         self.full_simulation_results = []
         for SNR in tmp_res_keys:
-            self.full_simulation_results.append(tmp_res[SNR])
+            self.full_simulation_results.extend(tmp_res[SNR])
         return self.full_simulation_results
 
 
@@ -84,11 +86,7 @@ class _RunParamsBuilder:
         self.constellation = constellation
         self.Es = Es
         self.rate = rate
-
-        if decoder is None:
-            self.decoder = lambda msg: msg
-        else:
-            self.decoder = decoder
+        self.decoder = decoder
 
     def build_to_run(self, SNR, tx_max, err_min, send_chunk, code_rate,
                      number_chunks_per_send=1, stop_on_surpass_error=True):
@@ -141,7 +139,7 @@ def _run_link_performance_full_metrics(run_params: _RunParams):
 def _run_link_performance(run_params: _RunParams):
     link_model = SPLinkModel(run_params.modulate, run_params.channel, run_params.receive, run_params.num_bits_symbol,
                              run_params.constellation, run_params.Es, run_params.decoder, run_params.rate)
-    return run_params.SNRs[0], [x[0] for x in
+    return run_params.SNRs[0], [x[0] if isinstance(x, np.ndarray) else x for x in
                                 link_model.link_performance(run_params.SNRs, run_params.tx_max,
                                                             run_params.err_min,
                                                             run_params.send_chunk, run_params.code_rate)]
