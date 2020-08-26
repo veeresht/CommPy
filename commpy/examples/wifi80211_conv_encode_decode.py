@@ -26,8 +26,8 @@ SNRs3 = np.arange(0, 6) + 10 * math.log10(w3.get_modem().num_bits_symbol)
 
 
 start = time.time()
-BERs_mcs2 = w2.link_performance(channels, SNRs2, 10, 10, 600, stop_on_surpass_error=False)
-BERs_mcs3 = w3.link_performance(channels, SNRs3, 10, 10, 600, stop_on_surpass_error=False)
+BERs_mcs2 = w2.link_performance(channels, SNRs2, 10, 10, 600, stop_on_surpass_error=False)[0]
+BERs_mcs3 = w3.link_performance(channels, SNRs3, 10, 10, 600, stop_on_surpass_error=False)[0]
 print(BERs_mcs2)
 print(BERs_mcs3)
 print(str(timedelta(seconds=(time.time() - start))))
