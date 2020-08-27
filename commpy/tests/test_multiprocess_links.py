@@ -66,7 +66,7 @@ def test_link_performance():
 @dec.slow
 def test_wifi80211_siso_channel():
     seed(17121996)
-    wifi80211 = Wifi80211(1)
+    wifi80211 = Wifi80211(1, number_of_processes=1)
     BERs = wifi80211.link_performance(SISOFlatChannel(fading_param=(1 + 0j, 0)), range(0, 9, 2), 10 ** 4, 600)[0]
     desired = (0.489, 0.503, 0.446, 0.31, 0.015)  # From previous tests
     # for i, val in enumerate(desired):
