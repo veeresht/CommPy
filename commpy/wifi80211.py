@@ -52,7 +52,7 @@ class Wifi80211:
         """
         Gets the modem that is going to be used for this particular WiFi simulation according to the MCS
         """
-        qpsks = [
+        bits_per_symbol = [
             2,
             4,
             4,
@@ -63,12 +63,13 @@ class Wifi80211:
             256,
             256
         ]
-        if self.mcs == 0:
-            # BPSK
-            return mod.PSKModem(2)
+        if self.mcs <= 2:
+            # BPSK for mcs 0
+            # QPSK for mcs 1 a 2
+            return mod.PSKModem(bits_per_symbol[self.mcs])
         else:
-            # Modem : QPSK
-            return mod.QAMModem(qpsks[self.mcs])
+            # Modem : QAMModem
+            return mod.QAMModem(bits_per_symbol[self.mcs])
 
     @staticmethod
     def _get_puncture_matrix(numerator: int, denominator: int) -> List:
