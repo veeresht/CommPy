@@ -155,11 +155,30 @@ class Wifi80211(SPWifi80211):
         return self.link_performance_mp_mcs([self.mcs], [SNRs], channel, tx_max, err_min, send_chunk, frame_aggregation,
                                             [receiver], stop_on_surpass_error)[self.mcs]
 
-    def link_performance_mp_mcs(self, mcss: list, SNRss: Iterable[Iterable],
+    def link_performance_mp_mcs(self, mcss: List[int], SNRss: Iterable[Iterable],
                                 channel: _FlatChannel, tx_max, err_min, send_chunk=None,
                                 frame_aggregation=1,
                                 receivers: Optional[Iterable] = None,
                                 stop_on_surpass_error=True):
+        """
+        Explicit multiprocess of multiple MCSs link performance call
+
+        Parameters
+        ----------
+        mcss    : list of MCSs to run
+        SNRss   : SNRs to test
+        channel : Channel to test the MCSs at each SNR at
+        tx_max  : maximum number of transmissions to test
+        err_min : minimum error be
+        send_chunk : amount of bits to send at each frame
+        frame_aggregation : number of frames to send at each transmission
+        receivers  : function to handle receiving
+        stop_on_surpass_error : flag to stop when err_min was surpassed
+
+        Returns
+        -------
+
+        """
         pool = Pool(self.number_of_processes if self.number_of_processes > 0 else None)
 
         if not receivers:
