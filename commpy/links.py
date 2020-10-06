@@ -17,6 +17,7 @@ from __future__ import division  # Python 2 compatibility
 
 import math
 from inspect import getfullargspec
+from fractions import Fraction
 
 import numpy as np
 
@@ -49,7 +50,7 @@ def link_performance(link_model, SNRs, send_max, err_min, send_chunk=None, code_
                   so it should be large enough regarding the code type.
                   *Default*: send_chunck = err_min
 
-    code_rate : float in (0,1]
+    code_rate : float or Fraction in (0,1]
                 Rate of the used code.
                 *Default*: 1 i.e. no code.
 
@@ -97,9 +98,9 @@ class LinkModel:
                 binary array.
               *Default* is no process.
 
-    rate : float
-        Code rate.
-        *Default* is 1.
+    rate : float or Fraction in (0,1]
+           Rate of the used code.
+           *Default*: 1 i.e. no code.
 
     Attributes
     ----------
@@ -134,13 +135,15 @@ class LinkModel:
         *Default* is 1.
     """
 
-    def __init__(self, modulate, channel, receive, num_bits_symbol, constellation, Es=1, decoder=None, rate=1.):
+    def __init__(self, modulate, channel, receive, num_bits_symbol, constellation, Es=1, decoder=None, rate=Fraction(1, 1)):
         self.modulate = modulate
         self.channel = channel
         self.receive = receive
         self.num_bits_symbol = num_bits_symbol
         self.constellation = constellation
         self.Es = Es
+        if type(rate) is float:
+            rate = Fraction(rate).limit_denominator(100)
         self.rate = rate
 
         if decoder is None:
@@ -149,7 +152,7 @@ class LinkModel:
             self.decoder = decoder
         self.full_simulation_results = None
 
-    def link_performance_full_metrics(self, SNRs, tx_max, err_min, send_chunk=None, code_rate: float = 1.,
+    def link_performance_full_metrics(self, SNRs, tx_max, err_min, send_chunk=None, code_rate: Fraction = Fraction(1, 1),
                                       number_chunks_per_send=1, stop_on_surpass_error=True):
         """
         Estimate the BER performance of a link model with Monte Carlo simulation.
@@ -171,7 +174,7 @@ class LinkModel:
                       so it should be large enough regarding the code type.
                       *Default*: send_chunck = err_min
 
-        code_rate : float in (0,1]
+        code_rate : Fraction in (0,1]
                     Rate of the used code.
                     *Default*: 1 i.e. no code.
 
@@ -200,18 +203,21 @@ class LinkModel:
         BEs = np.zeros((len(SNRs), tx_max), dtype=int)  # Bit errors per tx
         CEs = np.zeros((len(SNRs), tx_max), dtype=int)  # Chunk Errors per tx
         NCs = np.zeros((len(SNRs), tx_max), dtype=int)  # Number of Chunks per tx
-        # Set chunk size and round it to be a multiple of num_bits_symbol*nb_tx to avoid padding
+        # Set chunk size and round it to be a multiple of num_bits_symbol* nb_tx to avoid padding taking in to account the coding rate
         if send_chunk is None:
             send_chunk = err_min
-        divider = self.num_bits_symbol * self.channel.nb_tx
-        send_chunk = max(divider, send_chunk // divider * divider)
+        if type(code_rate) is float:
+            code_rate = Fraction(code_rate).limit_denominator(100)
+        self.rate = code_rate
+        divider = (Fraction(1, self.num_bits_symbol * self.channel.nb_tx) * 1 / code_rate).denominator
+        send_chunk = max(divider, (send_chunk * number_chunks_per_send) // divider * divider)
 
         receive_size = self.channel.nb_tx * self.num_bits_symbol
         full_args_decoder = len(getfullargspec(self.decoder).args) > 1
 
         # Computations
         for id_SNR in range(len(SNRs)):
-            self.channel.set_SNR_dB(SNRs[id_SNR], code_rate, self.Es)
+            self.channel.set_SNR_dB(SNRs[id_SNR], float(code_rate), self.Es)
             total_tx_send = 0
             bit_err = np.zeros(tx_max, dtype=int)
             chunk_loss = np.zeros(tx_max, dtype=int)
@@ -227,7 +233,7 @@ class LinkModel:
                 # Deals with MIMO channel
                 if isinstance(self.channel, MIMOFlatChannel):
                     nb_symb_vector = len(channel_output)
-                    received_msg = np.empty(int(math.ceil(len(msg) / self.rate)), dtype=np.int8)
+                    received_msg = np.empty(int(math.ceil(len(msg) / float(self.rate))), dtype=np.int8)
                     for i in range(nb_symb_vector):
                         received_msg[receive_size * i:receive_size * (i + 1)] = \
                             self.receive(channel_output[i], self.channel.channel_gains[i],
@@ -276,7 +282,7 @@ class LinkModel:
                       Number of bits to be send at each iteration. This is also the frame length of the decoder if available
                       so it should be large enough regarding the code type.
                       *Default*: send_chunck = err_min
-        code_rate : float in (0,1]
+        code_rate : float or Fraction in (0,1]
                     Rate of the used code.
                     *Default*: 1 i.e. no code.
         Returns
@@ -290,7 +296,10 @@ class LinkModel:
         # Set chunk size and round it to be a multiple of num_bits_symbol*nb_tx to avoid padding
         if send_chunk is None:
             send_chunk = err_min
-        divider = self.num_bits_symbol * self.channel.nb_tx
+        if type(code_rate) is float:
+            code_rate = Fraction(code_rate).limit_denominator(100)
+        self.rate = code_rate
+        divider = (Fraction(1, self.num_bits_symbol * self.channel.nb_tx) * 1 / code_rate).denominator
         send_chunk = max(divider, send_chunk // divider * divider)
 
         receive_size = self.channel.nb_tx * self.num_bits_symbol
@@ -298,7 +307,7 @@ class LinkModel:
 
         # Computations
         for id_SNR in range(len(SNRs)):
-            self.channel.set_SNR_dB(SNRs[id_SNR], code_rate, self.Es)
+            self.channel.set_SNR_dB(SNRs[id_SNR], float(code_rate), self.Es)
             bit_send = 0
             bit_err = 0
             while bit_send < send_max and bit_err < err_min:
@@ -310,7 +319,7 @@ class LinkModel:
                 # Deals with MIMO channel
                 if isinstance(self.channel, MIMOFlatChannel):
                     nb_symb_vector = len(channel_output)
-                    received_msg = np.empty(int(math.ceil(len(msg) / self.rate)), dtype=np.int8)
+                    received_msg = np.empty(int(math.ceil(len(msg) / float(self.rate))), dtype=np.int8)
                     for i in range(nb_symb_vector):
                         received_msg[receive_size * i:receive_size * (i + 1)] = \
                             self.receive(channel_output[i], self.channel.channel_gains[i],
