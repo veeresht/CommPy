@@ -695,11 +695,12 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     rate = k/n
     total_memory = trellis.total_memory
 
-    if tb_depth is None:
-        tb_depth = 5*total_memory
-
     # Number of message bits after decoding
     L = int(len(coded_bits)*rate)
+
+    if tb_depth is None:
+        tb_depth = min(5 * total_memory, L)
+
 
     path_metrics = np.full((trellis.number_states, 2), np.inf)
     path_metrics[0][0] = 0
