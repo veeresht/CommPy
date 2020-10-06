@@ -210,7 +210,7 @@ class LinkModel:
             code_rate = Fraction(code_rate).limit_denominator(100)
         self.rate = code_rate
         divider = (Fraction(1, self.num_bits_symbol * self.channel.nb_tx) * 1 / code_rate).denominator
-        send_chunk = max(divider, (send_chunk * number_chunks_per_send) // divider * divider)
+        send_chunk = max(divider, send_chunk // divider * divider)
 
         receive_size = self.channel.nb_tx * self.num_bits_symbol
         full_args_decoder = len(getfullargspec(self.decoder).args) > 1
