@@ -54,7 +54,7 @@ class _FlatChannel(object):
         else:
             self.noises = standard_normal(dims) * self.noise_std
 
-    def set_SNR_dB(self, SNR_dB, code_rate=1, Es=1):
+    def set_SNR_dB(self, SNR_dB, code_rate: float = 1., Es=1):
 
         """
         Sets the the noise standard deviation based on SNR expressed in dB.
