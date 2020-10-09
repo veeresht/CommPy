@@ -11,12 +11,12 @@ MAINTAINER = 'Veeresh Taranalli & Bastien Trotobas'
 MAINTAINER_EMAIL = 'veeresht@gmail.com'
 URL = 'http://veeresht.github.com/CommPy'
 LICENSE = 'BSD 3-Clause'
-VERSION = '0.5.0'
+VERSION = '0.6.0'
 
 #This is a list of files to install, and where
 #(relative to the 'root' dir, where setup.py is)
 #You could be more specific.
-files = ["channelcoding/*, channelcoding/tests/*, tests/*"]
+files = ["channelcoding/*, channelcoding/tests/*, tests/*, channelcoding/designs/ldpc/gallager/*, channelcoding/designs/ldpc/wimax/*"]
 
 setup(
     name=DISTNAME,
