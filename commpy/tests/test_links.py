@@ -62,7 +62,7 @@ def test_link_performance():
     QAM16 = QAMModem(16)
     RayleighChannel = MIMOFlatChannel(4, 4)
     RayleighChannel.uncorr_rayleigh_fading(complex)
-    ldpc_params = get_ldpc_code_params('channelcoding/designs/ldpc/wimax/1440.720.txt', True)
+    ldpc_params = get_ldpc_code_params('commpy/channelcoding/designs/ldpc/wimax/1440.720.txt', True)
 
     def modulate(bits):
         return QAM16.modulate(triang_ldpc_systematic_encode(bits, ldpc_params, False).reshape(-1, order='F'))
