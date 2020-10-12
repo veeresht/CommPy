@@ -16,8 +16,8 @@ Links (:mod:`commpy.links`)
 from __future__ import division  # Python 2 compatibility
 
 import math
-from inspect import getfullargspec
 from fractions import Fraction
+from inspect import getfullargspec
 
 import numpy as np
 
@@ -95,7 +95,7 @@ class LinkModel:
          *Default* Es=1.
 
     decoder : function with prototype decoder(array) or decoder(y, H, constellation, noise_var, array) that return a
-                binary array.
+                binary ndarray.
               *Default* is no process.
 
     rate : float or Fraction in (0,1]
@@ -127,7 +127,7 @@ class LinkModel:
     Es : float
          Average energy per symbols.
 
-    decoder : function with prototype decoder(binary array) that return a binary array.
+    decoder : function with prototype decoder(binary array) that return a binary ndarray.
               *Default* is no process.
 
     rate : float
@@ -233,7 +233,7 @@ class LinkModel:
                 # Deals with MIMO channel
                 if isinstance(self.channel, MIMOFlatChannel):
                     nb_symb_vector = len(channel_output)
-                    received_msg = np.empty(int(math.ceil(len(msg) / float(self.rate))), dtype=np.int8)
+                    received_msg = np.empty(int(math.ceil(len(msg) / float(self.rate))))
                     for i in range(nb_symb_vector):
                         received_msg[receive_size * i:receive_size * (i + 1)] = \
                             self.receive(channel_output[i], self.channel.channel_gains[i],
@@ -251,7 +251,7 @@ class LinkModel:
                 # calculate number of error frames
                 for i in range(number_chunks_per_send):
                     errors = np.bitwise_xor(msg[send_chunk * i:send_chunk * (i + 1)],
-                                            decoded_bits[send_chunk * i:send_chunk * (i + 1)]).sum()
+                                            decoded_bits[send_chunk * i:send_chunk * (i + 1)].astype(int)).sum()
                     bit_err[id_tx] += errors
                     chunk_loss[id_tx] += 1 if errors > 0 else 0
 
@@ -319,7 +319,7 @@ class LinkModel:
                 # Deals with MIMO channel
                 if isinstance(self.channel, MIMOFlatChannel):
                     nb_symb_vector = len(channel_output)
-                    received_msg = np.empty(int(math.ceil(len(msg) / float(self.rate))), dtype=np.int8)
+                    received_msg = np.empty(int(math.ceil(len(msg) / float(self.rate))))
                     for i in range(nb_symb_vector):
                         received_msg[receive_size * i:receive_size * (i + 1)] = \
                             self.receive(channel_output[i], self.channel.channel_gains[i],
@@ -332,9 +332,9 @@ class LinkModel:
                     decoded_bits = self.decoder(channel_output, self.channel.channel_gains,
                                                 self.constellation, self.channel.noise_std ** 2,
                                                 received_msg, self.channel.nb_tx * self.num_bits_symbol)
-                    bit_err += np.bitwise_xor(msg, decoded_bits[:len(msg)]).sum()
+                    bit_err += np.bitwise_xor(msg, decoded_bits[:len(msg)].astype(int)).sum()
                 else:
-                    bit_err += np.bitwise_xor(msg, self.decoder(received_msg)[:len(msg)]).sum()
+                    bit_err += np.bitwise_xor(msg, self.decoder(received_msg)[:len(msg)].astype(int)).sum()
                 bit_send += send_chunk
             BERs[id_SNR] = bit_err / bit_send
             if bit_err < err_min:
