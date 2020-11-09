@@ -241,8 +241,8 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
 
             # Variable Node Update
             msg_sum = np.array(message_matrix.sum(0)).squeeze()
-            message_matrix *= -1
-            message_matrix += parity_check_matrix.multiply(msg_sum + llr_vec[i_start:i_stop])
+            message_matrix.data *= -1
+            message_matrix.data += parity_check_matrix.multiply(msg_sum + llr_vec[i_start:i_stop]).data
 
             out_llrs = msg_sum + llr_vec[i_start:i_stop]
             np.signbit(out_llrs, out=dec_word[i_start:i_stop])
