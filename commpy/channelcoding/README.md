@@ -153,14 +153,14 @@ print("Uncoded message:\n{}\n".format(mean_BER_uncoded))
 Outputs:
 
 ```python
->>> Soft decision:
->>> 0.0
->>>
->>> Hard decision:
->>> 3.0000000000000004e-05
->>>
->>> Uncoded message:
->>> 0.008782
+Soft decision:
+2.8000000000000003e-05
+
+Hard decision:
+0.0007809999999999999
+
+Uncoded message:
+0.009064
 ```
 
 ### Reference
