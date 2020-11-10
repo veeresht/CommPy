@@ -72,23 +72,35 @@ def pnsequence(pn_order, pn_seed, pn_mask, seq_length):
 
     return pnseq
 
-def zcsequence(u, seq_length):
+def zcsequence(u, seq_length, q=0):
     """
     Generate a Zadoff-Chu (ZC) sequence.
 
     Parameters
     ----------
     u : int
-        Root index of the the ZC sequence.
+        Root index of the the ZC sequence: u>0.
 
     seq_length : int
-        Length of the sequence to be generated. Usually a prime number.
+        Length of the sequence to be generated. Usually a prime number:
+        u<seq_length, greatest-common-denominator(u,seq_length)=1.
+
+    q : int
+        Cyclic shift of the sequence (default 0).
 
     Returns
     -------
     zcseq : 1D ndarray of complex floats
         ZC sequence generated.
     """
-    zcseq = exp((-1j * pi * u * arange(seq_length) * (arange(seq_length)+1)) / seq_length)
+    assert u>0
+    assert u<seq_length
+    assert np.gcd(u,seq_length)==1
+    for el in [u,seq_length,q]:
+        assert float(el).is_integer()
+
+    cf = seq_length%2
+    n = arange(seq_length)
+    zcseq = exp( -1j * pi * u * n * (n+cf+2.*q) / seq_length)
 
     return zcseq
