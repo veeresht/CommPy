@@ -15,6 +15,7 @@ Sequences (:mod:`commpy.sequences`)
 """
 __all__ = ['pnsequence', 'zcsequence']
 
+import numpy as np
 from numpy import empty, exp, pi, arange, int8, fromiter, sum
 
 def pnsequence(pn_order, pn_seed, pn_mask, seq_length):
@@ -100,7 +101,7 @@ def zcsequence(u, seq_length, q=0):
         assert float(el).is_integer()
 
     cf = seq_length%2
-    n = arange(seq_length)
-    zcseq = exp( -1j * pi * u * n * (n+cf+2.*q) / seq_length)
+    n = np.arange(seq_length)
+    zcseq = np.exp( -1j * np.pi * u * n * (n+cf+2.*q) / seq_length)
 
     return zcseq
