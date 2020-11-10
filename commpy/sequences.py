@@ -94,11 +94,16 @@ def zcsequence(u, seq_length, q=0):
     zcseq : 1D ndarray of complex floats
         ZC sequence generated.
     """
-    assert u>0
-    assert u<seq_length
-    assert np.gcd(u,seq_length)==1
+
     for el in [u,seq_length,q]:
-        assert float(el).is_integer()
+        if not float(el).is_integer():
+            raise ValueError('{} is not an integer'.format(el))
+    if u<=0:
+        raise ValueError('u is not stricly positive')
+    if u>=seq_length:
+        raise ValueError('u is not stricly smaller than seq_length')
+    if np.gcd(u,seq_length)!=1:
+        raise ValueError('the greatest common denominator of u and seq_length is not 1')
 
     cf = seq_length%2
     n = np.arange(seq_length)
