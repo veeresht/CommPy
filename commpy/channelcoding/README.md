@@ -107,9 +107,9 @@ noiseVar = 10**(-snrdB/10) # noise variance (power)
 
 N_c = 10 # number of trials
 
-BER_soft = -9e99*np.ones(N_c)
-BER_hard = -9e99*np.ones(N_c)
-BER_uncoded = -9e99*np.ones(N_c)
+BER_soft = np.zeros(N_c)
+BER_hard = np.zeros(N_c)
+BER_uncoded = np.zeros(N_c)
 
 for cntr in range(N_c):
     
