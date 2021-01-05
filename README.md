@@ -37,7 +37,7 @@ Available Features
 - Binary Symmetric Channel (BSC)
 - Binary AWGN Channel (BAWGNC)
 
-[**Wifi 802.11 Simulation Class**](https://github.com/veeresht/CommPy/blob/master/commpy/wifi80211.py)
+[Wifi 802.11 Simulation Class](https://github.com/veeresht/CommPy/blob/master/commpy/wifi80211.py)
 - A class to simulate the transmissions and receiving parameters of physical layer 802.11 (currently till VHT (ac)).
 
 [Filters](https://github.com/veeresht/CommPy/blob/master/commpy/filters.py)
