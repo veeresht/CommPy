@@ -573,7 +573,9 @@ def _where_c(inarray, rows, cols, search_value, index_array):
 
 
 @functools.lru_cache(maxsize=128, typed=False)
-def _compute_branch_metrics(decoding_type, r_codeword, i_codeword_array):
+def _compute_branch_metrics(decoding_type, _r_codeword: tuple, _i_codeword_array: tuple):
+    r_codeword = np.array(_r_codeword)
+    i_codeword_array = np.array(_i_codeword_array)
     if decoding_type == 'hard':
         return hamming_dist(r_codeword.astype(int), i_codeword_array.astype(int))
     elif decoding_type == 'soft':
@@ -693,11 +695,12 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
     rate = k/n
     total_memory = trellis.total_memory
 
-    if tb_depth is None:
-        tb_depth = 5*total_memory
-
     # Number of message bits after decoding
     L = int(len(coded_bits)*rate)
+
+    if tb_depth is None:
+        tb_depth = min(5 * total_memory, L)
+
 
     path_metrics = np.full((trellis.number_states, 2), np.inf)
     path_metrics[0][0] = 0
@@ -745,7 +748,8 @@ def viterbi_decode(coded_bits, trellis, tb_depth=None, decoding_type='hard'):
 
     return decoded_bits[:L]
 
-def puncturing(message, punct_vec):
+
+def puncturing(message: np.ndarray, punct_vec: np.ndarray) -> np.ndarray:
     """
     Applying of the punctured procedure.
     Parameters
@@ -769,7 +773,8 @@ def puncturing(message, punct_vec):
             shift = shift + 1
     return np.array(punctured)
 
-def depuncturing(punctured, punct_vec, shouldbe):
+
+def depuncturing(punctured: np.ndarray, punct_vec: np.ndarray, shouldbe: int) -> np.ndarray:
     """
     Applying of the inserting zeros procedure.
     Parameters
@@ -795,5 +800,5 @@ def depuncturing(punctured, punct_vec, shouldbe):
         else:
             shift2 = shift2 + 1
         if idx%N == 0:
-            shift = shift + 1;
+            shift = shift + 1
     return depunctured

@@ -78,11 +78,12 @@ The [following](https://en.wikipedia.org/wiki/File:Conv_code_177_133.png) convol
 Convolutional encoder parameters:
 
 ```python
+generator_matrix = np.array([[5, 7]]) # generator branches
+trellis = cc.Trellis(np.array([M]), generator_matrix) # Trellis structure
+
 rate = 1/2 # code rate
 L = 7 # constraint length
 m = np.array([L-1]) # number of delay elements
-generator_matrix = np.array([[0o171, 0o133]]) # generator branches
-trellis = cc.Trellis(M, generator_matrix) # Trellis structure
 ```
 
 Viterbi decoder parameters:
@@ -106,9 +107,9 @@ noiseVar = 10**(-snrdB/10) # noise variance (power)
 
 N_c = 10 # number of trials
 
-BER_soft = np.empty((N_c,))
-BER_hard = np.empty((N_c,))
-BER_uncoded = np.empty((N_c,))
+BER_soft = np.zeros(N_c)
+BER_hard = np.zeros(N_c)
+BER_uncoded = np.zeros(N_c)
 
 for cntr in range(N_c):
     
@@ -136,31 +137,30 @@ for cntr in range(N_c):
     decoded_soft = cc.viterbi_decode(demodulated_soft, trellis, tb_depth, decoding_type='unquantized') # decoding (soft decision)
     decoded_hard = cc.viterbi_decode(demodulated_hard, trellis, tb_depth, decoding_type='hard') # decoding (hard decision)
 
+    NumErr, BER_soft[cntr] = BER_calc(message_bits, decoded_soft[:message_bits.size]) # bit-error ratio (soft decision)
+    NumErr, BER_hard[cntr] = BER_calc(message_bits, decoded_hard[:message_bits.size]) # bit-error ratio (hard decision)
+    NumErr, BER_uncoded[cntr] = BER_calc(message_bits, demodulated_uncoded[:message_bits.size]) # bit-error ratio (uncoded case)
 
-    NumErr, BER_soft[cntr] = BER_calc(message_bits, decoded_soft[:-(L-1)]) # bit-error ratio (soft decision)
-    NumErr, BER_hard[cntr] = BER_calc(message_bits, decoded_hard[:-(L-1)]) # bit-error ratio (hard decision)
-    NumErr, BER_uncoded[cntr] = BER_calc(message_bits, demodulated_uncoded) # bit-error ratio (uncoded case)
+mean_BER_soft = BER_soft.mean() # averaged bit-error ratio (soft decision)
+mean_BER_hard = BER_hard.mean() # averaged bit-error ratio (hard decision)
+mean_BER_uncoded = BER_uncoded.mean() # averaged bit-error ratio (uncoded case)
 
-mean_BER_soft = np.mean(BER_soft) # averaged bit-error ratio (soft decision)
-mean_BER_hard = np.mean(BER_hard) # averaged bit-error ratio (hard decision)
-mean_BER_uncoded = np.mean(BER_uncoded) # averaged bit-error ratio (uncoded case)
-
-print("Soft decision:\n"+str(mean_BER_soft)+"\n")
-print("Hard decision:\n"+str(mean_BER_hard)+"\n")
-print("Uncoded message:\n"+str(mean_BER_uncoded)+"\n")
+print("Soft decision:\n{}\n".format(mean_BER_soft))
+print("Hard decision:\n{}\n".format(mean_BER_hard))
+print("Uncoded message:\n{}\n".format(mean_BER_uncoded))
 ```
 
 Outputs:
 
 ```python
->>> Soft decision:
->>> 0.0
->>>
->>> Hard decision:
->>> 3.0000000000000004e-05
->>>
->>> Uncoded message:
->>> 0.008782
+Soft decision:
+2.8000000000000003e-05
+
+Hard decision:
+0.0007809999999999999
+
+Uncoded message:
+0.009064
 ```
 
 ### Reference

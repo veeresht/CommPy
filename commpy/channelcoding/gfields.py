@@ -3,7 +3,7 @@
 
 """ Galois Fields """
 
-from fractions import gcd
+from math import gcd
 
 from numpy import array, zeros, arange, convolve, ndarray, concatenate
 
@@ -52,7 +52,7 @@ class GF:
         if type(x) is int and x >= 0 and x < pow(2, m):
             self.elements = array([x])
         elif type(x) is ndarray and len(x) >= 1:
-            self.elements = x
+            self.elements = x.astype(int)
 
     # Overloading addition operator for Galois Field
     def __add__(self, x):

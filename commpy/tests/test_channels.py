@@ -48,6 +48,9 @@ class TestSISOFlatChannel:
                      err_msg='SISO channel as more than 1 Tx')
 
     def test_fading(self):
+        # Set seed
+        seed(17121996)
+
         def check_chan_gain(mod, chan):
             msg = choice(mod, self.msg_length)
             chan.propagate(msg)
@@ -121,6 +124,9 @@ class TestSISOFlatChannel:
                             err_msg='Wrong channel variance with real channel')
 
     def test_noise_generation(self):
+        # Set seed
+        seed(17121996)
+
         def check_noise(mod, chan, corrected_SNR_lin):
             msg = choice(mod, self.msg_length)
             chan.propagate(msg)
@@ -267,6 +273,9 @@ class TestMIMOFading(MIMOTestCase):
         super(TestMIMOFading, self).__init__()
 
     def do(self, nb_tx, nb_rx):
+        # Set seed
+        seed(17121996)
+
         def check_chan_gain(mod, chan):
             msg = choice(mod, self.msg_length)
             chan.propagate(msg)
@@ -408,7 +417,7 @@ class TestMIMOSpectular(MIMOTestCase):
     def do(self, nb_tx, nb_rx):
         chan = MIMOFlatChannel(nb_tx, nb_rx, 0)
 
-        # Text raising of ValueError
+        # Test raising of ValueError
         with assert_raises(ValueError):
             chan.specular_compo(0, -1, 0, 1)
         with assert_raises(ValueError):
@@ -429,6 +438,9 @@ class TestMIMONoiseGeneration(MIMOTestCase):
         super(TestMIMONoiseGeneration, self).__init__()
 
     def do(self, nb_tx, nb_rx):
+        # Set seed
+        seed(17121996)
+
         def check_noise(mod, chan, corrected_SNR_lin):
             msg = choice(mod, self.msg_length)
             chan.propagate(msg)
@@ -505,6 +517,9 @@ class TestMIMOkFactor(MIMOTestCase):
         super(TestMIMOkFactor, self).__init__()
 
     def do(self, nb_tx, nb_rx):
+        # Set seed
+        seed(17121996)
+
         prod_nb = nb_tx * nb_rx
 
         # Real channel
@@ -533,5 +548,4 @@ class TestMIMOkFactor(MIMOTestCase):
 
 
 if __name__ == "__main__":
-    seed(17121996)
     run_module_suite()
