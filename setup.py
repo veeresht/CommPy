@@ -1,7 +1,7 @@
 # Authors: CommPy contributors
 # License: BSD 3-Clause
 
-from distutils.core import setup
+from setuptools import setup
 
 # Taken from scikit-learn setup.py
 DISTNAME = 'scikit-commpy'
