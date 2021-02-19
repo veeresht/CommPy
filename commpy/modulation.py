@@ -21,14 +21,14 @@ Modulation Demodulation (:mod:`commpy.modulation`)
 
 """
 from bisect import insort
-from itertools import product
 
 import matplotlib.pyplot as plt
-from numpy import arange, array, zeros, pi, cos, sin, sqrt, log2, argmin, \
+from numpy import arange, array, zeros, pi, sqrt, log2, argmin, \
     hstack, repeat, tile, dot, shape, concatenate, exp, \
-    log, vectorize, empty, eye, kron, inf, full, abs, newaxis, minimum, clip
+    log, vectorize, empty, eye, kron, inf, full, abs, newaxis, minimum, clip, fromiter
 from numpy.fft import fft, ifft
 from numpy.linalg import qr, norm
+from sympy.combinatorics.graycode import GrayCode
 
 from commpy.utilities import bitarray2dec, dec2bitarray, signal_power
 
@@ -65,10 +65,16 @@ class Modem:
                         If the constellation is changed to an array-like with length that is not a power of 2.
         """
 
-    def __init__(self, constellation):
+    def __init__(self, constellation, reorder_as_gray=True):
         """ Creates a custom Modem object. """
 
-        self.constellation = constellation
+        if reorder_as_gray:
+            m = log2(len(constellation))
+            gray_code_sequence = GrayCode(m).generate_gray()
+            gray_code_sequence_array = fromiter((int(g, 2) for g in gray_code_sequence), int, len(constellation))
+            self.constellation = constellation[gray_code_sequence_array.argsort()]
+        else:
+            self.constellation = constellation
 
     def modulate(self, input_bits):
         """ Modulate (map) an array of bits to constellation symbols.
@@ -197,10 +203,7 @@ class PSKModem(Modem):
     def __init__(self, m):
         """ Creates a Phase Shift Keying (PSK) Modem object. """
 
-        def _constellation_symbol(i):
-            return cos(2 * pi * (i - 1) / m) + sin(2 * pi * (i - 1) / m) * (0 + 1j)
-
-        self.constellation = list(map(_constellation_symbol, arange(m)))
+        super().__init__(exp(1j * arange(0, 2 * pi, 2 * pi / m)))
 
 
 class QAMModem(Modem):
@@ -241,12 +244,10 @@ class QAMModem(Modem):
 
         """
 
-        def _constellation_symbol(i):
-            return (2 * i[0] - 1) + (2 * i[1] - 1) * (1j)
-
-        mapping_array = arange(1, sqrt(m) + 1) - (sqrt(m) / 2)
-        self.constellation = list(map(_constellation_symbol,
-                                      list(product(mapping_array, repeat=2))))
+        num_symb_pam = int(sqrt(m))
+        pam = arange(-num_symb_pam + 1, num_symb_pam, 2)
+        constellation = tile(hstack((pam, pam[::-1])), num_symb_pam // 2) * 1j + pam.repeat(num_symb_pam)
+        super().__init__(constellation)
 
 
 def ofdm_tx(x, nfft, nsc, cp_length):
