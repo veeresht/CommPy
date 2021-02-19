@@ -244,8 +244,8 @@ def ldpc_bp_decode(llr_vec, ldpc_code_params, decoder_algorithm, n_iters):
             message_matrix.data *= -1
             message_matrix.data += parity_check_matrix.multiply(msg_sum + llr_vec[i_start:i_stop]).data
 
-            out_llrs = msg_sum + llr_vec[i_start:i_stop]
-            np.signbit(out_llrs, out=dec_word[i_start:i_stop])
+            out_llrs[i_start:i_stop] = msg_sum + llr_vec[i_start:i_stop]
+            np.signbit(out_llrs[i_start:i_stop], out=dec_word[i_start:i_stop])
 
     # Reformat outputs
     n_blocks = llr_vec.size // ldpc_code_params['n_vnodes']
