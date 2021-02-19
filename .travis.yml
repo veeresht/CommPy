@@ -23,7 +23,7 @@ install:
     - conda info -a
 
     # Replace dep1 dep2 ... with your dependencies
-    - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib nose
+    - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib nose sympy
     - source activate test-environment
     #- conda install --yes -c dan_blanchard python-coveralls nose-cov
     - pip install coveralls
