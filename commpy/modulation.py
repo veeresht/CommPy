@@ -203,6 +203,10 @@ class PSKModem(Modem):
     def __init__(self, m):
         """ Creates a Phase Shift Keying (PSK) Modem object. """
 
+        num_bits_symbol = log2(m)
+        if num_bits_symbol != int(num_bits_symbol):
+            raise ValueError('Constellation length must be a power of 2.')
+
         super().__init__(exp(1j * arange(0, 2 * pi, 2 * pi / m)))
 
 
@@ -232,6 +236,7 @@ class QAMModem(Modem):
         ------
         ValueError
                         If the constellation is changed to an array-like with length that is not a power of 2.
+                        If the parameter m would lead to an non-square QAM during initialization.
     """
 
     def __init__(self, m):
@@ -240,13 +245,20 @@ class QAMModem(Modem):
         Parameters
         ----------
         m : int
-            Size of the QAM constellation.
+            Size of the QAM constellation. Must lead to a square QAM (ie sqrt(m) is an integer).
 
+        Raises
+        ------
+        ValueError
+                        If m would lead to an non-square QAM.
         """
 
-        num_symb_pam = int(sqrt(m))
+        num_symb_pam = sqrt(m)
+        if num_symb_pam != int(num_symb_pam):
+            raise ValueError('m must lead to a square QAM.')
+
         pam = arange(-num_symb_pam + 1, num_symb_pam, 2)
-        constellation = tile(hstack((pam, pam[::-1])), num_symb_pam // 2) * 1j + pam.repeat(num_symb_pam)
+        constellation = tile(hstack((pam, pam[::-1])), int(num_symb_pam) // 2) * 1j + pam.repeat(num_symb_pam)
         super().__init__(constellation)
 
 
