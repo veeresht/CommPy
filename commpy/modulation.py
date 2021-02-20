@@ -72,7 +72,7 @@ class Modem:
             m = log2(len(constellation))
             gray_code_sequence = GrayCode(m).generate_gray()
             gray_code_sequence_array = fromiter((int(g, 2) for g in gray_code_sequence), int, len(constellation))
-            self.constellation = constellation[gray_code_sequence_array.argsort()]
+            self.constellation = array(constellation)[gray_code_sequence_array.argsort()]
         else:
             self.constellation = constellation
 
