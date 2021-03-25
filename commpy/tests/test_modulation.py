@@ -145,9 +145,9 @@ class TestModulateHardDemodulate(ModemTestcase):
 
     def do_qam(self, modem):
         EbN0dB = arange(8, 25, 4)
-        nb_pam = sqrt(modem.m)
-        BERs_expected = 2 * (1 - 1 / nb_pam) / log2(nb_pam) * \
-                        Qfunc(sqrt(3 * log2(nb_pam) / (nb_pam ** 2 - 1) * (2 * 10 ** (EbN0dB / 10))))
+        nb_symb_pam = sqrt(modem.m)
+        BERs_expected = 2 * (1 - 1 / nb_symb_pam) / log2(nb_symb_pam) * \
+                        Qfunc(sqrt(3 * log2(nb_symb_pam) / (nb_symb_pam ** 2 - 1) * (2 * 10 ** (EbN0dB / 10))))
         self.check_BER(modem, EbN0dB, BERs_expected)
 
     def do_psk(self, modem):
