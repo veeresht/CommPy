@@ -3,14 +3,19 @@
 
 from itertools import product
 
-from numpy import zeros, identity, arange, concatenate, log2, array, inf
+from numpy import zeros, identity, arange, concatenate, log2, log10, array, inf, sqrt, sin, pi
 from numpy.random import seed
 from numpy.testing import run_module_suite, assert_allclose, dec, assert_raises, assert_array_equal
+from scipy.special import erf
 
-from commpy.channels import MIMOFlatChannel
+from commpy.channels import MIMOFlatChannel, SISOFlatChannel
 from commpy.links import *
 from commpy.modulation import QAMModem, mimo_ml, bit_lvl_repr, max_log_approx, PSKModem, Modem
 from commpy.utilities import signal_power
+
+
+def Qfunc(x):
+    return 0.5 - 0.5 * erf(x / sqrt(2))
 
 
 @dec.slow
@@ -124,7 +129,32 @@ class ModemTestcase:
         pass
 
 
+@dec.slow
 class TestModulateHardDemodulate(ModemTestcase):
+
+    @staticmethod
+    def check_BER(modem, EbN0dB, BERs_expected):
+        seed(8071996)
+        model = LinkModel(modem.modulate,
+                          SISOFlatChannel(fading_param=(1 + 0j, 0)),
+                          lambda y, _, __, ___: modem.demodulate(y, 'hard'),
+                          modem.num_bits_symbol, modem.constellation, modem.Es)
+        BERs = model.link_performance(EbN0dB + 10 * log10(log2(modem.m)), 5e5, 400, 720)
+        assert_allclose(BERs, BERs_expected, atol=1e-4, rtol=.1,
+                        err_msg='Wrong BER for a standard modulation with {} symbols'.format(modem.m))
+
+    def do_qam(self, modem):
+        EbN0dB = arange(8, 25, 4)
+        nb_symb_pam = sqrt(modem.m)
+        BERs_expected = 2 * (1 - 1 / nb_symb_pam) / log2(nb_symb_pam) * \
+                        Qfunc(sqrt(3 * log2(nb_symb_pam) / (nb_symb_pam ** 2 - 1) * (2 * 10 ** (EbN0dB / 10))))
+        self.check_BER(modem, EbN0dB, BERs_expected)
+
+    def do_psk(self, modem):
+        EbN0dB = arange(15, 25, 4)
+        SERs_expected = 2 * Qfunc(sqrt(2 * modem.num_bits_symbol * 10 ** (EbN0dB / 10)) * sin(pi / modem.m))
+        BERs_expected = SERs_expected / modem.num_bits_symbol
+        self.check_BER(modem, EbN0dB, BERs_expected)
 
     def do(self, modem):
         for bits in product(*((0, 1),) * modem.num_bits_symbol):

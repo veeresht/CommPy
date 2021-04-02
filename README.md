@@ -102,6 +102,7 @@ Requirements/Dependencies
 - scipy 0.15 or above
 - matplotlib 1.4 or above
 - nose 1.3 or above
+- sympy 1.7 or above
 
 Installation
 ------------
