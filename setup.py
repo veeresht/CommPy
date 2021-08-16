@@ -11,7 +11,7 @@ MAINTAINER = 'Veeresh Taranalli & Bastien Trotobas'
 MAINTAINER_EMAIL = 'veeresht@gmail.com'
 URL = 'http://veeresht.github.com/CommPy'
 LICENSE = 'BSD 3-Clause'
-VERSION = '0.6.0'
+VERSION = '0.7.0'
 
 #This is a list of files to install, and where
 #(relative to the 'root' dir, where setup.py is)
@@ -35,6 +35,7 @@ setup(
           'numpy',
           'scipy',
           'matplotlib',
+          'sympy'
     ],
     #'package' package must contain files (see list above)
     #This dict maps the package name =to=> directories
