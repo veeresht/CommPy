@@ -6,7 +6,7 @@ from setuptools import setup
 # Taken from scikit-learn setup.py
 DISTNAME = 'scikit-commpy'
 DESCRIPTION = 'Digital Communication Algorithms with Python'
-LONG_DESCRIPTION = open('README.md').read()
+LONG_DESCRIPTION = open('README.md', encoding="utf8").read()
 MAINTAINER = 'Veeresh Taranalli & Bastien Trotobas'
 MAINTAINER_EMAIL = 'veeresht@gmail.com'
 URL = 'http://veeresht.github.com/CommPy'
