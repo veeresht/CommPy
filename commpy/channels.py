@@ -449,7 +449,7 @@ class MIMOFlatChannel(_FlatChannel):
         H = zeros((self.nb_rx, self.nb_tx), dtype=complex)
         for n in range(self.nb_rx):
             for m in range(self.nb_tx):
-                H[n, m] = exp(1j * 2 * pi * (n * dr * cos(thetar) - m * dt * cos(thetat)))
+                H[n, m] = exp(1j * 2 * pi * (n * dr * cos(thetar) + m * dt * cos(thetat)))
         return H
 
     @property
