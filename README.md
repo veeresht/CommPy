@@ -126,7 +126,7 @@ Citing CommPy
 -------------
 If you use CommPy for a publication, presentation or a demo, a citation would be greatly appreciated. A citation example is presented here and we suggest to had the revision or version number and the date:
 
-V. Taranalli, B. Trotobas, and contributors, “CommPy: Digital Communication with Python”. [Online]. Available: github.com/veeresht/CommPy
+V. Taranalli, B. Trotobas, and contributors, "CommPy: Digital Communication with Python". [Online]. Available: github.com/veeresht/CommPy
 
 
 I would also greatly appreciate your feedback if you have found CommPy useful. Just send me a mail: veeresht@gmail.com
