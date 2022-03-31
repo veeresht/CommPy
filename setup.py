@@ -16,7 +16,7 @@ VERSION = '0.7.0'
 #This is a list of files to install, and where
 #(relative to the 'root' dir, where setup.py is)
 #You could be more specific.
-files = ["channelcoding/*, channelcoding/tests/*, tests/*, channelcoding/designs/ldpc/gallager/*, channelcoding/designs/ldpc/wimax/*"]
+files = ["channelcoding/*", "channelcoding/tests/*", "tests/*", "channelcoding/designs/ldpc/gallager/*", "channelcoding/designs/ldpc/wimax/*"]
 
 setup(
     name=DISTNAME,
