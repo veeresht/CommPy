@@ -131,4 +131,4 @@ V. Taranalli, B. Trotobas, and contributors, "CommPy: Digital Communication with
 
 I would also greatly appreciate your feedback if you have found CommPy useful. Just send me a mail: veeresht@gmail.com
 
-For more details on CommPy, please visit http://veeresht.github.com/CommPy
+For more details on CommPy, please visit https://veeresht.info/CommPy/
