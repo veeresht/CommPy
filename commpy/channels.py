@@ -19,7 +19,7 @@ Channel Models (:mod:`commpy.channels`)
 
 from __future__ import division, print_function  # Python 2 compatibility
 
-from numpy import complex, abs, sqrt, sum, zeros, identity, hstack, einsum, trace, kron, absolute, fromiter, array, exp, \
+from numpy import abs, sqrt, sum, zeros, identity, hstack, einsum, trace, kron, absolute, fromiter, array, exp, \
     pi, cos
 from numpy.random import randn, random, standard_normal
 from scipy.linalg import sqrtm
