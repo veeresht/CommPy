@@ -304,7 +304,7 @@ def triang_ldpc_systematic_encode(message_bits, ldpc_code_params, pad=True):
     Encode bits using the LDPC code specified. If the  generator matrix is not computed, this function will build it
     and add it to the dictionary. It will also add the parity check matrix.
 
-    This function work only for LDPC specified by a triangular parity check matrix.
+    This function work only for LDPC specified by a approximate triangular parity check matrix.
 
     Parameters
     ----------
@@ -312,7 +312,8 @@ def triang_ldpc_systematic_encode(message_bits, ldpc_code_params, pad=True):
         Message bit to encode.
 
     ldpc_code_params : dictionary that at least contains one of these options:
-        Option 1: generator matrix is available.
+        Option 1: generator matrix and parity-check matrix are available.
+                parity_check_matrix (CSC sparse matrix of int8) - parity check matrix.
                 generator_matrix (2D-array or sparse matrix) - generator matrix of the code.
         Option 2: generator and parity check matrices will be added as sparse matrices.
                 n_vnodes (int) - number of variable nodes.
@@ -337,7 +338,7 @@ def triang_ldpc_systematic_encode(message_bits, ldpc_code_params, pad=True):
             If the message length is not a multiple of block length and pad is False.
     """
 
-    if ldpc_code_params.get('generator_matrix') is None:
+    if ldpc_code_params.get('generator_matrix') is None or ldpc_code_params.get('parity_check_matrix') is None:
         build_matrix(ldpc_code_params)
 
     block_length = ldpc_code_params['generator_matrix'].shape[1]

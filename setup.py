@@ -6,12 +6,12 @@ from setuptools import setup
 # Taken from scikit-learn setup.py
 DISTNAME = 'scikit-commpy'
 DESCRIPTION = 'Digital Communication Algorithms with Python'
-LONG_DESCRIPTION = open('README.md').read()
+LONG_DESCRIPTION = open('README.md', encoding="utf8").read()
 MAINTAINER = 'Veeresh Taranalli & Bastien Trotobas'
-MAINTAINER_EMAIL = 'veeresht@gmail.com'
+MAINTAINER_EMAIL = 'bastien.trotobas@gmail.com'
 URL = 'http://veeresht.github.com/CommPy'
 LICENSE = 'BSD 3-Clause'
-VERSION = '0.7.0'
+VERSION = '0.8.0'
 
 #This is a list of files to install, and where
 #(relative to the 'root' dir, where setup.py is)
@@ -53,6 +53,7 @@ setup(
         'Intended Audience :: Science/Research',
         'Intended Audience :: Telecommunications Industry',
         'Operating System :: Unix',
+        'Operating System :: Microsoft :: Windows',
         'Programming Language :: Python',
         'Topic :: Scientific/Engineering',
         'Topic :: Software Development',
