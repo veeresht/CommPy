@@ -12,10 +12,10 @@ import commpy.channels as chan
 # ==================================================================================================
 # Complete example using Commpy Wifi 802.11 physical parameters
 # ==================================================================================================
-from commpy.wifi80211 import Wifi80211
+from commpy.multiprocess_links import Wifi80211
 
 # AWGN channel
-channels = chan.SISOFlatChannel(None, (1 + 0j, 0j))
+channel = chan.SISOFlatChannel(None, (1 + 0j, 0j))
 
 w2 = Wifi80211(mcs=2)
 w3 = Wifi80211(mcs=3)
@@ -26,14 +26,11 @@ SNRs3 = np.arange(0, 6) + 10 * math.log10(w3.get_modem().num_bits_symbol)
 
 
 start = time.time()
-BERs_mcs2 = w2.link_performance(channels, SNRs2, 10, 10, 600, stop_on_surpass_error=False)[0]
-BERs_mcs3 = w3.link_performance(channels, SNRs3, 10, 10, 600, stop_on_surpass_error=False)[0]
-print(BERs_mcs2)
-print(BERs_mcs3)
+BERs = w2.link_performance_mp_mcs([2, 3], [SNRs2, SNRs3], channel, 10, 10, 600, stop_on_surpass_error=False)
+print(BERs)
 print(str(timedelta(seconds=(time.time() - start))))
-
 # Test
-plt.semilogy(SNRs2, BERs_mcs2, 'o-', SNRs3, BERs_mcs3, 'o-')
+plt.semilogy(SNRs2, BERs[2][0], 'o-', SNRs3, BERs[3][0], 'o-')
 plt.grid()
 plt.xlabel('Signal to Noise Ration (dB)')
 plt.ylabel('Bit Error Rate')
