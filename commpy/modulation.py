@@ -245,7 +245,7 @@ class QAMModem(Modem):
         Parameters
         ----------
         m : int
-            Size of the QAM constellation. Must lead to a square QAM (ie sqrt(m) is an integer).
+            Size of the QAM constellation. Must be a power of 2 and lead to a square QAM (ie log2(m) and sqrt(m) are integers).
 
         Raises
         ------
@@ -256,6 +256,10 @@ class QAMModem(Modem):
         num_symb_pam = sqrt(m)
         if num_symb_pam != int(num_symb_pam):
             raise ValueError('m must lead to a square QAM.')
+            
+        num_bits_symbol = log2(m)
+        if num_bits_symbol != int(num_bits_symbol):
+            raise ValueError('Constellation length must be a power of 2.')
 
         pam = arange(-num_symb_pam + 1, num_symb_pam, 2)
         constellation = tile(hstack((pam, pam[::-1])), int(num_symb_pam) // 2) * 1j + pam.repeat(num_symb_pam)
